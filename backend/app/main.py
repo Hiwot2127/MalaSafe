@@ -2,7 +2,16 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from app.config import settings
 from app.middleware import setup_cors
-from app.routes import health_router, auth_router, mobile_router, uploads_router
+from app.routes import (
+    health_router,
+    auth_router,
+    mobile_router,
+    uploads_router,
+    analytics_router,
+    maps_router,
+    predictions_router,
+    alerts_router
+)
 from loguru import logger
 import sys
 
@@ -67,6 +76,10 @@ app.include_router(health_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(mobile_router, prefix="/api/v1")
 app.include_router(uploads_router, prefix="/api/v1")
+app.include_router(analytics_router, prefix="/api/v1")
+app.include_router(maps_router, prefix="/api/v1")
+app.include_router(predictions_router, prefix="/api/v1")
+app.include_router(alerts_router, prefix="/api/v1")
 
 
 # Startup event
