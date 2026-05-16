@@ -1,10 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Map as MapIcon } from 'lucide-react';
 import { mapsApi } from '@/lib/api/maps';
 import { RiskMapResponse } from '@/types/map';
 import { getRiskBadgeColor } from '@/lib/utils';
+
+const RiskMap = dynamic(() => import('@/components/maps/risk-map'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[500px] items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+      Loading map…
+    </div>
+  ),
+});
 
 export default function MapsPage() {
   const [mapData, setMapData] = useState<RiskMapResponse | null>(null);
@@ -82,20 +92,12 @@ export default function MapsPage() {
 
       {!loading && !error && mapData && mapData.features.length > 0 && (
         <>
-          {/* Map Placeholder */}
+          {/* Map */}
           <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-            <div className="flex items-center justify-center h-96 bg-gray-100 dark:bg-gray-700 rounded-lg">
-              <div className="text-center text-gray-600 dark:text-gray-400">
-                <MapIcon className="w-16 h-16 mx-auto mb-4" />
-                <p className="text-lg font-medium">Interactive Map</p>
-                <p className="text-sm mt-2">
-                  Leaflet map integration will be displayed here
-                </p>
-                <p className="text-xs mt-2">
-                  {mapData.features.length} districts loaded
-                </p>
-              </div>
-            </div>
+            <RiskMap data={mapData} />
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              {mapData.features.length} districts loaded
+            </p>
           </div>
 
           {/* Legend */}
@@ -164,10 +166,10 @@ export default function MapsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                        {feature.properties.cases.toLocaleString()}
+                        {(feature.properties.recent_cases ?? 0).toLocaleString()}
                       </td>
                       <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                        {feature.properties.deaths.toLocaleString()}
+                        {(feature.properties.recent_deaths ?? 0).toLocaleString()}
                       </td>
                     </tr>
                   ))}

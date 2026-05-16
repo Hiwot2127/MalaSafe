@@ -27,6 +27,7 @@ export function getRiskColor(riskLevel: string): string {
   const colors: Record<string, string> = {
     low: 'text-green-600 bg-green-50',
     medium: 'text-yellow-600 bg-yellow-50',
+    moderate: 'text-yellow-600 bg-yellow-50',
     high: 'text-orange-600 bg-orange-50',
     very_high: 'text-red-600 bg-red-50',
   };
@@ -37,6 +38,7 @@ export function getRiskBadgeColor(riskLevel: string): string {
   const colors: Record<string, string> = {
     low: 'bg-green-100 text-green-800',
     medium: 'bg-yellow-100 text-yellow-800',
+    moderate: 'bg-yellow-100 text-yellow-800',
     high: 'bg-orange-100 text-orange-800',
     very_high: 'bg-red-100 text-red-800',
   };

@@ -64,3 +64,22 @@
   width: 100%;
   z-index: 0;
 }
+
+/* Custom risk-marker hover card — strip leaflet's default tooltip chrome */
+.leaflet-tooltip.risk-tooltip,
+.leaflet-tooltip-top.risk-tooltip,
+.leaflet-tooltip-bottom.risk-tooltip,
+.leaflet-tooltip-left.risk-tooltip,
+.leaflet-tooltip-right.risk-tooltip {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  white-space: normal !important;
+}
+.risk-tooltip:before,
+.risk-tooltip:after {
+  display: none !important;
+  border: 0 !important;
+}

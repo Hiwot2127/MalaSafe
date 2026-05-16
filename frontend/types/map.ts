@@ -1,19 +1,26 @@
+export type RiskLevel = 'low' | 'moderate' | 'medium' | 'high' | 'very_high';
+
 export interface RiskFeature {
   type: 'Feature';
   properties: {
     district_code: string;
     district_name: string;
     region: string;
-    risk_level: 'low' | 'medium' | 'high' | 'very_high';
-    cases: number;
-    deaths: number;
+    geojson_key?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    risk_level: RiskLevel;
+    recent_cases?: number;
+    recent_deaths?: number;
     prediction_score?: number;
     confidence_score?: number;
+    prediction_reason?: string;
   };
-  geometry: {
-    type: 'Polygon' | 'MultiPolygon';
-    coordinates: number[][][] | number[][][][];
-  };
+  geometry:
+    | { type: 'Point'; coordinates: [number, number] }
+    | { type: 'Polygon'; coordinates: number[][][] }
+    | { type: 'MultiPolygon'; coordinates: number[][][][] }
+    | null;
 }
 
 export interface RiskMapResponse {
@@ -26,7 +33,7 @@ export interface Alert {
   district_id: string;
   district_name?: string;
   region?: string;
-  risk_level: 'low' | 'medium' | 'high' | 'very_high';
+  risk_level: RiskLevel;
   message: string;
   is_active: boolean;
   created_at: string;
@@ -36,7 +43,7 @@ export interface Prediction {
   id: string;
   district_id: string;
   district_name?: string;
-  risk_level: 'low' | 'medium' | 'high' | 'very_high';
+  risk_level: RiskLevel;
   confidence_score: number;
   prediction_score: number;
   prediction_reason: string;

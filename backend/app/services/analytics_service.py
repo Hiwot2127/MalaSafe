@@ -289,6 +289,8 @@ class AnalyticsService:
             District.district_name,
             District.region,
             District.geojson_key,
+            District.latitude,
+            District.longitude,
             Prediction.risk_level,
             Prediction.confidence_score,
             Prediction.prediction_score,
@@ -337,6 +339,13 @@ class AnalyticsService:
         for row in rows:
             risk_counts[row.risk_level] = risk_counts.get(row.risk_level, 0) + 1
             
+            geometry = None
+            if row.longitude is not None and row.latitude is not None:
+                geometry = {
+                    "type": "Point",
+                    "coordinates": [float(row.longitude), float(row.latitude)],
+                }
+
             features.append({
                 "type": "Feature",
                 "properties": {
@@ -344,14 +353,16 @@ class AnalyticsService:
                     "district_name": row.district_name,
                     "region": row.region,
                     "geojson_key": row.geojson_key,
+                    "latitude": float(row.latitude) if row.latitude is not None else None,
+                    "longitude": float(row.longitude) if row.longitude is not None else None,
                     "risk_level": row.risk_level,
                     "confidence_score": float(row.confidence_score),
                     "prediction_score": float(row.prediction_score),
                     "prediction_reason": row.prediction_reason,
                     "recent_cases": int(row.recent_cases),
-                    "recent_deaths": int(row.recent_deaths)
+                    "recent_deaths": int(row.recent_deaths),
                 },
-                "geometry": None  # GeoJSON geometry will be matched client-side using geojson_key
+                "geometry": geometry,
             })
         
         metadata = {
