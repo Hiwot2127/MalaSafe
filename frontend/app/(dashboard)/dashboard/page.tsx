@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Activity, AlertTriangle, TrendingUp, Users } from 'lucide-react';
+import { Activity, AlertTriangle, TrendingUp, Upload, Users } from 'lucide-react';
 import { analyticsApi } from '@/lib/api/analytics';
 import { DashboardSummary } from '@/types/analytics';
 

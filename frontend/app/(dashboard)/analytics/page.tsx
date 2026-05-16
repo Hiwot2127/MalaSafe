@@ -20,7 +20,7 @@ export default function AnalyticsPage() {
           trend_type: trendType,
           limit: 20,
         });
-        setTrends(response.trends);
+        setTrends(response.data ?? []);
       } catch (err: any) {
         setError(err.response?.data?.detail || 'Failed to fetch trends');
       } finally {
