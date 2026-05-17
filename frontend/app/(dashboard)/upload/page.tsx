@@ -203,7 +203,7 @@ export default function UploadPage() {
             </span>
           </SectionHeader>
           <UploadTimeline
-            stages={state.result.stages as StageResult[]}
+            stages={(state.result.stages as StageResult[] | undefined) ?? []}
             monthlyCloseId={state.result.monthly_close_id ?? null}
             monthlyCloseMode={state.result.monthly_close_mode ?? null}
           />
