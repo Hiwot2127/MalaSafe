@@ -108,7 +108,7 @@ python create_admin.py
 **Default Admin Credentials:**
 ```
 Email: admin@malasafe.gov.et
-Password: admin123
+Password: Admin@123
 ```
 
 ### Start Backend Server
@@ -174,7 +174,7 @@ npm run dev
 2. Should redirect to login page
 3. Enter admin credentials:
    - Email: `admin@malasafe.gov.et`
-   - Password: `admin123`
+   - Password: `Admin@123`
 4. Should redirect to dashboard
 
 ---
@@ -407,7 +407,7 @@ MalaSafe/
 ### Admin User
 ```
 Email: admin@malasafe.gov.et
-Password: admin123
+Password: Admin@123
 Role: admin
 ```
 
@@ -502,7 +502,7 @@ Your MalaSafe malaria surveillance system is now running!
 
 **Login with:**
 - Email: `admin@malasafe.gov.et`
-- Password: `admin123`
+- Password: `Admin@123`
 
 ---
 

@@ -83,7 +83,7 @@ Use this checklist to verify your MalaSafe installation is complete and working 
   ```
 - [ ] Verified admin credentials:
   - Email: `admin@malasafe.gov.et`
-  - Password: `admin123`
+  - Password: `Admin@123`
 
 ### Backend Server
 - [ ] Started backend server
@@ -137,7 +137,7 @@ Use this checklist to verify your MalaSafe installation is complete and working 
 - [ ] Login page displays correctly
 - [ ] Enter admin credentials:
   - Email: `admin@malasafe.gov.et`
-  - Password: `admin123`
+  - Password: `Admin@123`
 - [ ] Login successful
 - [ ] Redirects to `/dashboard`
 - [ ] User info displays in header
@@ -415,7 +415,7 @@ If all items are checked, your MalaSafe installation is complete and ready for u
 
 **Login with:**
 - Email: `admin@malasafe.gov.et`
-- Password: `admin123`
+- Password: `Admin@123`
 
 ---
 

@@ -107,7 +107,7 @@ There is no test runner configured on the frontend.
 
 ## Gotchas
 
-- The README documents a default admin login of `admin@malasafe.gov.et` / `admin123`, but [backend/create_admin.py](backend/create_admin.py) prompts interactively and enforces password strength — `admin123` will be rejected. Treat the README credential as illustrative only.
+- The README documents a default admin login of `admin@malasafe.gov.et` / `Admin@123`, but [backend/create_admin.py](backend/create_admin.py) prompts interactively and enforces password strength — `Admin@123` will be rejected. Treat the README credential as illustrative only.
 - `backend/venv.py314.broken/` exists alongside `backend/venv/`; the active virtualenv is `venv/`. Ignore the `.broken` directory.
 - There are many `*_COMPLETE.md` and `*_SUMMARY.md` files at the repo root — these are historical implementation reports from the initial build, not active specs. Source of truth is the code; treat these docs as background context only.
 - Ethiopian domain vocabulary: 12 regions (Addis Ababa, Afar, Amhara, Benishangul-Gumuz, Dire Dawa, Gambela, Harari, Oromia, Sidama, SNNPR, Somali, Tigray) and 3 seasons (Bega Oct–Jan, Belg Feb–May, Kiremt Jun–Sep). The `mobile` router exists for a future mobile client, not implemented end-to-end.

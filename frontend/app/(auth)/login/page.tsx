@@ -87,7 +87,7 @@ export default function LoginPage() {
         <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
           <p>Demo Credentials:</p>
           <p className="mt-1">Email: admin@malasafe.gov.et</p>
-          <p>Password: admin123</p>
+          <p>Password: Admin@123</p>
         </div>
       </div>
     </div>
