@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models import User
 from app.utils.dependencies import get_current_user, require_official
-from app.schemas.upload import UploadResponse, UploadError
+from app.schemas.upload import UploadResponse, UploadError, StageResult, UploadPreviewResponse
 from app.services.upload_service import UploadService
 from io import StringIO, BytesIO
 import csv
@@ -91,13 +91,9 @@ async def upload_weekly_malaria_data(
     upload_service = UploadService(db, str(current_user.id))
     
     try:
-        success, message, processed, created, skipped, errors, file_id, monthly_close_id, monthly_close_mode = \
+        (success, message, processed, created, skipped, errors, file_id,
+         monthly_close_id, monthly_close_mode, stages) = \
             await upload_service.process_weekly_malaria_upload(content, file.filename)
-
-        # Trigger background prediction processing if records were created
-        if created > 0:
-            # TODO: Get affected district IDs and trigger predictions
-            background_tasks.add_task(trigger_prediction_processing, [], db)
 
         return UploadResponse(
             success=success,
@@ -109,6 +105,7 @@ async def upload_weekly_malaria_data(
             file_id=file_id,
             monthly_close_id=monthly_close_id,
             monthly_close_mode=monthly_close_mode,
+            stages=[StageResult(**s) for s in stages],
         )
 
     except Exception as e:
@@ -178,7 +175,8 @@ async def upload_monthly_malaria_data(
     upload_service = UploadService(db, str(current_user.id))
     
     try:
-        success, message, processed, created, skipped, errors, file_id, monthly_close_id, monthly_close_mode = \
+        (success, message, processed, created, skipped, errors, file_id,
+         monthly_close_id, monthly_close_mode, stages) = \
             await upload_service.process_monthly_malaria_upload(content, file.filename)
 
         # Monthly close orchestration is owned by Celery (app.tasks.monthly_close)
@@ -195,6 +193,7 @@ async def upload_monthly_malaria_data(
             file_id=file_id,
             monthly_close_id=monthly_close_id,
             monthly_close_mode=monthly_close_mode,
+            stages=[StageResult(**s) for s in stages],
         )
 
     except Exception as e:
@@ -202,6 +201,44 @@ async def upload_monthly_malaria_data(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing upload: {str(e)}"
+        )
+
+
+@router.post("/malaria/monthly/preview", response_model=UploadPreviewResponse)
+async def preview_monthly_malaria_upload(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_official),
+):
+    """
+    Dry-run a monthly malaria upload. Same parsing + per-row validation as the
+    real endpoint, but **no rows are written** to the database.
+
+    Powers the pre-upload modal: the frontend can show valid / invalid /
+    duplicate counts (and per-row reasons) before the user commits to the
+    real upload at `POST /uploads/malaria/monthly`.
+    """
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only CSV files are allowed",
+        )
+    try:
+        content = await file.read()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Error reading file: {str(e)}",
+        )
+
+    upload_service = UploadService(db, str(current_user.id))
+    try:
+        return await upload_service.dry_run_validate_monthly(content, file.filename)
+    except Exception as e:
+        logger.error(f"Error previewing monthly malaria upload: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error previewing upload: {str(e)}",
         )
 
 
@@ -265,12 +302,9 @@ async def upload_climate_data(
     upload_service = UploadService(db, str(current_user.id))
     
     try:
-        success, message, processed, created, skipped, errors, file_id, monthly_close_id, monthly_close_mode = \
+        (success, message, processed, created, skipped, errors, file_id,
+         monthly_close_id, monthly_close_mode, stages) = \
             await upload_service.process_climate_upload(content, file.filename)
-
-        # Trigger background prediction processing if records were created
-        if created > 0:
-            background_tasks.add_task(trigger_prediction_processing, [], db)
 
         return UploadResponse(
             success=success,
@@ -282,6 +316,7 @@ async def upload_climate_data(
             file_id=file_id,
             monthly_close_id=monthly_close_id,
             monthly_close_mode=monthly_close_mode,
+            stages=[StageResult(**s) for s in stages],
         )
 
     except Exception as e:
@@ -333,13 +368,15 @@ async def download_monthly_malaria_template():
     output = StringIO()
     writer = csv.writer(output)
     
-    # Write headers
-    writer.writerow(['district_code', 'month', 'year', 'cases', 'deaths'])
-    
-    # Write example rows
-    writer.writerow(['AA-001', '1', '2024', '600', '20'])
-    writer.writerow(['OR-001', '1', '2024', '800', '32'])
-    writer.writerow(['AM-001', '1', '2024', '720', '24'])
+    # Headers — `tests` is optional. Officers who don't report exposure data
+    # can leave it blank; the predictor falls back to a cases*5 (TPR=20%) proxy.
+    writer.writerow(['district_code', 'month', 'year', 'cases', 'deaths', 'tests'])
+
+    # 4 example rows — last row demonstrates that `tests` may be left blank.
+    writer.writerow(['AA-001', '1', '2024', '600', '20', '2400'])
+    writer.writerow(['OR-001', '1', '2024', '800', '32', '3500'])
+    writer.writerow(['AM-001', '1', '2024', '720', '24', '3000'])
+    writer.writerow(['TG-001', '1', '2024', '410', '11', ''])
     
     # Convert to bytes
     output.seek(0)
