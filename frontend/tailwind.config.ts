@@ -18,7 +18,15 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        display: ["var(--font-fraunces)", "Georgia", "serif"],
+        sans: ["var(--font-manrope)", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        mono: ["var(--font-plex-mono)", "JetBrains Mono", "monospace"],
+      },
       colors: {
+        "status-valid": "hsl(var(--status-valid))",
+        "status-warn": "hsl(var(--status-warn))",
+        "status-error": "hsl(var(--status-error))",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

@@ -4,48 +4,84 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 217 91% 60%;
-    --radius: 0.5rem;
+    /* Surface: warm off-white, like uncoated journal stock. */
+    --background: 40 32% 98%;
+    --foreground: 220 16% 14%;
+
+    --card: 40 32% 98%;
+    --card-foreground: 220 16% 14%;
+
+    --popover: 40 36% 99%;
+    --popover-foreground: 220 16% 14%;
+
+    /* Primary: deep WHO-style navy. Used for buttons, primary actions. */
+    --primary: 220 38% 22%;
+    --primary-foreground: 40 32% 98%;
+
+    --secondary: 40 18% 92%;
+    --secondary-foreground: 220 16% 14%;
+
+    --muted: 40 16% 94%;
+    --muted-foreground: 220 10% 38%;
+
+    --accent: 40 18% 92%;
+    --accent-foreground: 220 16% 14%;
+
+    /* Destructive: terracotta, not screaming hex-red. */
+    --destructive: 12 50% 46%;
+    --destructive-foreground: 40 32% 98%;
+
+    --border: 38 16% 84%;
+    --input: 38 16% 84%;
+    --ring: 220 38% 22%;
+
+    /* Sharp keylines, not rounded SaaS pills. */
+    --radius: 0.25rem;
+
+    /* Domain accents — used directly via Tailwind arbitrary values where needed. */
+    --status-valid: 145 22% 38%;       /* muted sage — Ethiopian highland field */
+    --status-warn: 38 56% 50%;         /* saffron, earth tone */
+    --status-error: 12 50% 46%;        /* clay terracotta */
+
+    /* Font stacks — wired via next/font in the root layout. */
+    --font-display: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+    --font-sans: var(--font-manrope), -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: var(--font-plex-mono), 'JetBrains Mono', 'SF Mono', Consolas, monospace;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 217 91% 60%;
+    /* Dark surface: deep slate, not pure black. */
+    --background: 220 24% 9%;
+    --foreground: 40 16% 92%;
+
+    --card: 220 24% 9%;
+    --card-foreground: 40 16% 92%;
+
+    --popover: 220 24% 11%;
+    --popover-foreground: 40 16% 92%;
+
+    --primary: 40 32% 92%;
+    --primary-foreground: 220 38% 18%;
+
+    --secondary: 220 16% 18%;
+    --secondary-foreground: 40 16% 92%;
+
+    --muted: 220 16% 16%;
+    --muted-foreground: 40 8% 64%;
+
+    --accent: 220 16% 18%;
+    --accent-foreground: 40 16% 92%;
+
+    --destructive: 12 44% 50%;
+    --destructive-foreground: 40 32% 96%;
+
+    --border: 220 14% 20%;
+    --input: 220 14% 20%;
+    --ring: 40 16% 80%;
+
+    --status-valid: 145 22% 56%;
+    --status-warn: 38 56% 60%;
+    --status-error: 12 50% 58%;
   }
 }
 
@@ -55,7 +91,51 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
   }
+
+  /* Display text — Fraunces with opinionated optical sizing. */
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-feature-settings: 'ss01', 'ss02', 'ss03';
+  }
+  h1 { font-variation-settings: 'opsz' 96, 'SOFT' 30, 'WONK' 0; }
+  h2 { font-variation-settings: 'opsz' 48, 'SOFT' 30, 'WONK' 0; }
+  h3 { font-variation-settings: 'opsz' 24, 'SOFT' 30, 'WONK' 0; }
+
+  /* Tabular numerals for data — counts, durations, IDs. */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Section labels — small monospaced eyebrow above each section, like
+   numbered footnote references in an editorial layout. */
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Status pills — used by the validation modal tabs. */
+.status-valid { color: hsl(var(--status-valid)); }
+.status-warn { color: hsl(var(--status-warn)); }
+.status-error { color: hsl(var(--status-error)); }
+.bg-status-valid-tint { background-color: hsl(var(--status-valid) / 0.12); }
+.bg-status-warn-tint { background-color: hsl(var(--status-warn) / 0.12); }
+.bg-status-error-tint { background-color: hsl(var(--status-error) / 0.12); }
+
+/* Timeline stage reveal — used by upload-timeline.tsx. */
+@keyframes stage-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stage-reveal {
+  animation: stage-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Leaflet styles */
