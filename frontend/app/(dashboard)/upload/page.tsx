@@ -1,252 +1,305 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Upload, Download, FileText } from 'lucide-react';
-import { uploadsApi } from '@/lib/api/uploads';
+import { useState, useCallback } from "react";
+import { Download } from "lucide-react";
+import { toast } from "sonner";
+
+import { uploadsApi } from "@/lib/api/uploads";
+import { parseLocalPreview, type LocalPreviewResult } from "@/lib/csv-preview";
+import type {
+  UploadResponse,
+  UploadPreviewResponse,
+  UploadKind,
+  StageResult,
+} from "@/types/upload";
+
+import { UploadDropzone, SelectedFileChip } from "@/components/upload/upload-dropzone";
+import { UploadPreviewDialog } from "@/components/upload/upload-preview-dialog";
+import { UploadTimeline } from "@/components/upload/upload-timeline";
+import { cn } from "@/lib/utils";
+
+type PageState =
+  | { kind: "idle" }
+  | { kind: "previewing"; file: File; local: LocalPreviewResult | null; server: UploadPreviewResponse | null; loadingServer: boolean }
+  | { kind: "uploading"; file: File }
+  | { kind: "done"; result: UploadResponse; file: File };
+
+const KIND_LABEL: Record<UploadKind, string> = {
+  monthly: "Monthly malaria",
+  climate: "Climate",
+};
 
 export default function UploadPage() {
-  const [uploadType, setUploadType] = useState<'weekly' | 'monthly' | 'climate'>('weekly');
-  const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [errors, setErrors] = useState<any[]>([]);
+  const [uploadType, setUploadType] = useState<UploadKind>("monthly");
+  const [state, setState] = useState<PageState>({ kind: "idle" });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-      setMessage(null);
-      setErrors([]);
-    }
-  };
+  // File picked → kick off local preview + (for monthly) server dry-run in parallel.
+  const handleFile = useCallback(
+    async (file: File) => {
+      // Open the modal immediately with a placeholder so the UI never blocks.
+      setState({ kind: "previewing", file, local: null, server: null, loadingServer: uploadType === "monthly" });
 
-  const handleUpload = async () => {
-    if (!file) {
-      setMessage({ type: 'error', text: 'Please select a file' });
-      return;
-    }
+      // Client-side parse — should be sub-second even on large files.
+      const local = await parseLocalPreview(file, uploadType);
+      setState((prev) =>
+        prev.kind === "previewing" && prev.file === file
+          ? { ...prev, local }
+          : prev,
+      );
 
-    setLoading(true);
-    setMessage(null);
-    setErrors([]);
+      // Server dry-run is only meaningful for monthly today (only endpoint
+      // shipped in Phase 3 backend); skip for weekly/climate until those exist.
+      if (uploadType !== "monthly") {
+        setState((prev) =>
+          prev.kind === "previewing" && prev.file === file
+            ? { ...prev, loadingServer: false }
+            : prev,
+        );
+        return;
+      }
+
+      try {
+        const server = await uploadsApi.previewMonthlyMalariaUpload(file);
+        setState((prev) =>
+          prev.kind === "previewing" && prev.file === file
+            ? { ...prev, server, loadingServer: false }
+            : prev,
+        );
+      } catch (err: unknown) {
+        const message = extractErrorMessage(err) ?? "Preview check failed";
+        toast.error("Could not run server-side preview", { description: message });
+        setState((prev) =>
+          prev.kind === "previewing" && prev.file === file
+            ? { ...prev, loadingServer: false }
+            : prev,
+        );
+      }
+    },
+    [uploadType],
+  );
+
+  const handleConfirmUpload = useCallback(async () => {
+    if (state.kind !== "previewing") return;
+    const file = state.file;
+    setState({ kind: "uploading", file });
 
     try {
-      let response;
-      if (uploadType === 'climate') {
-        response = await uploadsApi.uploadClimate(file);
-      } else {
-        response = await uploadsApi.uploadMalaria(file, uploadType);
-      }
+      const response =
+        uploadType === "climate"
+          ? await uploadsApi.uploadClimate(file)
+          : await uploadsApi.uploadMalaria(file);
 
-      setMessage({
-        type: 'success',
-        text: `Successfully uploaded ${response.records_processed} records`,
-      });
-      
-      if (response.errors && response.errors.length > 0) {
-        setErrors(response.errors);
+      if (response.success) {
+        toast.success(`${response.records_created} rows imported`, {
+          description: response.records_skipped > 0
+            ? `${response.records_skipped} rows skipped — see timeline.`
+            : undefined,
+        });
+      } else {
+        toast.warning("Imported with skipped rows", {
+          description: `${response.records_created} created, ${response.records_skipped} skipped.`,
+        });
       }
-      
-      setFile(null);
-      // Reset file input
-      const fileInput = document.getElementById('file-input') as HTMLInputElement;
-      if (fileInput) fileInput.value = '';
-    } catch (err: any) {
-      setMessage({
-        type: 'error',
-        text: err.response?.data?.detail || 'Upload failed',
-      });
-    } finally {
-      setLoading(false);
+      setState({ kind: "done", result: response, file });
+    } catch (err: unknown) {
+      toast.error("Upload failed", { description: extractErrorMessage(err) ?? "Unknown error" });
+      setState({ kind: "idle" });
     }
-  };
+  }, [state, uploadType]);
 
-  const handleDownloadTemplate = async () => {
+  const handleCancelPreview = useCallback(() => {
+    setState({ kind: "idle" });
+  }, []);
+
+  const handleReset = useCallback(() => {
+    setState({ kind: "idle" });
+  }, []);
+
+  const handleDownloadTemplate = useCallback(async () => {
     try {
-      let blob;
-      let filename;
-      
-      if (uploadType === 'climate') {
-        blob = await uploadsApi.downloadClimateTemplate();
-        filename = 'climate_template.csv';
-      } else {
-        blob = await uploadsApi.downloadMalariaTemplate(uploadType);
-        filename = `${uploadType}_malaria_template.csv`;
-      }
-
-      // Create download link
+      const blob =
+        uploadType === "climate"
+          ? await uploadsApi.downloadClimateTemplate()
+          : await uploadsApi.downloadMalariaTemplate();
+      const filename =
+        uploadType === "climate" ? "climate_template.csv" : "monthly_malaria_template.csv";
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (err: any) {
-      setMessage({
-        type: 'error',
-        text: 'Failed to download template',
-      });
+      a.remove();
+    } catch (err) {
+      toast.error("Could not download template", { description: extractErrorMessage(err) ?? undefined });
     }
-  };
+  }, [uploadType]);
+
+  const previewOpen = state.kind === "previewing" || state.kind === "uploading";
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Upload Data</h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Import malaria and climate data from CSV files
+    <div className="mx-auto flex max-w-3xl flex-col gap-12 py-8">
+      {/* Editorial header */}
+      <header className="flex flex-col gap-3">
+        <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+          MalaSafe · Surveillance ingest
         </p>
-      </div>
+        <h1 className="font-display text-4xl leading-[1.05] tracking-tight">Upload data</h1>
+        <p className="max-w-prose font-sans text-base leading-relaxed text-muted-foreground">
+          Drop a malaria or climate CSV. Each row validates independently — defects are listed
+          and skipped, the rest still imports. Monthly malaria uploads also trigger a backtest,
+          drift check, and re-prediction for the following month.
+        </p>
+      </header>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Upload Form */}
-        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Upload CSV File
-          </h2>
+      {/* Section 001 — Type */}
+      <section className="flex flex-col gap-5">
+        <SectionHeader index="001" label="Data type" />
+        <fieldset className="grid grid-cols-1 gap-px overflow-hidden border border-border bg-border sm:grid-cols-2">
+          <legend className="sr-only">Upload type</legend>
+          {(Object.keys(KIND_LABEL) as UploadKind[]).map((kind) => (
+            <TypeOption
+              key={kind}
+              kind={kind}
+              checked={uploadType === kind}
+              onSelect={() => {
+                setUploadType(kind);
+                if (state.kind !== "idle") setState({ kind: "idle" });
+              }}
+            />
+          ))}
+        </fieldset>
+      </section>
 
-          <div className="space-y-4">
-            {/* Upload Type Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Data Type
-              </label>
-              <select
-                value={uploadType}
-                onChange={(e) => setUploadType(e.target.value as any)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              >
-                <option value="weekly">Weekly Malaria Data</option>
-                <option value="monthly">Monthly Malaria Data</option>
-                <option value="climate">Climate Data</option>
-              </select>
-            </div>
+      {/* Section 002 — File */}
+      <section className="flex flex-col gap-5">
+        <SectionHeader index="002" label="File">
+          <button
+            type="button"
+            onClick={handleDownloadTemplate}
+            className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Download aria-hidden className="size-3.5" strokeWidth={1.5} />
+            Example CSV
+          </button>
+        </SectionHeader>
 
-            {/* File Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                CSV File
-              </label>
-              <input
-                id="file-input"
-                type="file"
-                accept=".csv"
-                onChange={handleFileChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-              {file && (
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  Selected: {file.name}
-                </p>
-              )}
-            </div>
+        <UploadDropzone onFile={handleFile} disabled={state.kind === "uploading"} />
+        {state.kind === "previewing" && (
+          <SelectedFileChip file={state.file} onClear={handleCancelPreview} />
+        )}
+        {state.kind === "done" && (
+          <SelectedFileChip file={state.file} onClear={handleReset} />
+        )}
+      </section>
 
-            {/* Upload Button */}
-            <button
-              onClick={handleUpload}
-              disabled={loading || !file}
-              className="w-full flex items-center justify-center px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              {loading ? 'Uploading...' : 'Upload File'}
-            </button>
-
-            {/* Download Template Button */}
-            <button
-              onClick={handleDownloadTemplate}
-              className="w-full flex items-center justify-center px-4 py-2 text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download Template
-            </button>
-
-            {/* Message */}
-            {message && (
-              <div
-                className={`p-3 rounded-md ${
-                  message.type === 'success'
-                    ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                    : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
-                }`}
-              >
-                {message.text}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Instructions */}
-        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Instructions
-          </h2>
-
-          <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
-            <div>
-              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
-                Weekly Malaria Data
-              </h3>
-              <p>Required columns: district_code, week, year, cases, deaths</p>
-            </div>
-
-            <div>
-              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
-                Monthly Malaria Data
-              </h3>
-              <p>Required columns: district_code, month, year, cases, deaths</p>
-            </div>
-
-            <div>
-              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
-                Climate Data
-              </h3>
-              <p>Required columns: district_code, date, rainfall, temperature</p>
-            </div>
-
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
-                Tips
-              </h3>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Download the template for correct format</li>
-                <li>Ensure district codes are valid</li>
-                <li>Check for duplicate entries</li>
-                <li>Verify numeric fields are valid</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Validation Errors */}
-      {errors.length > 0 && (
-        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-          <h2 className="text-xl font-semibold text-red-600 dark:text-red-400 mb-4">
-            Validation Errors ({errors.length})
-          </h2>
-          <div className="max-h-96 overflow-y-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-4 py-2 text-left">Row</th>
-                  <th className="px-4 py-2 text-left">Field</th>
-                  <th className="px-4 py-2 text-left">Error</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {errors.map((error, index) => (
-                  <tr key={index}>
-                    <td className="px-4 py-2">{error.row}</td>
-                    <td className="px-4 py-2">{error.field}</td>
-                    <td className="px-4 py-2 text-red-600 dark:text-red-400">{error.error}</td>
-                  </tr>
+      {/* Section 003 — Timeline (only after a real upload) */}
+      {state.kind === "done" && (
+        <section className="flex flex-col gap-5">
+          <SectionHeader index="003" label="Timeline">
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              {state.result.records_created} of {state.result.records_processed} imported
+            </span>
+          </SectionHeader>
+          <UploadTimeline
+            stages={(state.result.stages as StageResult[] | undefined) ?? []}
+            monthlyCloseId={state.result.monthly_close_id ?? null}
+            monthlyCloseMode={state.result.monthly_close_mode ?? null}
+          />
+          {state.result.errors.length > 0 && (
+            <details className="border border-border bg-card">
+              <summary className="flex cursor-pointer items-center justify-between border-b border-border px-4 py-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground">
+                <span>{state.result.errors.length} row{state.result.errors.length === 1 ? "" : "s"} skipped</span>
+                <span aria-hidden>▾</span>
+              </summary>
+              <ul className="flex flex-col">
+                {state.result.errors.map((e, i) => (
+                  <li key={i} className="flex items-start gap-4 border-b border-border/60 px-4 py-2.5 last:border-0">
+                    <span className="w-12 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+                      row {e.row ?? "—"}
+                    </span>
+                    <p className="font-sans text-sm">{e.error}</p>
+                  </li>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              </ul>
+            </details>
+          )}
+        </section>
       )}
+
+      <UploadPreviewDialog
+        open={previewOpen}
+        onOpenChange={(open) => {
+          if (!open && state.kind !== "uploading") handleCancelPreview();
+        }}
+        fileName={state.kind === "previewing" || state.kind === "uploading" ? state.file.name : ""}
+        kind={uploadType}
+        localPreview={state.kind === "previewing" ? state.local : null}
+        serverPreview={state.kind === "previewing" ? state.server : null}
+        loadingServer={state.kind === "previewing" && state.loadingServer}
+        onConfirm={handleConfirmUpload}
+        onCancel={handleCancelPreview}
+        confirming={state.kind === "uploading"}
+      />
     </div>
   );
+}
+
+// ─── Sub-components ─────────────────────────────────────────────────────────
+
+interface SectionHeaderProps {
+  index: string;
+  label: string;
+  children?: React.ReactNode;
+}
+function SectionHeader({ index, label, children }: SectionHeaderProps) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-border pb-3">
+      <div className="flex items-baseline gap-3.5">
+        <span className="font-mono text-[11px] tabular-nums text-muted-foreground">{index}</span>
+        <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-foreground">
+          {label}
+        </span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+interface TypeOptionProps {
+  kind: UploadKind;
+  checked: boolean;
+  onSelect: () => void;
+}
+function TypeOption({ kind, checked, onSelect }: TypeOptionProps) {
+  // Two mutually exclusive class sets so the active (navy) state isn't
+  // lightened by a stale `hover:bg-secondary` from the base classes.
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={checked}
+      className={cn(
+        "group flex flex-col items-start gap-1 px-5 py-4 text-left transition-colors",
+        checked
+          ? "bg-primary text-primary-foreground hover:bg-primary"
+          : "bg-card text-foreground hover:bg-secondary",
+      )}
+    >
+      <span className="font-mono text-[10px] uppercase tracking-[0.22em] opacity-60">
+        {kind}
+      </span>
+      <span className="font-display text-base leading-tight">
+        {KIND_LABEL[kind]}
+      </span>
+    </button>
+  );
+}
+
+function extractErrorMessage(err: unknown): string | undefined {
+  if (!err || typeof err !== "object") return undefined;
+  // axios-shaped error
+  const maybe = err as { response?: { data?: { detail?: string } }; message?: string };
+  return maybe.response?.data?.detail ?? maybe.message;
 }

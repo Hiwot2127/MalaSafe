@@ -19,6 +19,7 @@ class MalariaData(Base):
     year = Column(Integer, nullable=False, index=True)
     cases = Column(Integer, nullable=False, default=0)
     deaths = Column(Integer, nullable=False, default=0)
+    tests = Column(Integer, nullable=True)  # Optional. Real exposure when officers report it; falls back to cases*5 proxy.
     uploaded_by = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
     
@@ -31,6 +32,7 @@ class MalariaData(Base):
         CheckConstraint('cases >= 0', name='check_cases_non_negative'),
         CheckConstraint('deaths >= 0', name='check_deaths_non_negative'),
         CheckConstraint('deaths <= cases', name='check_deaths_not_exceed_cases'),
+        CheckConstraint('tests IS NULL OR tests >= 0', name='check_tests_non_negative'),
         CheckConstraint('week >= 1 AND week <= 53', name='check_valid_week'),
         CheckConstraint('month >= 1 AND month <= 12', name='check_valid_month'),
         CheckConstraint('year >= 2000 AND year <= 2100', name='check_valid_year'),
@@ -53,6 +55,7 @@ class MalariaData(Base):
             "year": self.year,
             "cases": self.cases,
             "deaths": self.deaths,
+            "tests": self.tests,
             "uploaded_by": str(self.uploaded_by) if self.uploaded_by else None,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }

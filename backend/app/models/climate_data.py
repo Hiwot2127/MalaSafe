@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Float, Date, DateTime, ForeignKey, CheckConstraint, Index
+from sqlalchemy import Boolean, Column, String, Float, Date, DateTime, ForeignKey, CheckConstraint, Index, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -20,15 +20,22 @@ class ClimateData(Base):
     humidity = Column(Float, nullable=True)  # relative humidity %, derived from t2m + d2m
     season = Column(String(50), nullable=True, index=True)  # 'kiremt' | 'bega' | 'belg'
     date = Column(Date, nullable=False, index=True)
+    is_provisional = Column(Boolean, nullable=False, default=True)  # True until CHIRPS final supersedes
+    data_source = Column(String(20), nullable=False, default='manual_upload')  # chirps | era5 | manual_upload | imputed_*
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    
+
     # Relationships
     district = relationship("District", back_populates="climate_data")
-    
+
     # Constraints
     __table_args__ = (
         CheckConstraint('rainfall >= 0', name='check_rainfall_non_negative'),
         CheckConstraint('temperature >= -50 AND temperature <= 60', name='check_valid_temperature'),
+        CheckConstraint(
+            "data_source IN ('manual_upload', 'chirps', 'era5', 'imputed_hierarchical', 'imputed_baseline')",
+            name='check_climate_data_source',
+        ),
+        UniqueConstraint('district_id', 'date', name='uq_climate_data_district_date'),
         # Composite index for common queries
         Index('idx_climate_district_date', 'district_id', 'date'),
         Index('idx_climate_date', 'date'),
@@ -49,5 +56,7 @@ class ClimateData(Base):
             "humidity": self.humidity,
             "season": self.season,
             "date": self.date.isoformat() if self.date else None,
+            "is_provisional": self.is_provisional,
+            "data_source": self.data_source,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
