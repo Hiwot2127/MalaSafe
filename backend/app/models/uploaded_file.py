@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -14,6 +14,8 @@ class UploadedFile(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     file_name = Column(String(255), nullable=False)
     upload_type = Column(String(50), nullable=False, index=True)  # e.g., 'malaria_data', 'climate_data', 'bulk_import'
+    row_count = Column(Integer, nullable=True)  # parsed row count, used for downstream branching
+    month_span = Column(Integer, nullable=True)  # distinct (year, month) tuples; <=2 = close mode, >2 = backfill
     uploaded_by = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
     
@@ -35,6 +37,8 @@ class UploadedFile(Base):
             "id": str(self.id),
             "file_name": self.file_name,
             "upload_type": self.upload_type,
+            "row_count": self.row_count,
+            "month_span": self.month_span,
             "uploaded_by": str(self.uploaded_by) if self.uploaded_by else None,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }

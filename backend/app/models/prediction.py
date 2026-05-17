@@ -25,6 +25,8 @@ class Prediction(Base):
     risk_level = Column(String(20), nullable=False, index=True)  # low, moderate, high, very_high
     confidence_score = Column(Float, nullable=False)  # 0.0 to 1.0
     prediction_score = Column(Float, nullable=False)  # Model's raw prediction score
+    q10 = Column(Float, nullable=True)  # 10th percentile bound from quantile booster (lower CI)
+    q90 = Column(Float, nullable=True)  # 90th percentile bound from quantile booster (upper CI)
     prediction_reason = Column(Text, nullable=True)  # Explanation of prediction
     prediction_date = Column(Date, nullable=False, index=True)  # Date for which prediction is made
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
@@ -52,6 +54,8 @@ class Prediction(Base):
             "risk_level": self.risk_level,
             "confidence_score": self.confidence_score,
             "prediction_score": self.prediction_score,
+            "q10": self.q10,
+            "q90": self.q90,
             "prediction_reason": self.prediction_reason,
             "prediction_date": self.prediction_date.isoformat() if self.prediction_date else None,
             "created_at": self.created_at.isoformat() if self.created_at else None
