@@ -156,7 +156,7 @@ export default function UploadPage() {
       {/* Section 001 — Type */}
       <section className="flex flex-col gap-5">
         <SectionHeader index="001" label="Data type" />
-        <fieldset className="grid grid-cols-1 gap-px overflow-hidden border border-border bg-border sm:grid-cols-3">
+        <fieldset className="grid grid-cols-1 gap-px overflow-hidden border border-border bg-border sm:grid-cols-2">
           <legend className="sr-only">Upload type</legend>
           {(Object.keys(KIND_LABEL) as UploadKind[]).map((kind) => (
             <TypeOption

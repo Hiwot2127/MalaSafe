@@ -45,17 +45,17 @@ async def upload_monthly_malaria_data(
     **Authorization:** Officials only (not public users)
     
     **CSV Format:**
-    - district_code: District code (e.g., AA-001)
+    - district_code: Ethiopian woreda code (e.g., ET140101 — see /uploads/templates/malaria/monthly)
     - month: Month number (1-12)
     - year: Year (2000-2100)
     - cases: Number of malaria cases (≥0)
     - deaths: Number of deaths (≥0, ≤cases)
-    
+
     **Example CSV:**
     ```csv
     district_code,month,year,cases,deaths
-    AA-001,1,2024,600,20
-    OR-001,1,2024,800,32
+    ET140101,1,2024,600,20
+    ET040101,1,2024,800,32
     ```
     
     **Validation:**
@@ -171,16 +171,16 @@ async def upload_climate_data(
     **Authorization:** Officials only (not public users)
     
     **CSV Format:**
-    - district_code: District code (e.g., AA-001)
+    - district_code: Ethiopian woreda code (e.g., ET140101 — see /uploads/templates/climate)
     - date: Date in YYYY-MM-DD format
     - rainfall: Rainfall in mm (≥0)
     - temperature: Temperature in Celsius (-50 to 60)
-    
+
     **Example CSV:**
     ```csv
     district_code,date,rainfall,temperature
-    AA-001,2024-01-15,5.2,22.5
-    OR-001,2024-01-15,12.8,24.3
+    ET140101,2024-01-15,5.2,22.5
+    ET040101,2024-01-15,12.8,24.3
     ```
     
     **Validation:**
@@ -258,11 +258,15 @@ async def download_monthly_malaria_template():
     # can leave it blank; the predictor falls back to a cases*5 (TPR=20%) proxy.
     writer.writerow(['district_code', 'month', 'year', 'cases', 'deaths', 'tests'])
 
-    # 4 example rows — last row demonstrates that `tests` may be left blank.
-    writer.writerow(['AA-001', '1', '2024', '600', '20', '2400'])
-    writer.writerow(['OR-001', '1', '2024', '800', '32', '3500'])
-    writer.writerow(['AM-001', '1', '2024', '720', '24', '3000'])
-    writer.writerow(['TG-001', '1', '2024', '410', '11', ''])
+    # 4 example rows using real Ethiopian woreda codes (ETxxxxxx, CSA 2021
+    # boundaries). Last row demonstrates that `tests` may be left blank.
+    # Month is chosen to sit beyond the seeded history so the template
+    # imports successfully out of the box; officers replace it with their
+    # actual reporting month.
+    writer.writerow(['ET140101', '5', '2026', '600', '20', '2400'])  # Akaki Kality, Addis Ababa
+    writer.writerow(['ET040101', '5', '2026', '800', '32', '3500'])  # Mana Sibu, Oromia
+    writer.writerow(['ET030101', '5', '2026', '720', '24', '3000'])  # Addi Arekay, Amhara
+    writer.writerow(['ET010101', '5', '2026', '410', '11', ''])      # Tahtay Adiyabo, Tigray
     
     # Convert to bytes
     output.seek(0)
@@ -288,11 +292,13 @@ async def download_climate_template():
     
     # Write headers
     writer.writerow(['district_code', 'date', 'rainfall', 'temperature'])
-    
-    # Write example rows
-    writer.writerow(['AA-001', '2024-01-15', '5.2', '22.5'])
-    writer.writerow(['OR-001', '2024-01-15', '12.8', '24.3'])
-    writer.writerow(['AM-001', '2024-01-15', '8.5', '20.1'])
+
+    # Example rows using real Ethiopian woreda codes (ETxxxxxx, CSA 2021).
+    # Date is chosen beyond the seeded climate history so the template
+    # imports cleanly; officers replace it with their actual observation date.
+    writer.writerow(['ET140101', '2026-05-15', '5.2', '22.5'])  # Akaki Kality, Addis Ababa
+    writer.writerow(['ET040101', '2026-05-15', '12.8', '24.3'])  # Mana Sibu, Oromia
+    writer.writerow(['ET030101', '2026-05-15', '8.5', '20.1'])   # Addi Arekay, Amhara
     
     # Convert to bytes
     output.seek(0)
