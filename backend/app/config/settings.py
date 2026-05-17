@@ -42,9 +42,12 @@ class Settings(BaseSettings):
     MODEL_PATH: str = "./models"
     MODEL_VERSION: str = "1.0.0"
 
-    # Monthly Close pipeline (off until Phase 6 orchestration ships; flip on per
-    # deployment when the Celery worker + climate fetch service are wired up).
-    MONTHLY_CLOSE_ENABLED: bool = False
+    # Monthly Close pipeline. ON by default now that migration 003 is applied
+    # and the model_versions row is seeded. The Celery task is currently a stub
+    # (Phase 7 fills in the orchestration); MonthlyClose rows will sit in
+    # `pending` status until then. Set MONTHLY_CLOSE_ENABLED=false to disable
+    # dispatch entirely (e.g. in a deploy without Redis available).
+    MONTHLY_CLOSE_ENABLED: bool = True
     # Distinct (year, month) tuples above this count switch the upload from
     # "close" mode (backtest + drift + re-predict) to "backfill" mode (skip
     # backtest/drift, dispatch retrain).
