@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime
+from sqlalchemy import Column, String, DateTime, Float
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -17,6 +17,12 @@ class District(Base):
     region = Column(String(100), nullable=False, index=True)
     zone = Column(String(100), nullable=True)
     geojson_key = Column(String(100), nullable=True)
+    # OCHA ADM3 P-code (ETxxxxxx). Same value as district_code when seeded from
+    # reference_geo_names.csv, kept separately for clarity and migration safety.
+    adm3_pcode = Column(String(20), unique=True, nullable=True, index=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    elevation_m = Column(Float, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     
     # Relationships
@@ -38,5 +44,9 @@ class District(Base):
             "region": self.region,
             "zone": self.zone,
             "geojson_key": self.geojson_key,
+            "adm3_pcode": self.adm3_pcode,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "elevation_m": self.elevation_m,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
