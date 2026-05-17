@@ -41,6 +41,14 @@ class Settings(BaseSettings):
     # AI Model
     MODEL_PATH: str = "./models"
     MODEL_VERSION: str = "1.0.0"
+
+    # Monthly Close pipeline (off until Phase 6 orchestration ships; flip on per
+    # deployment when the Celery worker + climate fetch service are wired up).
+    MONTHLY_CLOSE_ENABLED: bool = False
+    # Distinct (year, month) tuples above this count switch the upload from
+    # "close" mode (backtest + drift + re-predict) to "backfill" mode (skip
+    # backtest/drift, dispatch retrain).
+    MONTHLY_CLOSE_MAX_MONTHS: int = 2
     
     # Email (optional)
     SMTP_HOST: Optional[str] = None

@@ -91,14 +91,14 @@ async def upload_weekly_malaria_data(
     upload_service = UploadService(db, str(current_user.id))
     
     try:
-        success, message, processed, created, skipped, errors, file_id = \
+        success, message, processed, created, skipped, errors, file_id, monthly_close_id, monthly_close_mode = \
             await upload_service.process_weekly_malaria_upload(content, file.filename)
-        
+
         # Trigger background prediction processing if records were created
         if created > 0:
             # TODO: Get affected district IDs and trigger predictions
             background_tasks.add_task(trigger_prediction_processing, [], db)
-        
+
         return UploadResponse(
             success=success,
             message=message,
@@ -106,9 +106,11 @@ async def upload_weekly_malaria_data(
             records_created=created,
             records_skipped=skipped,
             errors=[UploadError(**err) for err in errors],
-            file_id=file_id
+            file_id=file_id,
+            monthly_close_id=monthly_close_id,
+            monthly_close_mode=monthly_close_mode,
         )
-        
+
     except Exception as e:
         logger.error(f"Error processing weekly malaria upload: {e}")
         raise HTTPException(
@@ -176,13 +178,13 @@ async def upload_monthly_malaria_data(
     upload_service = UploadService(db, str(current_user.id))
     
     try:
-        success, message, processed, created, skipped, errors, file_id = \
+        success, message, processed, created, skipped, errors, file_id, monthly_close_id, monthly_close_mode = \
             await upload_service.process_monthly_malaria_upload(content, file.filename)
-        
-        # Trigger background prediction processing if records were created
-        if created > 0:
-            background_tasks.add_task(trigger_prediction_processing, [], db)
-        
+
+        # Monthly close orchestration is owned by Celery (app.tasks.monthly_close)
+        # when settings.MONTHLY_CLOSE_ENABLED is true. No FastAPI background task
+        # needed here — the upload service has already dispatched.
+
         return UploadResponse(
             success=success,
             message=message,
@@ -190,9 +192,11 @@ async def upload_monthly_malaria_data(
             records_created=created,
             records_skipped=skipped,
             errors=[UploadError(**err) for err in errors],
-            file_id=file_id
+            file_id=file_id,
+            monthly_close_id=monthly_close_id,
+            monthly_close_mode=monthly_close_mode,
         )
-        
+
     except Exception as e:
         logger.error(f"Error processing monthly malaria upload: {e}")
         raise HTTPException(
@@ -261,13 +265,13 @@ async def upload_climate_data(
     upload_service = UploadService(db, str(current_user.id))
     
     try:
-        success, message, processed, created, skipped, errors, file_id = \
+        success, message, processed, created, skipped, errors, file_id, monthly_close_id, monthly_close_mode = \
             await upload_service.process_climate_upload(content, file.filename)
-        
+
         # Trigger background prediction processing if records were created
         if created > 0:
             background_tasks.add_task(trigger_prediction_processing, [], db)
-        
+
         return UploadResponse(
             success=success,
             message=message,
@@ -275,9 +279,11 @@ async def upload_climate_data(
             records_created=created,
             records_skipped=skipped,
             errors=[UploadError(**err) for err in errors],
-            file_id=file_id
+            file_id=file_id,
+            monthly_close_id=monthly_close_id,
+            monthly_close_mode=monthly_close_mode,
         )
-        
+
     except Exception as e:
         logger.error(f"Error processing climate upload: {e}")
         raise HTTPException(

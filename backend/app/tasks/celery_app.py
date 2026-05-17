@@ -14,7 +14,7 @@ celery_app = Celery(
     "malasafe",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
-    include=["app.tasks.predict_monthly"],
+    include=["app.tasks.predict_monthly", "app.tasks.monthly_close"],
 )
 
 celery_app.conf.update(

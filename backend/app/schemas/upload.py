@@ -31,7 +31,9 @@ class UploadResponse(BaseModel):
     records_skipped: int = 0
     errors: List[UploadError] = []
     file_id: Optional[UUID] = None
-    
+    monthly_close_id: Optional[UUID] = None  # Set when monthly upload dispatches the closing pipeline.
+    monthly_close_mode: Optional[str] = None  # 'close' (<=2 months) or 'backfill' (>2 months).
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -41,7 +43,9 @@ class UploadResponse(BaseModel):
                 "records_created": 45,
                 "records_skipped": 5,
                 "errors": [],
-                "file_id": "123e4567-e89b-12d3-a456-426614174000"
+                "file_id": "123e4567-e89b-12d3-a456-426614174000",
+                "monthly_close_id": "abc12345-e89b-12d3-a456-426614174001",
+                "monthly_close_mode": "close"
             }
         }
 

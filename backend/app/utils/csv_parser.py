@@ -175,6 +175,7 @@ class MalariaCSVParser(CSVParser):
     
     REQUIRED_COLUMNS_WEEKLY = ['district_code', 'week', 'year', 'cases', 'deaths']
     REQUIRED_COLUMNS_MONTHLY = ['district_code', 'month', 'year', 'cases', 'deaths']
+    OPTIONAL_COLUMNS_MONTHLY = ['tests']  # If present, must be numeric >= 0. Powers the exposure offset; absent = fall back to cases*5 proxy.
     
     @classmethod
     def parse_weekly_data(cls, file_content: bytes) -> Tuple[pd.DataFrame, List[Dict]]:
@@ -277,7 +278,11 @@ class MalariaCSVParser(CSVParser):
         errors.extend(cls.validate_numeric_column(df, 'year', min_value=2000, max_value=2100))
         errors.extend(cls.validate_numeric_column(df, 'cases', min_value=0))
         errors.extend(cls.validate_numeric_column(df, 'deaths', min_value=0))
-        
+
+        # Optional `tests` column — validate only if present.
+        if 'tests' in df.columns:
+            errors.extend(cls.validate_numeric_column(df, 'tests', min_value=0))
+
         # Validate deaths <= cases
         for idx, row in df.iterrows():
             row_num = idx + 2
@@ -293,7 +298,7 @@ class MalariaCSVParser(CSVParser):
                     })
             except (ValueError, TypeError):
                 pass
-        
+
         return df, errors
 
 
