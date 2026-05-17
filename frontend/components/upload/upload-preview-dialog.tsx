@@ -143,14 +143,27 @@ export function UploadPreviewDialog({
         </DialogHeader>
 
         {/* Summary counts strip */}
-        <div className="grid grid-cols-3 divide-x divide-border border-b border-border">
-          <SummaryCell label="Valid" value={summary.valid} tone="valid" />
-          <SummaryCell label="Skipped" value={summary.skipped} tone="warn" />
-          <SummaryCell label="Duplicates" value={summary.duplicates} tone="error" />
-        </div>
+        {!confirming && (
+          <div className="grid grid-cols-3 divide-x divide-border border-b border-border">
+            <SummaryCell label="Valid" value={summary.valid} tone="valid" />
+            <SummaryCell label="Skipped" value={summary.skipped} tone="warn" />
+            <SummaryCell label="Duplicates" value={summary.duplicates} tone="error" />
+          </div>
+        )}
+
+        {/* Uploading state — replaces tabs while the request is in flight. */}
+        {confirming && (
+          <div className="flex flex-col items-center justify-center gap-4 border-b border-border px-6 py-16 text-center">
+            <Loader2 aria-hidden className="size-7 animate-spin text-muted-foreground" strokeWidth={1.5} />
+            <p className="font-display text-lg">Importing…</p>
+            <p className="max-w-sm font-sans text-sm text-muted-foreground">
+              Writing rows to the database, then dispatching the close pipeline. This usually finishes in a few seconds.
+            </p>
+          </div>
+        )}
 
         {/* File-level blocker — disables the confirm button. */}
-        {hasFileBlocker && (
+        {!confirming && hasFileBlocker && (
           <div className="border-b border-border px-6 py-4">
             <Alert
               variant="destructive"
@@ -168,7 +181,7 @@ export function UploadPreviewDialog({
         )}
 
         {/* Tabs: Valid / Invalid / Duplicates */}
-        {!hasFileBlocker && (
+        {!confirming && !hasFileBlocker && (
           <Tabs defaultValue="valid" className="px-6 pt-4">
             <TabsList className="h-auto gap-1 border-b border-border bg-transparent p-0">
               <TabBadge value="valid" label="Valid" count={summary.valid} tone="valid" />
@@ -251,7 +264,9 @@ export function UploadPreviewDialog({
         {/* Footer */}
         <DialogFooter className="flex-col gap-2 border-t border-border px-6 py-4 sm:flex-row sm:justify-between">
           <p className="font-mono text-[11px] text-muted-foreground">
-            {summary.valid > 0
+            {confirming
+              ? "Don't close this tab until the import finishes."
+              : summary.valid > 0
               ? `${summary.valid} row${summary.valid === 1 ? "" : "s"} will be imported. Bad rows are listed but skipped.`
               : "Nothing to import yet."}
           </p>
