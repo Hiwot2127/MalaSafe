@@ -6,6 +6,7 @@ from .analytics import router as analytics_router
 from .maps import router as maps_router
 from .predictions import router as predictions_router
 from .alerts import router as alerts_router
+from .monthly_close import router as monthly_close_router
 
 __all__ = [
     "health_router",
@@ -15,5 +16,6 @@ __all__ = [
     "analytics_router",
     "maps_router",
     "predictions_router",
-    "alerts_router"
+    "alerts_router",
+    "monthly_close_router",
 ]

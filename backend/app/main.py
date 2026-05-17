@@ -10,7 +10,8 @@ from app.routes import (
     analytics_router,
     maps_router,
     predictions_router,
-    alerts_router
+    alerts_router,
+    monthly_close_router,
 )
 from loguru import logger
 import sys
@@ -80,6 +81,7 @@ app.include_router(analytics_router, prefix="/api/v1")
 app.include_router(maps_router, prefix="/api/v1")
 app.include_router(predictions_router, prefix="/api/v1")
 app.include_router(alerts_router, prefix="/api/v1")
+app.include_router(monthly_close_router, prefix="/api/v1")
 
 
 # Startup event
