@@ -65,4 +65,4 @@ export interface UploadedFile {
   month_span?: number;
 }
 
-export type UploadKind = "weekly" | "monthly" | "climate";
+export type UploadKind = "monthly" | "climate";

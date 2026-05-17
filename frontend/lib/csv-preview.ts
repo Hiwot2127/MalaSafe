@@ -27,7 +27,6 @@ export interface LocalPreviewResult {
 }
 
 const REQUIRED_BY_KIND: Record<UploadKind, string[]> = {
-  weekly: ["district_code", "week", "year", "cases", "deaths"],
   monthly: ["district_code", "month", "year", "cases", "deaths"],
   climate: ["district_code", "date", "rainfall", "temperature"],
 };
@@ -90,11 +89,8 @@ export async function parseLocalPreview(
             }
 
             // Per-kind numeric ranges (best-effort, matches backend tier-1 rules).
-            if (kind === "weekly" || kind === "monthly") {
-              if (kind === "weekly" && row.week && !inRange(row.week, 1, 53)) {
-                issues.push({ row: rowNumber, column: "week", value: row.week, error: "Week must be 1–53" });
-              }
-              if (kind === "monthly" && row.month && !inRange(row.month, 1, 12)) {
+            if (kind === "monthly") {
+              if (row.month && !inRange(row.month, 1, 12)) {
                 issues.push({ row: rowNumber, column: "month", value: row.month, error: "Month must be 1–12" });
               }
               if (row.year && !inRange(row.year, 2000, 2100)) {
@@ -115,7 +111,7 @@ export async function parseLocalPreview(
               if ("tests" in row && row.tests && !isFiniteNumber(row.tests)) {
                 issues.push({ row: rowNumber, column: "tests", value: row.tests, error: "Tests must be numeric" });
               }
-              if (kind === "monthly" && row.month && row.year &&
+              if (row.month && row.year &&
                   inRange(row.month, 1, 12) && inRange(row.year, 2000, 2100)) {
                 const m = String(Math.trunc(Number(row.month))).padStart(2, "0");
                 const y = String(Math.trunc(Number(row.year))).padStart(4, "0");

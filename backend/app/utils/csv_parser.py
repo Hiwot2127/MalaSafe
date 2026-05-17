@@ -171,16 +171,15 @@ class CSVParser:
 
 
 class MalariaCSVParser(CSVParser):
-    """Parser for malaria data CSV files."""
-    
-    REQUIRED_COLUMNS_WEEKLY = ['district_code', 'week', 'year', 'cases', 'deaths']
+    """Parser for malaria data CSV files. Monthly-only — weekly was removed."""
+
     REQUIRED_COLUMNS_MONTHLY = ['district_code', 'month', 'year', 'cases', 'deaths']
     OPTIONAL_COLUMNS_MONTHLY = ['tests']  # If present, must be numeric >= 0. Powers the exposure offset; absent = fall back to cases*5 proxy.
-    
+
     @classmethod
-    def parse_weekly_data(cls, file_content: bytes) -> Tuple[Optional[pd.DataFrame], List[Dict], List[Dict]]:
+    def parse_monthly_data(cls, file_content: bytes) -> Tuple[Optional[pd.DataFrame], List[Dict], List[Dict]]:
         """
-        Parse weekly malaria data CSV.
+        Parse monthly malaria data CSV.
 
         Returns:
             Tuple of (DataFrame, file_errors, row_errors).
@@ -189,57 +188,6 @@ class MalariaCSVParser(CSVParser):
               (unparseable CSV, empty file, missing required columns).
             - row_errors: per-row problems. Those rows should be skipped but
               the rest of the file still imports.
-        """
-        row_errors: List[Dict] = []
-
-        # Read CSV
-        try:
-            df = cls.read_csv_file(file_content)
-        except ValueError as e:
-            return None, [{"error": str(e)}], []
-
-        df = cls.remove_empty_rows(df)
-        if df.empty:
-            return None, [{"error": "CSV file is empty"}], []
-
-        df = cls.normalize_column_names(df)
-
-        missing_columns = cls.validate_required_columns(df, cls.REQUIRED_COLUMNS_WEEKLY)
-        if missing_columns:
-            return None, [{"error": f"Missing required columns: {', '.join(missing_columns)}"}], []
-
-        # Per-row validations (don't reject the whole file).
-        row_errors.extend(cls.validate_required_values(df, cls.REQUIRED_COLUMNS_WEEKLY))
-        row_errors.extend(cls.validate_numeric_column(df, 'week', min_value=1, max_value=53))
-        row_errors.extend(cls.validate_numeric_column(df, 'year', min_value=2000, max_value=2100))
-        row_errors.extend(cls.validate_numeric_column(df, 'cases', min_value=0))
-        row_errors.extend(cls.validate_numeric_column(df, 'deaths', min_value=0))
-
-        for idx, row in df.iterrows():
-            row_num = idx + 2
-            try:
-                cases = float(row['cases'])
-                deaths = float(row['deaths'])
-                if deaths > cases:
-                    row_errors.append({
-                        "row": row_num,
-                        "column": "deaths",
-                        "value": str(deaths),
-                        "error": f"Deaths ({deaths}) cannot exceed cases ({cases})"
-                    })
-            except (ValueError, TypeError):
-                pass  # already caught by numeric validation
-
-        return df, [], row_errors
-
-    @classmethod
-    def parse_monthly_data(cls, file_content: bytes) -> Tuple[Optional[pd.DataFrame], List[Dict], List[Dict]]:
-        """
-        Parse monthly malaria data CSV.
-
-        Returns:
-            Tuple of (DataFrame, file_errors, row_errors). See parse_weekly_data
-            for the two-tier error contract.
         """
         row_errors: List[Dict] = []
 
@@ -298,7 +246,7 @@ class ClimateCSVParser(CSVParser):
 
         Returns:
             Tuple of (DataFrame, file_errors, row_errors). See
-            `MalariaCSVParser.parse_weekly_data` for the two-tier contract.
+            `MalariaCSVParser.parse_monthly_data` for the two-tier contract.
         """
         row_errors: List[Dict] = []
 

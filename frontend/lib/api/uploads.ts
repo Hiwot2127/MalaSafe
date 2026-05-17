@@ -3,21 +3,17 @@ import type {
   UploadResponse,
   UploadPreviewResponse,
   UploadedFile,
-  UploadKind,
 } from "@/types/upload";
 
 const FORM_HEADERS = { "Content-Type": "multipart/form-data" } as const;
 
 export const uploadsApi = {
-  /** Upload weekly or monthly malaria CSV (real upload — writes to DB). */
-  uploadMalaria: async (
-    file: File,
-    uploadType: Exclude<UploadKind, "climate">,
-  ): Promise<UploadResponse> => {
+  /** Upload monthly malaria CSV (real upload — writes to DB). */
+  uploadMalaria: async (file: File): Promise<UploadResponse> => {
     const formData = new FormData();
     formData.append("file", file);
     const response = await apiClient.post(
-      `/uploads/malaria/${uploadType}`,
+      "/uploads/malaria/monthly",
       formData,
       { headers: FORM_HEADERS },
     );
@@ -48,11 +44,9 @@ export const uploadsApi = {
     return response.data;
   },
 
-  downloadMalariaTemplate: async (
-    uploadType: Exclude<UploadKind, "climate">,
-  ): Promise<Blob> => {
+  downloadMalariaTemplate: async (): Promise<Blob> => {
     const response = await apiClient.get(
-      `/uploads/templates/malaria/${uploadType}`,
+      "/uploads/templates/malaria/monthly",
       { responseType: "blob" },
     );
     return response.data;

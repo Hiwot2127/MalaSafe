@@ -16,6 +16,7 @@ import type {
 import { UploadDropzone, SelectedFileChip } from "@/components/upload/upload-dropzone";
 import { UploadPreviewDialog } from "@/components/upload/upload-preview-dialog";
 import { UploadTimeline } from "@/components/upload/upload-timeline";
+import { cn } from "@/lib/utils";
 
 type PageState =
   | { kind: "idle" }
@@ -24,7 +25,6 @@ type PageState =
   | { kind: "done"; result: UploadResponse; file: File };
 
 const KIND_LABEL: Record<UploadKind, string> = {
-  weekly: "Weekly malaria",
   monthly: "Monthly malaria",
   climate: "Climate",
 };
@@ -87,7 +87,7 @@ export default function UploadPage() {
       const response =
         uploadType === "climate"
           ? await uploadsApi.uploadClimate(file)
-          : await uploadsApi.uploadMalaria(file, uploadType);
+          : await uploadsApi.uploadMalaria(file);
 
       if (response.success) {
         toast.success(`${response.records_created} rows imported`, {
@@ -120,9 +120,9 @@ export default function UploadPage() {
       const blob =
         uploadType === "climate"
           ? await uploadsApi.downloadClimateTemplate()
-          : await uploadsApi.downloadMalariaTemplate(uploadType);
+          : await uploadsApi.downloadMalariaTemplate();
       const filename =
-        uploadType === "climate" ? "climate_template.csv" : `${uploadType}_malaria_template.csv`;
+        uploadType === "climate" ? "climate_template.csv" : "monthly_malaria_template.csv";
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -273,14 +273,19 @@ interface TypeOptionProps {
   onSelect: () => void;
 }
 function TypeOption({ kind, checked, onSelect }: TypeOptionProps) {
+  // Two mutually exclusive class sets so the active (navy) state isn't
+  // lightened by a stale `hover:bg-secondary` from the base classes.
   return (
     <button
       type="button"
       onClick={onSelect}
       aria-pressed={checked}
-      className={`group flex flex-col items-start gap-1 bg-card px-5 py-4 text-left transition-colors hover:bg-secondary ${
-        checked ? "bg-primary text-primary-foreground hover:bg-primary" : ""
-      }`}
+      className={cn(
+        "group flex flex-col items-start gap-1 px-5 py-4 text-left transition-colors",
+        checked
+          ? "bg-primary text-primary-foreground hover:bg-primary"
+          : "bg-card text-foreground hover:bg-secondary",
+      )}
     >
       <span className="font-mono text-[10px] uppercase tracking-[0.22em] opacity-60">
         {kind}
