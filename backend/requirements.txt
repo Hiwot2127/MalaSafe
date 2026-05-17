@@ -24,6 +24,8 @@ pandas==2.1.4
 numpy==1.26.3
 scikit-learn==1.4.0
 joblib==1.3.2
+lightgbm==4.3.0       # malaria risk predictor (Poisson + quantile + cold-start)
+pyarrow==15.0.0       # parquet for feature manifest / model artifacts
 
 # Background Tasks
 celery==5.3.6
