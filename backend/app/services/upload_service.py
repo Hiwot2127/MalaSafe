@@ -16,6 +16,7 @@ from app.schemas.upload import (
     UploadError,
 )
 from typing import Any, Tuple, List, Dict, Optional, Set
+import asyncio
 import hashlib
 import pandas as pd
 import time
@@ -523,8 +524,8 @@ class UploadService:
         await self.db.refresh(close)
 
         # Dispatch the orchestrator. Lazy import keeps the Celery task graph
-        # decoupled from the request path (and the task module is a Phase 2
-        # stub today; Phase 6 fills it in).
+        # decoupled from the request path.
+        celery_ok = False
         try:
             from app.tasks.celery_app import celery_app
             task_name = (
@@ -535,14 +536,26 @@ class UploadService:
             args = [str(close.id)] if mode == "close" else []
             kwargs = {} if mode == "close" else {"reason": "backfill"}
             celery_app.send_task(task_name, args=args, kwargs=kwargs)
+            celery_ok = True
             logger.info(
                 f"Dispatched {task_name} for MonthlyClose {close.id} "
                 f"(mode={mode}, month={anchor_date}, span={len(distinct_months)})"
             )
         except Exception as exc:  # pragma: no cover — broker may be down in dev
             logger.warning(
-                f"MonthlyClose {close.id} created but Celery dispatch failed: {exc}. "
-                "Row stays in `pending`; a future sweep will pick it up."
+                f"MonthlyClose {close.id} Celery dispatch failed ({exc}); "
+                "falling back to in-process orchestration."
+            )
+
+        # Dev fallback: when Celery is unreachable, run the orchestrator as a
+        # fire-and-forget asyncio task on the same event loop. Climate fetch
+        # is IO-bound so this won't starve the request loop. The route has
+        # already returned by the time it runs.
+        if not celery_ok and mode == "close":
+            from app.tasks.monthly_close import _orchestrate
+            asyncio.create_task(_orchestrate(close.id))
+            logger.info(
+                f"MonthlyClose {close.id} scheduled inline via asyncio task."
             )
 
         return str(close.id), mode

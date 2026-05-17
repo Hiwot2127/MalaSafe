@@ -260,13 +260,14 @@ async def download_monthly_malaria_template():
 
     # 4 example rows using real Ethiopian woreda codes (ETxxxxxx, CSA 2021
     # boundaries). Last row demonstrates that `tests` may be left blank.
-    # Month is chosen to sit beyond the seeded history so the template
-    # imports successfully out of the box; officers replace it with their
+    # Month is chosen so the climate fetch hits CHIRPS final-published
+    # months (≥ ~2 days after month end) and isn't a duplicate of the
+    # seeded historical malaria data; officers replace it with their
     # actual reporting month.
-    writer.writerow(['ET140101', '5', '2026', '600', '20', '2400'])  # Akaki Kality, Addis Ababa
-    writer.writerow(['ET040101', '5', '2026', '800', '32', '3500'])  # Mana Sibu, Oromia
-    writer.writerow(['ET030101', '5', '2026', '720', '24', '3000'])  # Addi Arekay, Amhara
-    writer.writerow(['ET010101', '5', '2026', '410', '11', ''])      # Tahtay Adiyabo, Tigray
+    writer.writerow(['ET140101', '4', '2026', '600', '20', '2400'])  # Akaki Kality, Addis Ababa
+    writer.writerow(['ET040101', '4', '2026', '800', '32', '3500'])  # Mana Sibu, Oromia
+    writer.writerow(['ET030101', '4', '2026', '720', '24', '3000'])  # Addi Arekay, Amhara
+    writer.writerow(['ET010101', '4', '2026', '410', '11', ''])      # Tahtay Adiyabo, Tigray
     
     # Convert to bytes
     output.seek(0)

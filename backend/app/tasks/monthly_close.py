@@ -110,10 +110,17 @@ async def _orchestrate(close_id: UUID) -> dict:
         # Close mode: full pipeline.
         try:
             await _set_status(db, close, "climate_fetching")
-            # Phase 4 stub: skip the actual CHIRPS/ERA5 fetch. Forward
-            # predictions will fall back to climatological normals in
-            # the predictor's feature builder.
-            climate_note = "skipped (Phase 4 not yet shipped)"
+            # Fetch real climate for the just-uploaded month so the next
+            # prediction reads observed CHIRPS rainfall + ERA5 temperature
+            # instead of falling back to climatological normals.
+            from app.services.climate.climate_fetch_service import ClimateFetchService
+
+            try:
+                fetch_report = await ClimateFetchService(db).fetch_month(anchor)
+                climate_note = fetch_report.as_dict()
+            except Exception as exc:
+                logger.warning(f"climate_fetching failed for close={close.id}: {exc}")
+                climate_note = {"status": "failed", "error": str(exc)}
 
             await _set_status(db, close, "backtesting")
             backtest = await BacktestService(db).run(close.id, anchor)
