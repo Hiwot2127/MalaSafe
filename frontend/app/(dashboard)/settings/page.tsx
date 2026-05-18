@@ -91,7 +91,7 @@ function Row({
       </dt>
       <dd
         className={`text-foreground ${
-          mono ? 'font-mono text-sm tabular-nums' : 'font-display text-lg leading-tight tracking-tight'
+          mono ? 'font-mono text-sm tabular-nums' : 'font-display font-semibold text-lg leading-tight tracking-[-0.014em]'
         }`}
       >
         {value}
