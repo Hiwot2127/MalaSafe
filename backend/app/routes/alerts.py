@@ -14,7 +14,11 @@ from typing import Optional
 router = APIRouter(prefix="/alerts", tags=["Alerts"])
 
 
-@router.get("", response_model=AlertsResponse)
+@router.get(
+    "",
+    response_model=AlertsResponse,
+    summary="List malaria risk alerts",
+)
 async def get_alerts(
     active_only: bool = Query(True, description="Show only active alerts"),
     risk_level: Optional[str] = Query(None, regex="^(low|moderate|high|very_high)$", description="Filter by risk level"),
@@ -27,23 +31,24 @@ async def get_alerts(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Get malaria risk alerts.
-    
-    **Authorization:** Any authenticated user
-    
-    **Query Parameters:**
-    - active_only: Show only active alerts (default: true)
-    - risk_level: Filter by risk level (low, moderate, high, very_high)
-    - region: Filter by region name
-    - district_code: Filter by district code
-    - limit: Number of alerts to return (1-500, default: 50)
-    - offset: Offset for pagination (default: 0)
-    
-    **Returns:**
-    - List of alerts with district information
-    - Total count
-    - Active count
-    - High risk count
+    Get malaria risk alerts with optional filters.
+
+    **Authorization:** any authenticated user.
+
+    **Filtering**
+    - `active_only` (default `true`): hide alerts that have been deactivated.
+    - `risk_level`: one of `low`, `moderate`, `high`, `very_high`.
+    - `region`, `district_code`: narrow by geography.
+    - `q`: case-insensitive substring match on district name (for typeahead).
+
+    **Pagination**
+    - `limit` (1–500, default 50), `offset` (default 0).
+
+    **Returns**
+    - `alerts`: list of alert records with district info, newest first
+    - `total`: total matching the filters (ignoring pagination)
+    - `active_count`: count of active alerts in scope
+    - `high_risk_count`: count of `high` or `very_high` active alerts in scope
     
     **Example Response:**
     ```json

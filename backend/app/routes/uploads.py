@@ -32,7 +32,12 @@ async def trigger_prediction_processing(district_ids: list[str], db: AsyncSessio
     pass
 
 
-@router.post("/malaria/monthly", response_model=UploadResponse)
+@router.post(
+    "/malaria/monthly",
+    response_model=UploadResponse,
+    summary="Upload monthly malaria cases CSV",
+    responses={400: {"description": "Bad file or validation error"}, 403: {"description": "Public users cannot upload"}},
+)
 async def upload_monthly_malaria_data(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
@@ -119,7 +124,12 @@ async def upload_monthly_malaria_data(
         )
 
 
-@router.post("/malaria/monthly/preview", response_model=UploadPreviewResponse)
+@router.post(
+    "/malaria/monthly/preview",
+    response_model=UploadPreviewResponse,
+    summary="Validate a malaria CSV (dry-run, no write)",
+    responses={400: {"description": "Bad file or validation error"}},
+)
 async def preview_monthly_malaria_upload(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
@@ -157,7 +167,12 @@ async def preview_monthly_malaria_upload(
         )
 
 
-@router.post("/climate", response_model=UploadResponse)
+@router.post(
+    "/climate",
+    response_model=UploadResponse,
+    summary="Upload climate data CSV (rainfall, temperature, etc.)",
+    responses={400: {"description": "Bad file or validation error"}, 403: {"description": "Public users cannot upload"}},
+)
 async def upload_climate_data(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
@@ -242,7 +257,11 @@ async def upload_climate_data(
         )
 
 
-@router.get("/templates/malaria/monthly")
+@router.get(
+    "/templates/malaria/monthly",
+    summary="Download blank malaria monthly CSV template",
+    response_class=StreamingResponse,
+)
 async def download_monthly_malaria_template():
     """
     Download CSV template for monthly malaria data.
@@ -279,7 +298,11 @@ async def download_monthly_malaria_template():
     )
 
 
-@router.get("/templates/climate")
+@router.get(
+    "/templates/climate",
+    summary="Download blank climate CSV template",
+    response_class=StreamingResponse,
+)
 async def download_climate_template():
     """
     Download CSV template for climate data.

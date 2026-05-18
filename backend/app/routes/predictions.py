@@ -24,7 +24,12 @@ from datetime import date, datetime, timedelta
 router = APIRouter(prefix="/predictions", tags=["Predictions"])
 
 
-@router.get("/history/{district_id}", response_model=PredictionHistoryResponse)
+@router.get(
+    "/history/{district_id}",
+    response_model=PredictionHistoryResponse,
+    summary="Get prediction history for a district",
+    responses={404: {"description": "District not found"}},
+)
 async def get_prediction_history(
     district_id: str = Path(..., description="District ID (UUID)"),
     limit: int = Query(30, ge=1, le=365, description="Number of predictions to return"),
@@ -120,7 +125,13 @@ async def get_prediction_history(
     }
 
 
-@router.post("/generate", response_model=PredictionResultResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/generate",
+    response_model=PredictionResultResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Generate a prediction for one district",
+    responses={404: {"description": "District not found"}},
+)
 async def generate_prediction(
     payload: GeneratePredictionRequest,
     db: AsyncSession = Depends(get_db),
@@ -129,11 +140,19 @@ async def generate_prediction(
 ):
     """Generate (or refresh) a malaria-risk prediction for one district + month.
 
-    Authorization: ADMIN | MOH_OFFICER | EPHI_OFFICER.
+    **Authorization:** `ADMIN` | `MOH_OFFICER` | `EPHI_OFFICER`.
 
-    The endpoint is idempotent on (district_id, target_month): if a prediction
-    already exists, the existing row is returned. Pass `force=true` via the
-    batch endpoint to overwrite.
+    Idempotent on `(district_id, target_month)`: if a prediction already exists
+    it is returned unchanged. To overwrite existing predictions, use the batch
+    endpoint with `force=true`.
+
+    **Request body**
+    - `district_id`: District UUID
+    - `target_month`: First day of the target month (`YYYY-MM-01`)
+
+    **Notes**
+    - `is_warm` is `false` when the model used a cold-start fallback (insufficient
+      history for the district); treat the prediction as lower-confidence in that case.
     """
     svc = PredictionService(db, get_predictor())
     try:
@@ -157,21 +176,37 @@ async def generate_prediction(
     )
 
 
-@router.post("/generate-batch", response_model=BatchGenerateResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/generate-batch",
+    response_model=BatchGenerateResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Queue batch prediction for many districts",
+)
 async def generate_batch(
     payload: BatchGenerateRequest,
     background: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.MOH_OFFICER)),
 ):
-    """Queue a background batch prediction for many districts at one month.
+    """Queue a background batch prediction job for many districts at one target month.
 
-    Authorization: ADMIN | MOH_OFFICER.
+    **Authorization:** `ADMIN` | `MOH_OFFICER`.
 
-    When `district_ids` is omitted, generates for every district where
-    `adm3_pcode` is set (i.e. every woreda mapped to the model). Returns 202
-    immediately; results land in the `predictions` table as the worker writes
-    them. Use `GET /predictions/history/{district_id}` to poll.
+    Returns `202 Accepted` immediately — work continues in a background task.
+    Results land in the `predictions` table as they complete; poll
+    `GET /predictions/history/{district_id}` to see them.
+
+    **Request body**
+    - `target_month`: First day of the target month (`YYYY-MM-01`)
+    - `district_ids` (optional): list of district UUIDs. If omitted, runs for
+      every district that has an `adm3_pcode` set (i.e. every woreda mapped
+      to the model).
+    - `force` (optional, default `false`): when `true`, overwrites existing
+      predictions for the same `(district_id, target_month)`.
+
+    **Response**
+    - `queued`: always `true` on success
+    - `n_districts`: number of districts the job will process
     """
     if payload.district_ids is None:
         q = select(func.count(District.id)).where(District.adm3_pcode.is_not(None))

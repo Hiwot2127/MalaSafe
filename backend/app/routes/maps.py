@@ -15,7 +15,11 @@ from datetime import date, datetime
 router = APIRouter(prefix="/maps", tags=["GIS Maps"])
 
 
-@router.get("/risk", response_model=RiskMapResponse)
+@router.get(
+    "/risk",
+    response_model=RiskMapResponse,
+    summary="Get risk heatmap (GeoJSON FeatureCollection)",
+)
 async def get_risk_map(
     date_filter: Optional[date] = Query(None, description="Filter by prediction date (default: today)"),
     region: Optional[str] = Query(None, description="Filter to a single region by exact name"),
@@ -23,7 +27,9 @@ async def get_risk_map(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Get risk heatmap data for GIS visualization.
+    Get risk heatmap data as a GeoJSON FeatureCollection for map visualization.
+
+    **Authorization:** any authenticated user.
     
     **Authorization:** Any authenticated user
     

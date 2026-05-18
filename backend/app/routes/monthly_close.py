@@ -38,7 +38,7 @@ router = APIRouter(prefix="/monthly-close", tags=["Monthly Close"])
 # ── List ───────────────────────────────────────────────────────────────────
 
 
-@router.get("")
+@router.get("", summary="List monthly close runs")
 async def list_closes(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_official),
@@ -46,6 +46,22 @@ async def list_closes(
     month: Optional[date] = None,
     limit: int = Query(50, ge=1, le=200),
 ) -> dict:
+    """List monthly close runs, newest first.
+
+    A *monthly close* is one end-of-month ML pipeline execution: it generates the
+    next month's predictions, produces a backtest of the previous month, and
+    records any drift findings.
+
+    **Authorization:** any *official* role (`ADMIN`, `MOH_OFFICER`, `EPHI_OFFICER`).
+
+    **Filters**
+    - `status` (alias for `status_filter`): `pending` | `running` | `completed` | `failed`
+    - `month`: limit to a specific target month (`YYYY-MM-01`)
+    - `limit`: 1–200, default 50
+
+    **Returns**
+    - `items`: list of MonthlyClose rows (id, month, status, created_at, completed_at, error)
+    """
     q = select(MonthlyClose).order_by(desc(MonthlyClose.created_at)).limit(limit)
     if status_filter:
         q = q.where(MonthlyClose.status == status_filter)
@@ -58,12 +74,20 @@ async def list_closes(
 # ── Detail ─────────────────────────────────────────────────────────────────
 
 
-@router.get("/{close_id}")
+@router.get(
+    "/{close_id}",
+    summary="Get one monthly close run",
+    responses={404: {"description": "MonthlyClose not found"}},
+)
 async def get_close(
     close_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_official),
 ) -> dict:
+    """Get a single monthly close run by ID.
+
+    **Authorization:** any *official* role.
+    """
     close = (
         await db.execute(select(MonthlyClose).where(MonthlyClose.id == close_id))
     ).scalar_one_or_none()
@@ -75,7 +99,11 @@ async def get_close(
 # ── Backtest rows ──────────────────────────────────────────────────────────
 
 
-@router.get("/{close_id}/backtest")
+@router.get(
+    "/{close_id}/backtest",
+    summary="Get backtest rows for a close run",
+    responses={404: {"description": "MonthlyClose not found"}},
+)
 async def get_backtest(
     close_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -83,6 +111,17 @@ async def get_backtest(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=2000),
 ) -> dict:
+    """Paginated backtest results for one monthly close run.
+
+    Rows are sorted by `abs_error` descending — the largest prediction errors
+    appear first, which is what you want for model-quality review.
+
+    **Authorization:** any *official* role.
+
+    **Returns**
+    - `count`: total backtest rows (independent of pagination)
+    - `items`: backtest rows for the requested slice
+    """
     close_exists = (
         await db.execute(select(MonthlyClose.id).where(MonthlyClose.id == close_id))
     ).scalar_one_or_none()
@@ -120,7 +159,11 @@ async def get_backtest(
 # ── Drift findings ─────────────────────────────────────────────────────────
 
 
-@router.get("/{close_id}/drift")
+@router.get(
+    "/{close_id}/drift",
+    summary="Get drift findings for a close run",
+    responses={404: {"description": "MonthlyClose not found"}},
+)
 async def get_drift(
     close_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -129,6 +172,16 @@ async def get_drift(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=500),
 ) -> dict:
+    """Paginated drift findings for one monthly close run.
+
+    A drift finding flags a feature whose distribution shifted significantly
+    between training and the close period. Sorted by `z_score` descending.
+
+    **Authorization:** any *official* role.
+
+    **Filters**
+    - `severity`: `warn` | `critical`
+    """
     close_exists = (
         await db.execute(select(MonthlyClose.id).where(MonthlyClose.id == close_id))
     ).scalar_one_or_none()
@@ -162,7 +215,12 @@ async def get_drift(
 # ── Admin: re-run an existing close ────────────────────────────────────────
 
 
-@router.post("/{close_id}/run", status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/{close_id}/run",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Re-dispatch a close run (admin)",
+    responses={404: {"description": "MonthlyClose not found"}},
+)
 async def trigger_close_run(
     close_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -170,8 +228,13 @@ async def trigger_close_run(
 ) -> dict:
     """Re-dispatch the orchestrator for an existing close row.
 
-    Useful when a crash left a close stuck in `pending`, or when you want
-    to re-run after model artifacts changed.
+    Useful when a crash left a close stuck in `pending`, or when you want to
+    re-run after model artifacts changed. Terminal states (`completed`, `failed`)
+    are reset back to `pending` before dispatch.
+
+    **Authorization:** `ADMIN` only.
+
+    Returns `202 Accepted` — the orchestrator runs in the background.
     """
     close = (
         await db.execute(select(MonthlyClose).where(MonthlyClose.id == close_id))
@@ -194,7 +257,11 @@ async def trigger_close_run(
 # -- Admin: monthly forward predictions ---------------------------------------
 
 
-@router.post("/predict-monthly", status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/predict-monthly",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Trigger monthly batch prediction (admin)",
+)
 async def trigger_predict_monthly(
     target_month: Optional[str] = Query(
         None,
@@ -204,9 +271,13 @@ async def trigger_predict_monthly(
 ) -> dict:
     """Manually dispatch the monthly batch prediction.
 
-    Replaces the previous Celery Beat schedule. For a recurring run, hit
-    this endpoint from system cron or your deploy platform's cron (Vercel
-    cron, GitHub Actions, etc.) on the 5th of each month.
+    Replaces the previous Celery Beat schedule. For a recurring run, hit this
+    endpoint from system cron or your deploy platform's cron (e.g. Render Cron
+    Jobs, GitHub Actions) on the 5th of each month.
+
+    **Authorization:** `ADMIN` only.
+
+    Returns `202 Accepted` — work continues in the background.
     """
     from app.tasks.predict_monthly import run_monthly_predictions
 
