@@ -20,6 +20,7 @@ async def get_alerts(
     risk_level: Optional[str] = Query(None, regex="^(low|moderate|high|very_high)$", description="Filter by risk level"),
     region: Optional[str] = Query(None, description="Filter by region"),
     district_code: Optional[str] = Query(None, description="Filter by district code"),
+    q: Optional[str] = Query(None, description="Case-insensitive substring match on district name"),
     limit: int = Query(50, ge=1, le=500, description="Number of alerts to return"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
     db: AsyncSession = Depends(get_db),
@@ -87,7 +88,11 @@ async def get_alerts(
     
     if district_code:
         query = query.where(District.district_code == district_code)
-    
+
+    if q:
+        # Strip trims user whitespace so trailing-space typeahead doesn't kill the query.
+        query = query.where(District.district_name.ilike(f"%{q.strip()}%"))
+
     # Order by created_at descending (newest first)
     query = query.order_by(desc(Alert.created_at))
     

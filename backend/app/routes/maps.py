@@ -18,6 +18,7 @@ router = APIRouter(prefix="/maps", tags=["GIS Maps"])
 @router.get("/risk", response_model=RiskMapResponse)
 async def get_risk_map(
     date_filter: Optional[date] = Query(None, description="Filter by prediction date (default: today)"),
+    region: Optional[str] = Query(None, description="Filter to a single region by exact name"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -113,9 +114,9 @@ async def get_risk_map(
     ```
     """
     service = AnalyticsService(db)
-    
-    features, metadata = await service.get_risk_map_data(date_filter)
-    
+
+    features, metadata = await service.get_risk_map_data(date_filter, region=region)
+
     return {
         "type": "FeatureCollection",
         "features": features,
