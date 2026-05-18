@@ -523,39 +523,17 @@ class UploadService:
         await self.db.commit()
         await self.db.refresh(close)
 
-        # Dispatch the orchestrator. Lazy import keeps the Celery task graph
-        # decoupled from the request path.
-        celery_ok = False
-        try:
-            from app.tasks.celery_app import celery_app
-            task_name = (
-                "app.tasks.monthly_close.run"
-                if mode == "close"
-                else "app.tasks.monthly_close.retrain"
-            )
-            args = [str(close.id)] if mode == "close" else []
-            kwargs = {} if mode == "close" else {"reason": "backfill"}
-            celery_app.send_task(task_name, args=args, kwargs=kwargs)
-            celery_ok = True
-            logger.info(
-                f"Dispatched {task_name} for MonthlyClose {close.id} "
-                f"(mode={mode}, month={anchor_date}, span={len(distinct_months)})"
-            )
-        except Exception as exc:  # pragma: no cover - broker may be down in dev
-            logger.warning(
-                f"MonthlyClose {close.id} Celery dispatch failed ({exc}); "
-                "falling back to in-process orchestration."
-            )
-
-        # Dev fallback: when Celery is unreachable, run the orchestrator as a
-        # fire-and-forget asyncio task on the same event loop. Climate fetch
-        # is IO-bound so this won't starve the request loop. The route has
-        # already returned by the time it runs.
-        if not celery_ok and mode == "close":
-            from app.tasks.monthly_close import _orchestrate
-            asyncio.create_task(_orchestrate(close.id))
-            logger.info(
-                f"MonthlyClose {close.id} scheduled inline via asyncio task."
-            )
+        # In-process orchestration via asyncio.create_task — the route has
+        # already returned by the time the pipeline starts running, and
+        # climate fetch is IO-bound so it won't starve the request loop.
+        # Both modes go through monthly_close.run, which delegates to
+        # _orchestrate; the backfill branch in there marks the close
+        # complete + dispatches the retrain stub.
+        from app.tasks.monthly_close import run as run_close
+        asyncio.create_task(run_close(str(close.id)))
+        logger.info(
+            f"MonthlyClose {close.id} dispatched in-process "
+            f"(mode={mode}, month={anchor_date}, span={len(distinct_months)})."
+        )
 
         return str(close.id), mode

@@ -16,7 +16,7 @@ class MonthlyCloseService:
     async def start_close(self, monthly_close_id: UUID) -> None:
         """Run the closing pipeline for one MonthlyClose row.
 
-        Called from the Celery task `monthly_close.run`. Walks the state
+        Called from the in-process task `monthly_close.run`. Walks the state
         machine: pending -> climate_fetching -> backtesting ->
         drift_checking -> predicting -> completed.
         """

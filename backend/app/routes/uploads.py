@@ -95,9 +95,8 @@ async def upload_monthly_malaria_data(
          monthly_close_id, monthly_close_mode, stages) = \
             await upload_service.process_monthly_malaria_upload(content, file.filename)
 
-        # Monthly close orchestration is owned by Celery (app.tasks.monthly_close)
-        # when settings.MONTHLY_CLOSE_ENABLED is true. No FastAPI background task
-        # needed here - the upload service has already dispatched.
+        # Monthly close orchestration runs in-process via asyncio.create_task()
+        # from upload_service when settings.MONTHLY_CLOSE_ENABLED is true.
 
         return UploadResponse(
             success=success,

@@ -1,40 +1,36 @@
-"""Monthly close orchestration Celery task.
+"""Monthly close orchestration — in-process async task.
 
 Walks the MonthlyClose state machine:
     pending -> climate_fetching -> backtesting -> drift_checking ->
     predicting -> completed
 
-Climate fetch is currently a no-op stub (Phase 4 wires up Copernicus CDS +
-CHIRPS). Backtest, drift, and re-prediction run for real against the data
-already in the DB - uploaded actuals plus existing predictions and climate.
+Runs in the FastAPI process via asyncio.create_task() — no broker, no
+external worker. The upload service spawns this fire-and-forget after
+inserting the MonthlyClose row.
 
-Backfill-mode closes skip backtest + drift and immediately enqueue a
-retrain task (also a stub today; Phase 6).
+Climate fetch reads real CHIRPS + ERA5-Land rasters. Backtest, drift, and
+re-prediction run against the data already in the DB — uploaded actuals
+plus existing predictions and climate.
+
+Backfill-mode closes skip backtest + drift and immediately dispatch the
+retrain stub (Phase 6 will fill in).
 """
 from __future__ import annotations
 
-import asyncio
 from datetime import date, datetime, timezone
 from uuid import UUID
 
 from loguru import logger
 from sqlalchemy import select
 
-from app.tasks.celery_app import celery_app
 
+async def run(monthly_close_id: str) -> dict:
+    """Drive the closing pipeline for one MonthlyClose row.
 
-@celery_app.task(
-    name="app.tasks.monthly_close.run",
-    bind=True,
-    max_retries=3,
-    default_retry_delay=300,
-)
-def run(self, monthly_close_id: str) -> dict:
-    """Run the closing pipeline for one MonthlyClose row.
-
-    Called by the upload service after a small (<=2 month) monthly malaria
-    upload lands. Sync wrapper around the async orchestrator so Celery can
-    own retries.
+    Public entry point used by the upload service and the admin /run
+    endpoint. Returns a status dict; exceptions inside _orchestrate are
+    logged + persisted on the MonthlyClose row but not re-raised here, so
+    asyncio.create_task() callers don't have to handle them.
     """
     try:
         close_id = UUID(monthly_close_id)
@@ -43,19 +39,18 @@ def run(self, monthly_close_id: str) -> dict:
         return {"monthly_close_id": monthly_close_id, "status": "invalid_id"}
 
     try:
-        return asyncio.run(_orchestrate(close_id))
+        return await _orchestrate(close_id)
     except Exception as exc:
         logger.exception(f"monthly_close.run failed for {close_id}: {exc}")
-        raise self.retry(exc=exc)
+        return {"monthly_close_id": str(close_id), "status": "failed", "error": str(exc)}
 
 
-@celery_app.task(name="app.tasks.monthly_close.retrain", bind=True)
-def retrain(self, reason: str = "manual") -> dict:
-    """Phase 6 stub. Trains a new candidate LightGBM model.
+async def retrain(reason: str = "manual") -> dict:
+    """Phase 6 stub. Will train a new candidate LightGBM model.
 
-    Dispatched by:
+    Triggered by:
       - backfill-mode uploads (immediately, since backtest is skipped)
-      - quarterly beat schedule (Phase 6)
+      - quarterly schedule (Phase 6)
       - drift-triggered orchestrator (Phase 6)
     """
     logger.info(f"monthly_close.retrain dispatched (reason={reason}). Phase 6 will implement.")
@@ -99,10 +94,7 @@ async def _orchestrate(close_id: UUID) -> dict:
             close.stats_json = {"mode": "backfill", "note": "backtest + drift skipped; retrain dispatched"}
             await db.commit()
             try:
-                celery_app.send_task(
-                    "app.tasks.monthly_close.retrain",
-                    args=[], kwargs={"reason": "backfill"},
-                )
+                await retrain(reason="backfill")
             except Exception as exc:
                 logger.warning(f"retrain dispatch failed for close={close.id}: {exc}")
             return {"monthly_close_id": str(close.id), "status": "backfill_completed"}

@@ -1,23 +1,26 @@
 """Monthly close orchestration - read-only routes for the dashboard.
 
-The upload service creates MonthlyClose rows and dispatches the Celery
-orchestrator (app.tasks.monthly_close.run). These endpoints let the
-frontend poll status, drill into the backtest table, and surface drift
-findings.
+The upload service creates MonthlyClose rows and dispatches the
+in-process orchestrator (app.tasks.monthly_close.run) via
+asyncio.create_task(). These endpoints let the frontend poll status,
+drill into the backtest table, and surface drift findings.
 
-A single admin trigger endpoint also lets ops re-run the pipeline for an
-existing close row - useful for replaying after a Celery worker outage,
-without re-uploading the CSV.
+Two admin trigger endpoints also live here:
+  * POST /monthly-close/{id}/run - re-run the close pipeline for an
+    existing row, e.g. after a crash left it stuck in `pending`.
+  * POST /monthly-close/predict-monthly - manually fire the next-month
+    forward prediction batch (replaces the old Celery Beat schedule).
 """
 from __future__ import annotations
 
+import asyncio
 from datetime import date
 from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from loguru import logger
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -77,7 +80,8 @@ async def get_backtest(
     close_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_official),
-    limit: int = Query(500, ge=1, le=2000),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=2000),
 ) -> dict:
     close_exists = (
         await db.execute(select(MonthlyClose.id).where(MonthlyClose.id == close_id))
@@ -85,17 +89,30 @@ async def get_backtest(
     if close_exists is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="MonthlyClose not found")
 
+    # Total rows for the close - independent of pagination slice. The client
+    # uses this for page-of-N controls.
+    total = (
+        await db.execute(
+            select(func.count())
+            .select_from(BacktestResult)
+            .where(BacktestResult.monthly_close_id == close_id)
+        )
+    ).scalar_one()
+
     rows = (
         await db.execute(
             select(BacktestResult)
             .where(BacktestResult.monthly_close_id == close_id)
             .order_by(desc(BacktestResult.abs_error))
+            .offset(skip)
             .limit(limit)
         )
     ).scalars().all()
     return {
         "monthly_close_id": str(close_id),
-        "count": len(rows),
+        "count": int(total),
+        "skip": skip,
+        "limit": limit,
         "items": [r.to_dict() for r in rows],
     }
 
@@ -109,6 +126,8 @@ async def get_drift(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_official),
     severity: Optional[str] = Query(None, regex="^(warn|critical)$"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=500),
 ) -> dict:
     close_exists = (
         await db.execute(select(MonthlyClose.id).where(MonthlyClose.id == close_id))
@@ -116,17 +135,26 @@ async def get_drift(
     if close_exists is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="MonthlyClose not found")
 
-    q = (
-        select(DriftFinding)
-        .where(DriftFinding.monthly_close_id == close_id)
-        .order_by(desc(DriftFinding.z_score))
+    base = select(DriftFinding).where(DriftFinding.monthly_close_id == close_id)
+    count_base = select(func.count()).select_from(DriftFinding).where(
+        DriftFinding.monthly_close_id == close_id
     )
     if severity:
-        q = q.where(DriftFinding.severity == severity)
-    rows = (await db.execute(q)).scalars().all()
+        base = base.where(DriftFinding.severity == severity)
+        count_base = count_base.where(DriftFinding.severity == severity)
+
+    total = (await db.execute(count_base)).scalar_one()
+
+    rows = (
+        await db.execute(
+            base.order_by(desc(DriftFinding.z_score)).offset(skip).limit(limit)
+        )
+    ).scalars().all()
     return {
         "monthly_close_id": str(close_id),
-        "count": len(rows),
+        "count": int(total),
+        "skip": skip,
+        "limit": limit,
         "items": [r.to_dict() for r in rows],
     }
 
@@ -142,8 +170,8 @@ async def trigger_close_run(
 ) -> dict:
     """Re-dispatch the orchestrator for an existing close row.
 
-    Useful when a Celery outage left a close stuck in `pending`, or when
-    you want to re-run after model artifacts changed.
+    Useful when a crash left a close stuck in `pending`, or when you want
+    to re-run after model artifacts changed.
     """
     close = (
         await db.execute(select(MonthlyClose).where(MonthlyClose.id == close_id))
@@ -158,13 +186,29 @@ async def trigger_close_run(
         close.completed_at = None
         await db.commit()
 
-    from app.tasks.celery_app import celery_app
-    try:
-        celery_app.send_task("app.tasks.monthly_close.run", args=[str(close.id)])
-    except Exception as exc:
-        logger.warning(f"Celery dispatch failed for {close.id}: {exc}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Could not dispatch close run: {exc}",
-        )
+    from app.tasks.monthly_close import run as run_close
+    asyncio.create_task(run_close(str(close.id)))
     return {"monthly_close_id": str(close.id), "status": "dispatched"}
+
+
+# -- Admin: monthly forward predictions ---------------------------------------
+
+
+@router.post("/predict-monthly", status_code=status.HTTP_202_ACCEPTED)
+async def trigger_predict_monthly(
+    target_month: Optional[str] = Query(
+        None,
+        description="ISO date of first-of-month (YYYY-MM-DD). Defaults to next calendar month.",
+    ),
+    current_user: User = Depends(require_admin),
+) -> dict:
+    """Manually dispatch the monthly batch prediction.
+
+    Replaces the previous Celery Beat schedule. For a recurring run, hit
+    this endpoint from system cron or your deploy platform's cron (Vercel
+    cron, GitHub Actions, etc.) on the 5th of each month.
+    """
+    from app.tasks.predict_monthly import run_monthly_predictions
+
+    asyncio.create_task(run_monthly_predictions(target_month=target_month))
+    return {"target_month": target_month or "next-month", "status": "dispatched"}

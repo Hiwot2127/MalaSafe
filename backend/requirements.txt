@@ -40,10 +40,6 @@ netCDF4==1.6.5        # NetCDF4 backend for xarray
 cdsapi==0.7.0         # Copernicus CDS client (reads ~/.cdsapirc)
 setuptools<81         # cdsapi 0.7.0 still imports pkg_resources, removed in setuptools 81
 
-# Background Tasks
-celery==5.3.6
-redis==5.0.1
-
 # Utilities
 python-dateutil==2.8.2
 pytz==2023.3
