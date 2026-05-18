@@ -6,6 +6,11 @@ import { ArrowUpRight } from 'lucide-react';
 import { analyticsApi } from '@/lib/api/analytics';
 import { DashboardSummary } from '@/types/analytics';
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+  AlertCard,
   EditorialCard,
   Metric,
   PageHeader,
@@ -107,12 +112,32 @@ export default function DashboardPage() {
         ? 'Critical posture - review now'
         : 'Monitoring posture';
 
+  const alertEyebrow =
+    postureStatus === 'valid'
+      ? 'All clear · No action required'
+      : postureStatus === 'error'
+        ? 'Critical · Immediate review'
+        : 'Monitoring · Open alerts';
+  const alertDescription =
+    activeAlerts > 0
+      ? `${activeAlerts.toLocaleString()} alert${activeAlerts === 1 ? '' : 's'} open across ${highRisk.toLocaleString()} high-risk district${highRisk === 1 ? '' : 's'}. Review the alerts queue to triage and dispatch.`
+      : 'No alerts open against the current monthly close. Caseload and CFR remain within expected thresholds.';
+
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-14">
       <PageHeader
         eyebrow={`MalaSafe · ${period}`}
         title="Surveillance dashboard"
         description="A standing read on caseload, mortality, alerting posture, and risk concentration. Numbers update with each monthly close."
+      />
+
+      {/* Posture alert hero - leads with the most actionable signal. */}
+      <AlertCard
+        tone={postureStatus}
+        eyebrow={alertEyebrow}
+        title={postureLabel}
+        description={alertDescription}
+        cta={activeAlerts > 0 ? { label: 'Review alerts', href: '/alerts' } : undefined}
       />
 
       {/* Navy hero - sets the color tone of the application. */}
@@ -252,9 +277,51 @@ export default function DashboardPage() {
         </EditorialCard>
       </section>
 
-      {/* Section 003 - Jump to */}
+      {/* Section 003 - Operational checklist */}
       <section className="flex flex-col gap-5">
-        <SectionHeader index="003" label="Jump to" tone="signal" />
+        <SectionHeader index="003" label="How this works" tone="signal" />
+        <EditorialCard className="p-0">
+          <Accordion type="single" collapsible defaultValue="item-cfr">
+            <AccordionItem value="item-cfr">
+              <AccordionTrigger eyebrow="Case fatality">
+                What does CFR &gt; 1% trigger?
+              </AccordionTrigger>
+              <AccordionContent>
+                Any district that closes a month above the 1% case-fatality ratio is
+                auto-flagged. The district lead receives a notification and an alert
+                is opened against the close. Reviewing the alert and acknowledging
+                the action clears the flag from the surveillance posture.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-predict">
+              <AccordionTrigger eyebrow="Forecasting">
+                How are predictions generated?
+              </AccordionTrigger>
+              <AccordionContent>
+                A LightGBM model trained on historical case counts, mortality,
+                weekly climate, and district geography produces a forward-looking
+                risk score per district per month. Cold-start districts use a
+                climate + geography-only sub-model until enough history accumulates.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-close">
+              <AccordionTrigger eyebrow="Workflow">
+                How do I add a monthly close?
+              </AccordionTrigger>
+              <AccordionContent>
+                Upload a monthly malaria CSV from the Upload page. The validator
+                surfaces row-level tolerance issues before commit. Once accepted,
+                the close kicks off a re-prediction across all districts and
+                refreshes this dashboard.
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </EditorialCard>
+      </section>
+
+      {/* Section 004 - Jump to */}
+      <section className="flex flex-col gap-5">
+        <SectionHeader index="004" label="Jump to" tone="signal" />
         <ul className="grid grid-cols-1 gap-px overflow-hidden border border-border bg-border sm:grid-cols-3">
           {QUICK_LINKS.map((item) => (
             <li key={item.href}>
