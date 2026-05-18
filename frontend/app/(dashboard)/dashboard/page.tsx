@@ -140,19 +140,19 @@ export default function DashboardPage() {
         cta={activeAlerts > 0 ? { label: 'Review alerts', href: '/alerts' } : undefined}
       />
 
-      {/* Navy hero - sets the color tone of the application. */}
-      <section className="relative flex flex-col gap-6 overflow-hidden bg-primary p-8 text-primary-foreground sm:p-10">
+      {/* Period summary - the brand-blue hero with the headline numbers. */}
+      <section className="relative flex flex-col gap-6 overflow-hidden rounded-[var(--radius)] bg-primary p-8 text-primary-foreground sm:p-10">
         <span aria-hidden className="absolute inset-y-6 left-0 w-[3px] bg-accent-signal" />
         <div className="flex flex-col gap-3">
           <p className="font-mono text-[10px] uppercase tracking-[0.28em] opacity-70">
-            MalaSafe · Current posture
+            MalaSafe · {period}
           </p>
-          <h2 className="font-display text-4xl font-semibold leading-[1.05] tracking-[-0.022em] sm:text-5xl">
-            {postureLabel}
+          <h2 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-0.022em] sm:text-4xl">
+            Reporting window
           </h2>
           <p className="max-w-prose font-sans text-base leading-relaxed opacity-85">
-            {cases.toLocaleString()} cases recorded across the {period} reporting window
-            against {deaths.toLocaleString()} deaths (CFR {cfr.toFixed(2)}%).{' '}
+            {cases.toLocaleString()} cases against {deaths.toLocaleString()} deaths
+            (CFR {cfr.toFixed(2)}%).{' '}
             {activeAlerts > 0
               ? `${activeAlerts.toLocaleString()} alerts open, ${highRisk.toLocaleString()} districts on watch.`
               : 'No alerts open at this time.'}
