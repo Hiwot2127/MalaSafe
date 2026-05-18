@@ -37,7 +37,7 @@ export default function Sidebar() {
       {/* Brand block - locked to the same height as the top bar so the rule
           across the top of the app is continuous. */}
       <div className="flex h-[4.5rem] shrink-0 items-center gap-3 border-b border-border px-6">
-        <LogoMark size={32} />
+        <LogoMark size={32} priority />
         <div className="flex flex-col gap-0.5 leading-none">
           <p className="font-display text-base font-semibold tracking-[-0.018em] text-foreground">
             MalaSafe

@@ -1,22 +1,23 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-// MalaSafe brand mark.
-// Concept: a navy square containing a geometric "M" letterform whose twin peaks
-// double-read as Ethiopian highlands - the operational range of the surveillance
-// system. Sharp 0.25rem-aligned corners match the editorial vocabulary. The mark
-// is monochrome on purpose so it composes with the section tone strips and chart
-// palette without competing for attention.
+// MalaSafe brand mark - shield + Anopheles silhouette + map pin, expressing
+// the system's three dimensions: protection (shield), the pathogen vector
+// (mosquito), and geographic surveillance (pin). Lives as a single raster in
+// /public/logo.png so the artwork stays pixel-faithful at brand surfaces.
 
 interface LogoMarkProps {
   size?: number;
   className?: string;
   /**
-   * "solid"   - navy filled square + cream mark. Use on light surfaces.
-   * "outline" - transparent frame + currentColor mark. Use on dark surfaces
-   *             (inherits the parent's text color, so wrap in text-* utility).
+   * "solid"   - render the raster as-is. Use on light or branded surfaces.
+   * "outline" - render the raster inside a tinted ring container. Use when
+   *             surrounding text uses primary-foreground (dark panels).
    */
   variant?: "solid" | "outline";
   title?: string;
+  /** Forward to next/image for above-the-fold logos (e.g. sidebar header). */
+  priority?: boolean;
 }
 
 export function LogoMark({
@@ -24,41 +25,29 @@ export function LogoMark({
   className,
   variant = "solid",
   title = "MalaSafe",
+  priority = false,
 }: LogoMarkProps) {
   const isOutline = variant === "outline";
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
+    <span
       aria-label={title}
-      className={className}
-    >
-      <title>{title}</title>
-      {isOutline ? (
-        <rect
-          x="1"
-          y="1"
-          width="30"
-          height="30"
-          rx="1"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        />
-      ) : (
-        <rect width="32" height="32" rx="1.5" fill="hsl(220 38% 22%)" />
+      role="img"
+      className={cn(
+        "inline-flex items-center justify-center",
+        isOutline && "rounded-md p-1.5 ring-1 ring-primary-foreground/30 bg-primary-foreground/5",
+        className,
       )}
-      <path
-        d="M7 23.5 L7 9 L16 17.5 L25 9 L25 23.5"
-        stroke={isOutline ? "currentColor" : "hsl(40 32% 98%)"}
-        strokeWidth="2.5"
-        strokeLinecap="square"
-        strokeLinejoin="miter"
+      style={{ width: isOutline ? size + 12 : size, height: isOutline ? size + 12 : size }}
+    >
+      <Image
+        src="/logo.png"
+        alt={title}
+        width={size}
+        height={size}
+        priority={priority}
+        className="select-none"
       />
-    </svg>
+    </span>
   );
 }
 
@@ -67,18 +56,20 @@ interface LogoWordmarkProps {
   variant?: "solid" | "outline";
   caption?: string;
   size?: number;
+  priority?: boolean;
 }
 
 export function LogoWordmark({
   className,
   variant = "solid",
   caption = "Surveillance · 01",
-  size = 28,
+  size = 32,
+  priority = false,
 }: LogoWordmarkProps) {
   const inverse = variant === "outline";
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <LogoMark size={size} variant={variant} />
+      <LogoMark size={size} variant={variant} priority={priority} />
       <div className="flex flex-col gap-0.5 leading-none">
         <span
           className={cn(
