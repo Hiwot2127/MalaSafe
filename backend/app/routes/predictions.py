@@ -184,7 +184,7 @@ async def generate_batch(
 
 
 async def _run_batch_predict(target_month: date, district_ids, force: bool) -> None:
-    """Standalone async worker — opens its own session (BackgroundTasks doesn't
+    """Standalone async worker - opens its own session (BackgroundTasks doesn't
     keep the request session alive)."""
     from app.database.base import AsyncSessionLocal
     try:

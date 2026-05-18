@@ -1,4 +1,4 @@
-"""Monthly close orchestration — read-only routes for the dashboard.
+"""Monthly close orchestration - read-only routes for the dashboard.
 
 The upload service creates MonthlyClose rows and dispatches the Celery
 orchestrator (app.tasks.monthly_close.run). These endpoints let the
@@ -6,7 +6,7 @@ frontend poll status, drill into the backtest table, and surface drift
 findings.
 
 A single admin trigger endpoint also lets ops re-run the pipeline for an
-existing close row — useful for replaying after a Celery worker outage,
+existing close row - useful for replaying after a Celery worker outage,
 without re-uploading the CSV.
 """
 from __future__ import annotations

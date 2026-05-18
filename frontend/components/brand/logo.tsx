@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 // MalaSafe brand mark.
 // Concept: a navy square containing a geometric "M" letterform whose twin peaks
-// double-read as Ethiopian highlands — the operational range of the surveillance
+// double-read as Ethiopian highlands - the operational range of the surveillance
 // system. Sharp 0.25rem-aligned corners match the editorial vocabulary. The mark
 // is monochrome on purpose so it composes with the section tone strips and chart
 // palette without competing for attention.
@@ -11,8 +11,8 @@ interface LogoMarkProps {
   size?: number;
   className?: string;
   /**
-   * "solid"   — navy filled square + cream mark. Use on light surfaces.
-   * "outline" — transparent frame + currentColor mark. Use on dark surfaces
+   * "solid"   - navy filled square + cream mark. Use on light surfaces.
+   * "outline" - transparent frame + currentColor mark. Use on dark surfaces
    *             (inherits the parent's text color, so wrap in text-* utility).
    */
   variant?: "solid" | "outline";

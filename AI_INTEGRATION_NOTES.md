@@ -1,4 +1,4 @@
-# AI integration — what's wired and how to bring it online
+# AI integration - what's wired and how to bring it online
 
 This file describes the LightGBM malaria-risk predictor that was added to the
 backend. It's intentionally separate from the historical `*_COMPLETE.md` docs:
@@ -8,33 +8,33 @@ those describe the pre-AI surveillance system. This one is forward-looking.
 
 ### Backend
 
-- `app/ai/__init__.py`, `predictor.py`, `features.py`, `phrasebook.py` —
+- `app/ai/__init__.py`, `predictor.py`, `features.py`, `phrasebook.py` -
   loads 4 LightGBM boosters + risk thresholds + climatological baselines,
   exposes a `MalariaPredictor` singleton via `get_predictor()`.
-- `app/services/prediction_service.py` — bridges the predictor and the
+- `app/services/prediction_service.py` - bridges the predictor and the
   `predictions` table (idempotent upsert, alert raise on `high`/`very_high`).
-- `app/schemas/predictions.py` — request/response models for generate endpoints.
-- `app/routes/predictions.py` — adds `POST /predictions/generate` (admin/MOH/EPHI)
+- `app/schemas/predictions.py` - request/response models for generate endpoints.
+- `app/routes/predictions.py` - adds `POST /predictions/generate` (admin/MOH/EPHI)
   and `POST /predictions/generate-batch` (admin/MOH, returns 202 + background).
-- `app/tasks/{celery_app,predict_monthly}.py` — Celery beat scheduled the 5th
+- `app/tasks/{celery_app,predict_monthly}.py` - Celery beat scheduled the 5th
   of every month at 02:00 EAT.
-- `alembic/versions/002_extend_for_ml.py` — adds geo columns to `districts`,
+- `alembic/versions/002_extend_for_ml.py` - adds geo columns to `districts`,
   full-set climate columns to `climate_data`, and a unique constraint on
   `(district_id, prediction_date)` so backfill is idempotent.
-- `app/models/{district,climate_data}.py` — ORM updates to mirror the migration.
-- `requirements.txt` — adds `lightgbm==4.3.0`, `pyarrow==15.0.0`.
+- `app/models/{district,climate_data}.py` - ORM updates to mirror the migration.
+- `requirements.txt` - adds `lightgbm==4.3.0`, `pyarrow==15.0.0`.
 
 ### Scripts
 
-- `scripts/seed_districts.py` — populates `districts` from
+- `scripts/seed_districts.py` - populates `districts` from
   `reference_geo_names.csv` + climate-CSV centroids (no GDAL needed).
-- `scripts/seed_climate_history.py` — populates `climate_data` from
+- `scripts/seed_climate_history.py` - populates `climate_data` from
   `climate_per_woreda_monthly.csv`. Converts EC dates to Gregorian inline.
-- `scripts/compute_baselines.py` — writes `models/regional_baselines.json` (used by
+- `scripts/compute_baselines.py` - writes `models/regional_baselines.json` (used by
   the predictor for anomaly features).
-- `scripts/backfill_predictions.py` — runs the model over every
+- `scripts/backfill_predictions.py` - runs the model over every
   (district, month) in 2021-07..2026-01.
-- `test_predictor.py` — standalone smoke test (no DB needed).
+- `test_predictor.py` - standalone smoke test (no DB needed).
 
 ### Model artifacts
 
@@ -44,7 +44,7 @@ In `backend/models/`:
 - `lightgbm_coldstart.txt` (no-lag fallback for new facilities)
 - `risk_thresholds.json` (per-woreda p50/p75/p95 cutoffs)
 - `model_card.json` (version, training metrics, feature list)
-- `regional_baselines.json` — produced by `compute_baselines.py`, **not yet present**
+- `regional_baselines.json` - produced by `compute_baselines.py`, **not yet present**
 
 Training metrics (test set):
 - Spearman r = 0.982
@@ -136,9 +136,9 @@ Then point `SEED_DATA_DIR` at `backend/seed_data/`.
 
 ## Known caveats (mirrored in `model_card.json`)
 
-1. **MaxTemp / MinTemp are AvgTemp ± 5°C** — monthly-means path; daily extremes
+1. **MaxTemp / MinTemp are AvgTemp ± 5°C** - monthly-means path; daily extremes
    not used. Acceptable for monthly predictions; revisit if predicting weekly.
-2. **6% of training rows had imputed climate** — flagged via `csrc_*` one-hot.
+2. **6% of training rows had imputed climate** - flagged via `csrc_*` one-hot.
    Model has learned to weight those rows slightly less.
 3. **Cold-start sub-model** is used when fewer than 3 months of history exist
    for a district. First 3 months of any new facility's predictions are cold.
@@ -147,7 +147,7 @@ Then point `SEED_DATA_DIR` at `backend/seed_data/`.
    systematically missed. Stage 12 candidate: ERA5T near-real-time integration.
 5. **Travel feature** isn't available at inference (no live data feed); we
    pass 0 (median value, 58.8% of training rows were 0).
-6. **MalariaData.tests column missing** — the existing schema only stores
+6. **MalariaData.tests column missing** - the existing schema only stores
    `cases`. The predictor uses a regional median fallback for the exposure
    offset, which slightly biases the prediction toward regional means.
 

@@ -171,7 +171,7 @@ class CSVParser:
 
 
 class MalariaCSVParser(CSVParser):
-    """Parser for malaria data CSV files. Monthly-only — weekly was removed."""
+    """Parser for malaria data CSV files. Monthly-only - weekly was removed."""
 
     REQUIRED_COLUMNS_MONTHLY = ['district_code', 'month', 'year', 'cases', 'deaths']
     OPTIONAL_COLUMNS_MONTHLY = ['tests']  # If present, must be numeric >= 0. Powers the exposure offset; absent = fall back to cases*5 proxy.
@@ -212,7 +212,7 @@ class MalariaCSVParser(CSVParser):
         row_errors.extend(cls.validate_numeric_column(df, 'cases', min_value=0))
         row_errors.extend(cls.validate_numeric_column(df, 'deaths', min_value=0))
 
-        # Optional `tests` column — validate only if present.
+        # Optional `tests` column - validate only if present.
         if 'tests' in df.columns:
             row_errors.extend(cls.validate_numeric_column(df, 'tests', min_value=0))
 

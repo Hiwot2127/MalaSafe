@@ -114,7 +114,7 @@ export default function MapsPage() {
         }
       />
 
-      {/* Section 001 — Surface */}
+      {/* Section 001 - Surface */}
       <section className="flex flex-col gap-5">
         <SectionHeader
           index="001"
@@ -198,7 +198,7 @@ export default function MapsPage() {
               </EditorialCard>
             ) : null}
 
-            {/* Section 002 — Districts table */}
+            {/* Section 002 - Districts table */}
             <SectionHeader index="002" label="Districts" tone="signal">
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
                 {districtCount} rows

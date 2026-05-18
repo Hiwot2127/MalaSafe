@@ -1,5 +1,5 @@
 // Shared editorial primitives.
-// Vocabulary lives in app/globals.css — Fraunces display, Manrope sans, IBM Plex
+// Vocabulary lives in app/globals.css - Fraunces display, Manrope sans, IBM Plex
 // Mono eyebrows, warm card surfaces, sharp 0.25rem corners, status tints.
 // /upload and /monthly-close are the design references.
 

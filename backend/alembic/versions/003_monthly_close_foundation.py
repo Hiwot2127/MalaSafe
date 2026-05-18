@@ -9,14 +9,14 @@ handful of column additions on existing tables.
 
 New tables
 ----------
-- model_versions     — registry of LightGBM artifact bundles. One row per
+- model_versions     - registry of LightGBM artifact bundles. One row per
                        trained model; partial unique index keeps exactly
                        one row with status='active' at any time.
-- monthly_closes     — one row per uploaded malaria CSV that triggers the
+- monthly_closes     - one row per uploaded malaria CSV that triggers the
                        closing pipeline. Tracks orchestration state.
-- backtest_results   — predicted-vs-actual per district per close, with
+- backtest_results   - predicted-vs-actual per district per close, with
                        the model version that produced the prediction.
-- drift_findings     — 3σ anomalies detected per (district, metric) for a
+- drift_findings     - 3σ anomalies detected per (district, metric) for a
                        close. Drives the drift-triggered retrain.
 
 Column additions
@@ -25,8 +25,8 @@ Column additions
                    data_source (chirps/era5/manual/imputed). Plus a
                    unique (district_id, date) so the climate-fetch
                    service can upsert idempotently.
-- malaria_data:    tests (optional column — closes model card caveat #6).
-- predictions:     q10, q90 (interval bounds — predictor already computes
+- malaria_data:    tests (optional column - closes model card caveat #6).
+- predictions:     q10, q90 (interval bounds - predictor already computes
                    them, we stop discarding the output).
 - uploaded_files:  row_count, month_span (cheap downstream branching:
                    small upload = monthly close, big upload = backfill).
@@ -65,7 +65,7 @@ def upgrade() -> None:
         'climate_data',
         "data_source IN ('manual_upload', 'chirps', 'era5', 'imputed_hierarchical', 'imputed_baseline')",
     )
-    # Existing rows arrived via the legacy CSV path — mark them final manual_upload.
+    # Existing rows arrived via the legacy CSV path - mark them final manual_upload.
     op.execute(
         "UPDATE climate_data SET is_provisional = false, data_source = 'manual_upload' "
         "WHERE data_source IS NULL OR data_source = 'manual_upload'"

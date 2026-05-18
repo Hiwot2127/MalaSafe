@@ -51,7 +51,7 @@ export default function AnalyticsPage() {
   const averageCfr =
     totals.cases > 0 ? ((totals.deaths / totals.cases) * 100).toFixed(2) : '0.00';
 
-  // Sparkline geometry — cases + deaths over time. Each series is normalised
+  // Sparkline geometry - cases + deaths over time. Each series is normalised
   // against the max of the cases series so death movement is visible on the
   // same axis without overwhelming a death line that's an order of magnitude
   // smaller than the cases line.
@@ -83,7 +83,7 @@ export default function AnalyticsPage() {
         }
       />
 
-      {/* Section 001 — Series */}
+      {/* Section 001 - Series */}
       <section className="flex flex-col gap-5">
         <SectionHeader
           index="001"
@@ -173,8 +173,8 @@ export default function AnalyticsPage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground tabular-nums">
-                  <span>{trends[trends.length - 1]?.period ?? '—'}</span>
-                  <span>{trends[0]?.period ?? '—'}</span>
+                  <span>{trends[trends.length - 1]?.period ?? '-'}</span>
+                  <span>{trends[0]?.period ?? '-'}</span>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-px bg-border sm:grid-cols-3 lg:grid-cols-1 lg:divide-y lg:divide-border lg:bg-card">
@@ -184,7 +184,7 @@ export default function AnalyticsPage() {
               </div>
             </EditorialCard>
 
-            {/* Section 002 — Table */}
+            {/* Section 002 - Table */}
             <SectionHeader index="002" label="Periods" tone="signal">
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
                 {trends.length} rows

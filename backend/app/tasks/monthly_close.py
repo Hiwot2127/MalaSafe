@@ -6,7 +6,7 @@ Walks the MonthlyClose state machine:
 
 Climate fetch is currently a no-op stub (Phase 4 wires up Copernicus CDS +
 CHIRPS). Backtest, drift, and re-prediction run for real against the data
-already in the DB — uploaded actuals plus existing predictions and climate.
+already in the DB - uploaded actuals plus existing predictions and climate.
 
 Backfill-mode closes skip backtest + drift and immediately enqueue a
 retrain task (also a stub today; Phase 6).

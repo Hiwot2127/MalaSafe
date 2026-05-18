@@ -1,15 +1,15 @@
 """3-sigma drift / anomaly detection for a closed month.
 
-For each (district, metric), pull a baseline window — the same calendar
-month in each of the prior 3 years — and z-score the observed value
+For each (district, metric), pull a baseline window - the same calendar
+month in each of the prior 3 years - and z-score the observed value
 against that baseline. Anomalies above |z| >= 2 are persisted as
 DriftFinding rows; |z| >= 3 is marked `critical`.
 
 Metrics covered:
-  cases     — from malaria_data
-  rainfall  — from climate_data
-  temp      — climate_data.temperature
-  humidity  — climate_data.humidity
+  cases     - from malaria_data
+  rainfall  - from climate_data
+  temp      - climate_data.temperature
+  humidity  - climate_data.humidity
 
 The orchestrator rolls the critical count into MonthlyClose.stats_json
 and (Phase 6+) may trigger a retrain when critical findings exceed
@@ -164,7 +164,7 @@ class DriftService:
                 ))
             )
         ).all()
-        # If multiple rows per district per month (shouldn't be — unique constraint
+        # If multiple rows per district per month (shouldn't be - unique constraint
         # is on district_id+date), average them.
         agg: dict[UUID, dict[str, list[float]]] = {}
         for did, rain, temp, hum in rows:

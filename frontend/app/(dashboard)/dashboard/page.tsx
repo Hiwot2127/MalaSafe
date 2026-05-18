@@ -104,7 +104,7 @@ export default function DashboardPage() {
     postureStatus === 'valid'
       ? 'Stable posture'
       : postureStatus === 'error'
-        ? 'Critical posture — review now'
+        ? 'Critical posture - review now'
         : 'Monitoring posture';
 
   return (
@@ -115,7 +115,7 @@ export default function DashboardPage() {
         description="A standing read on caseload, mortality, alerting posture, and risk concentration. Numbers update with each monthly close."
       />
 
-      {/* Navy hero — sets the color tone of the application. */}
+      {/* Navy hero - sets the color tone of the application. */}
       <section className="relative flex flex-col gap-6 overflow-hidden bg-primary p-8 text-primary-foreground sm:p-10">
         <span aria-hidden className="absolute inset-y-6 left-0 w-[3px] bg-accent-signal" />
         <div className="flex flex-col gap-3">
@@ -165,7 +165,7 @@ export default function DashboardPage() {
         </dl>
       </section>
 
-      {/* Section 001 — Indicators */}
+      {/* Section 001 - Indicators */}
       <section className="flex flex-col gap-5">
         <SectionHeader index="001" label="Indicators" tone="signal">
           <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -202,7 +202,7 @@ export default function DashboardPage() {
         </EditorialCard>
       </section>
 
-      {/* Section 002 — Posture */}
+      {/* Section 002 - Posture */}
       <section className="flex flex-col gap-5">
         <SectionHeader index="002" label="Posture" tone={postureStatus}>
           <StatusPill kind={postureStatus}>
@@ -252,7 +252,7 @@ export default function DashboardPage() {
         </EditorialCard>
       </section>
 
-      {/* Section 003 — Jump to */}
+      {/* Section 003 - Jump to */}
       <section className="flex flex-col gap-5">
         <SectionHeader index="003" label="Jump to" tone="signal" />
         <ul className="grid grid-cols-1 gap-px overflow-hidden border border-border bg-border sm:grid-cols-3">

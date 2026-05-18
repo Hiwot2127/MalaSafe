@@ -20,7 +20,7 @@ const STAGE_TITLES: Record<string, string> = {
 };
 
 export function UploadTimeline({ stages, monthlyCloseId, monthlyCloseMode }: UploadTimelineProps) {
-  // Defensive — older backend builds returned UploadResponse without a `stages`
+  // Defensive - older backend builds returned UploadResponse without a `stages`
   // field, and our page passes it through as-is. Don't crash; render nothing.
   if (!stages || stages.length === 0) return null;
 

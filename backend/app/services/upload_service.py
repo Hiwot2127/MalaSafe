@@ -224,7 +224,7 @@ class UploadService:
         )
 
         # Dispatch the monthly close pipeline if enabled. Failures here must not
-        # roll back the malaria_data inserts — the rows are valuable on their own.
+        # roll back the malaria_data inserts - the rows are valuable on their own.
         t_dispatch = _now_ms()
         monthly_close_id: Optional[str] = None
         monthly_close_mode: Optional[str] = None
@@ -238,7 +238,7 @@ class UploadService:
                     "dispatch_close", "ok", t_dispatch,
                     detail=f"{monthly_close_mode} mode, {month_span} month(s)"
                 ))
-            except Exception as exc:  # pragma: no cover — best-effort dispatch
+            except Exception as exc:  # pragma: no cover - best-effort dispatch
                 logger.warning(
                     f"Monthly close dispatch failed for file {file_id}: {exc}. "
                     "Malaria rows landed; close pipeline will need manual replay."
@@ -268,7 +268,7 @@ class UploadService:
     ) -> UploadPreviewResponse:
         """Validate a monthly malaria CSV without writing anything.
 
-        Powers `POST /uploads/malaria/monthly/preview` — the modal preview shows
+        Powers `POST /uploads/malaria/monthly/preview` - the modal preview shows
         exactly what would happen if the user clicked Confirm.
         """
         df, file_errors, row_errors = MalariaCSVParser.parse_monthly_data(file_content)
@@ -484,12 +484,12 @@ class UploadService:
         state, returns the existing id without re-dispatching.
 
         Returns:
-            (monthly_close_id_str, mode_str) — both None on hard failure.
+            (monthly_close_id_str, mode_str) - both None on hard failure.
         """
         if not distinct_months:
             return None, None
 
-        # Pick the mode + "month" anchor (latest month in the upload — the
+        # Pick the mode + "month" anchor (latest month in the upload - the
         # close run is "about" that month for backtest + next-prediction).
         mode = "close" if len(distinct_months) <= settings.MONTHLY_CLOSE_MAX_MONTHS else "backfill"
         anchor_year, anchor_month = distinct_months[-1]
@@ -541,7 +541,7 @@ class UploadService:
                 f"Dispatched {task_name} for MonthlyClose {close.id} "
                 f"(mode={mode}, month={anchor_date}, span={len(distinct_months)})"
             )
-        except Exception as exc:  # pragma: no cover — broker may be down in dev
+        except Exception as exc:  # pragma: no cover - broker may be down in dev
             logger.warning(
                 f"MonthlyClose {close.id} Celery dispatch failed ({exc}); "
                 "falling back to in-process orchestration."

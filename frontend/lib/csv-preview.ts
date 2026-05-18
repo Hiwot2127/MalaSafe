@@ -8,7 +8,7 @@ import type { UploadError, UploadKind } from "@/types/upload";
  * so the modal can open immediately with row counts + obvious-format issues,
  * without waiting for a round-trip to the backend dry-run endpoint.
  *
- * The backend dry-run is still the source of truth — it runs full district +
+ * The backend dry-run is still the source of truth - it runs full district +
  * duplicate validation. This is a fast first read so the modal feels instant.
  */
 

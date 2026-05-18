@@ -84,7 +84,7 @@ class UploadPreviewRow(BaseModel):
 
 
 class UploadPreviewResponse(BaseModel):
-    """Dry-run response — no rows are written to the DB."""
+    """Dry-run response - no rows are written to the DB."""
     summary: UploadPreviewSummary
     valid_sample: List[UploadPreviewRow] = []  # first ~50 valid rows, for the table preview
     invalid_rows: List[UploadError] = []  # all invalid rows with reasons

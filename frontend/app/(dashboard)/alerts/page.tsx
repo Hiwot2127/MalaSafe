@@ -94,7 +94,7 @@ export default function AlertsPage() {
         }
       />
 
-      {/* Section 001 — Summary */}
+      {/* Section 001 - Summary */}
       <section className="flex flex-col gap-5">
         <SectionHeader
           index="001"
@@ -140,7 +140,7 @@ export default function AlertsPage() {
         </EditorialCard>
       </section>
 
-      {/* Section 002 — Active alerts */}
+      {/* Section 002 - Active alerts */}
       <section className="flex flex-col gap-5">
         <SectionHeader index="002" label="Roster" tone="signal">
           <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">

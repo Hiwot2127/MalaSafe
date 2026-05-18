@@ -2,7 +2,7 @@
 
 Mirrors the transform in temp/climate-pipeline/08_feature_engineering.py so the
 model gets the exact same shape at inference time. The single source of truth
-is the column list inside model_card.json (predictor.feats) — this module
+is the column list inside model_card.json (predictor.feats) - this module
 must produce values for every name in that list.
 
 Design:
@@ -11,7 +11,7 @@ Design:
     relative to target_month.
   - Anomalies use a static (ADM3_PCODE, gregorian_month) baseline loaded from
     `models/regional_baselines.json` (written by scripts/compute_baselines.py).
-  - Missing lags / climate are encoded as NaN — LightGBM handles missing natively.
+  - Missing lags / climate are encoded as NaN - LightGBM handles missing natively.
   - is_warm = True when we have at least 3 prior months of MalariaData.
 """
 from __future__ import annotations
@@ -75,7 +75,7 @@ class FeatureContext:
 
 
 # ---------------------------------------------------------------------------
-# Helpers — match 08_feature_engineering.py semantics
+# Helpers - match 08_feature_engineering.py semantics
 # ---------------------------------------------------------------------------
 def month_index(target: date) -> int:
     return (pd.Timestamp(target).to_period("M") - MONTH_INDEX_ANCHOR).n

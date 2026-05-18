@@ -2,7 +2,7 @@
 
 Ports the offline pipeline's `03a_fetch_chirps.py` for online use: download
 ONE month's Africa-wide monthly rainfall raster from UCSB, gunzip it, return
-the local path. Pure HTTP — no API key, no SDK.
+the local path. Pure HTTP - no API key, no SDK.
 
 Source: https://data.chc.ucsb.edu/products/CHIRPS-2.0/africa_monthly/tifs/
 File:   chirps-v2.0.YYYY.MM.tif.gz  (~1-2 MB gzipped, ~5km Africa coverage)
@@ -60,7 +60,7 @@ def download_month(year: int, month: int, dest_dir: Path) -> Path:
 def is_provisional(target_month: date, today: date | None = None) -> bool:
     """Treat months younger than CHIRPS_PROVISIONAL_DAYS as preliminary.
 
-    The offline pipeline uses a fixed 90-day window — same default here.
+    The offline pipeline uses a fixed 90-day window - same default here.
     """
     cutoff = today or date.today()
     age_days = (cutoff - target_month).days

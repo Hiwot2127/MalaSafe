@@ -67,7 +67,7 @@ def ec_to_gregorian(ec_str: str) -> date | None:
     if g_month > 12:
         g_month -= 12
         g_year += 1
-    if em == 13:  # Pagume — intercalary days, attach to August of the next G-year-1
+    if em == 13:  # Pagume - intercalary days, attach to August of the next G-year-1
         # Pagume rolls over to early Sep but is small (5-6 days). For monthly
         # aggregation we lump it into August preceding the new EC year start.
         g_month = 8

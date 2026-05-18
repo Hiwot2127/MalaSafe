@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     # backtest/drift, dispatch retrain).
     MONTHLY_CLOSE_MAX_MONTHS: int = 2
 
-    # Phase 4 — climate fetch pipeline. Paths default to bundled assets; the
+    # Phase 4 - climate fetch pipeline. Paths default to bundled assets; the
     # Copernicus CDS credentials are read from ~/.cdsapirc by the cdsapi
     # client, so URL/KEY env vars stay optional (only set them in deploys
     # where the rc file isn't present).

@@ -137,7 +137,7 @@ export default function MonthlyClosePage() {
         )}
       </section>
 
-      {/* Climate fetch report — the Phase 4 surface */}
+      {/* Climate fetch report - the Phase 4 surface */}
       <section className="flex flex-col gap-5">
         <SectionHeader index="002" label="Climate fetch" />
         <ClimateReport climate={climate} />
@@ -185,7 +185,7 @@ function SectionHeader({ index, label, children }: { index: string; label: strin
 function StageList({ close }: { close: MonthlyCloseDetail }) {
   const failed = close.status === "failed";
   const completed = close.status === "completed";
-  // When the pipeline is fully done, all stages should render as ✓ — no
+  // When the pipeline is fully done, all stages should render as ✓ - no
   // lingering spinner on the final "Completed" row.
   const currentIdx = completed
     ? STAGES.length
@@ -244,7 +244,7 @@ function ClimateReport({ climate }: { climate: Record<string, unknown> | string 
     return <EmptyNote text={climate} />;
   }
   const errors = (climate.errors as string[] | undefined) ?? [];
-  const target = (climate.target_month as string | undefined) ?? "—";
+  const target = (climate.target_month as string | undefined) ?? "-";
   return (
     <div className="flex flex-col gap-5 border border-border bg-card p-5">
       <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
@@ -302,9 +302,9 @@ function BacktestRows({ rows, totalCount }: { rows: BacktestRow[]; totalCount: n
             <tr key={r.id} className="border-b border-border/60 last:border-0">
               <td className="px-4 py-2 font-mono text-xs text-muted-foreground tabular-nums">{r.district_id.slice(0, 8)}</td>
               <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.actual_cases}</td>
-              <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.predicted_cases ?? "—"}</td>
-              <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.abs_error ?? "—"}</td>
-              <td className="px-4 py-2 text-right font-mono text-xs uppercase tracking-[0.18em]">{r.within_q10_q90 === null ? "—" : r.within_q10_q90 ? "yes" : "no"}</td>
+              <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.predicted_cases ?? "-"}</td>
+              <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.abs_error ?? "-"}</td>
+              <td className="px-4 py-2 text-right font-mono text-xs uppercase tracking-[0.18em]">{r.within_q10_q90 === null ? "-" : r.within_q10_q90 ? "yes" : "no"}</td>
             </tr>
           ))}
         </tbody>
@@ -320,7 +320,7 @@ function BacktestRows({ rows, totalCount }: { rows: BacktestRow[]; totalCount: n
 
 function DriftSummary({ stats }: { stats: Record<string, unknown> }) {
   // Backend stats only carry n_findings + n_critical; derive warn so we
-  // don't show a "—" placeholder when total > critical.
+  // don't show a "-" placeholder when total > critical.
   const findings = typeof stats.n_findings === "number" ? stats.n_findings : null;
   const critical = typeof stats.n_critical === "number" ? stats.n_critical : null;
   const warn =
@@ -399,13 +399,13 @@ function formatMonthLabel(monthIso: string): string {
 }
 
 function asNumber(v: unknown): string {
-  if (v === null || v === undefined) return "—";
+  if (v === null || v === undefined) return "-";
   if (typeof v === "number") return v.toLocaleString();
   return String(v);
 }
 
 function asFloat(v: unknown): string {
-  if (v === null || v === undefined) return "—";
-  if (typeof v === "number") return Number.isFinite(v) ? v.toFixed(2) : "—";
+  if (v === null || v === undefined) return "-";
+  if (typeof v === "number") return Number.isFinite(v) ? v.toFixed(2) : "-";
   return String(v);
 }

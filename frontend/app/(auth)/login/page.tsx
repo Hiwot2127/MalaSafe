@@ -49,7 +49,7 @@ function LoginForm() {
 
   return (
     <div className="grid min-h-screen grid-cols-1 bg-background text-foreground lg:grid-cols-[1.05fr_1fr]">
-      {/* Editorial column — visible on lg+ */}
+      {/* Editorial column - visible on lg+ */}
       <aside className="relative hidden flex-col justify-between bg-primary px-12 py-14 text-primary-foreground lg:flex">
         <div className="flex flex-col gap-5">
           <LogoMark size={56} variant="outline" className="text-primary-foreground" />
@@ -71,7 +71,7 @@ function LoginForm() {
             Predict the cases.
           </h2>
           <p className="font-sans text-base leading-relaxed opacity-80">
-            Operational malaria surveillance for the Ethiopian highlands —
+            Operational malaria surveillance for the Ethiopian highlands -
             monthly case ingest, climate fusion, drift checks, and a re-prediction
             in time for the next outbreak window.
           </p>

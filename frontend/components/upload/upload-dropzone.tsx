@@ -16,7 +16,7 @@ export function UploadDropzone({
   onFile,
   disabled = false,
   accept = ".csv",
-  maxBytes = 10 * 1024 * 1024, // 10MB — matches backend MAX_UPLOAD_SIZE
+  maxBytes = 10 * 1024 * 1024, // 10MB - matches backend MAX_UPLOAD_SIZE
 }: UploadDropzoneProps) {
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -59,7 +59,7 @@ export function UploadDropzone({
       >
         <input {...getInputProps()} />
 
-        {/* Decorative corner ticks — the journal layout hint. */}
+        {/* Decorative corner ticks - the journal layout hint. */}
         <span className="absolute left-2 top-2 size-3 border-l border-t border-border" aria-hidden />
         <span className="absolute right-2 top-2 size-3 border-r border-t border-border" aria-hidden />
         <span className="absolute bottom-2 left-2 size-3 border-b border-l border-border" aria-hidden />

@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "MalaSafe — Malaria Surveillance",
+  title: "MalaSafe - Malaria Surveillance",
   description: "Malaria surveillance and prediction system for Ethiopia",
 };
 

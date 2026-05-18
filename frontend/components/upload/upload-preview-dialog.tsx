@@ -151,7 +151,7 @@ export function UploadPreviewDialog({
           </div>
         )}
 
-        {/* Uploading state — replaces tabs while the request is in flight. */}
+        {/* Uploading state - replaces tabs while the request is in flight. */}
         {confirming && (
           <div className="flex flex-col items-center justify-center gap-4 border-b border-border px-6 py-16 text-center">
             <Loader2 aria-hidden className="size-7 animate-spin text-muted-foreground" strokeWidth={1.5} />
@@ -162,7 +162,7 @@ export function UploadPreviewDialog({
           </div>
         )}
 
-        {/* File-level blocker — disables the confirm button. */}
+        {/* File-level blocker - disables the confirm button. */}
         {!confirming && hasFileBlocker && (
           <div className="border-b border-border px-6 py-4">
             <Alert
@@ -210,7 +210,7 @@ export function UploadPreviewDialog({
                       {validSampleRows.map((r, i) => (
                         <TableRow key={i} className="border-border/60">
                           <TableCell className="font-mono text-xs tabular-nums text-muted-foreground">
-                            {r.rowNumber || "—"}
+                            {r.rowNumber || "-"}
                           </TableCell>
                           {validColumns.map((c) => (
                             <TableCell
@@ -232,7 +232,7 @@ export function UploadPreviewDialog({
                   hint={
                     nothingToImport
                       ? "Fix the issues in the Invalid tab and re-upload."
-                      : "Server-side checks may still find duplicates — see other tabs."
+                      : "Server-side checks may still find duplicates - see other tabs."
                   }
                   tone={nothingToImport ? "warn" : "valid"}
                 />
@@ -245,7 +245,7 @@ export function UploadPreviewDialog({
             </TabsContent>
 
             <TabsContent value="invalid" className="mt-0">
-              <ErrorList rows={invalidRows} emptyLabel="No invalid rows — this file will import cleanly." />
+              <ErrorList rows={invalidRows} emptyLabel="No invalid rows - this file will import cleanly." />
             </TabsContent>
 
             <TabsContent value="duplicates" className="mt-0">
@@ -356,7 +356,7 @@ function ErrorList({ rows, emptyLabel }: { rows: UploadError[]; emptyLabel: stri
             className="flex items-start gap-4 border-b border-border/60 py-3 last:border-0"
           >
             <span className="w-12 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-              row {e.row ?? "—"}
+              row {e.row ?? "-"}
             </span>
             <div className="min-w-0 flex-1">
               <p className="font-sans text-sm text-foreground">{e.error}</p>
@@ -408,6 +408,6 @@ function inferColumns(rows: Array<Record<string, string | number | null>>): stri
 }
 
 function formatCell(v: string | number | null | undefined): string {
-  if (v === null || v === undefined || v === "") return "—";
+  if (v === null || v === undefined || v === "") return "-";
   return String(v);
 }

@@ -189,7 +189,7 @@ export default function RiskMap({ data }: { data: RiskMapResponse }) {
       </div>
       {points.length === 0 && (
         <p className="border-t border-border bg-card px-4 py-3 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-          No district coordinates returned — markers can&apos;t be plotted.
+          No district coordinates returned - markers can&apos;t be plotted.
         </p>
       )}
     </>

@@ -8,7 +8,7 @@ import type {
 const FORM_HEADERS = { "Content-Type": "multipart/form-data" } as const;
 
 export const uploadsApi = {
-  /** Upload monthly malaria CSV (real upload — writes to DB). */
+  /** Upload monthly malaria CSV (real upload - writes to DB). */
   uploadMalaria: async (file: File): Promise<UploadResponse> => {
     const formData = new FormData();
     formData.append("file", file);
@@ -21,7 +21,7 @@ export const uploadsApi = {
   },
 
   /**
-   * Dry-run the monthly upload — same parsing + per-row validation as the
+   * Dry-run the monthly upload - same parsing + per-row validation as the
    * real endpoint, but no rows are written. Powers the pre-upload modal.
    */
   previewMonthlyMalariaUpload: async (file: File): Promise<UploadPreviewResponse> => {
