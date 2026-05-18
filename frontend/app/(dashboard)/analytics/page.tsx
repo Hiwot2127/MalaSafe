@@ -51,19 +51,25 @@ export default function AnalyticsPage() {
   const averageCfr =
     totals.cases > 0 ? ((totals.deaths / totals.cases) * 100).toFixed(2) : '0.00';
 
-  // Sparkline geometry (cases over time).
-  const maxCases = trends.reduce((m, t) => Math.max(m, t.cases), 0);
-  const sparkPoints = trends.length
-    ? trends
-        .slice()
-        .reverse()
-        .map((t, i) => {
-          const x = (i / Math.max(trends.length - 1, 1)) * 100;
-          const y = maxCases === 0 ? 50 : 50 - (t.cases / maxCases) * 45;
-          return `${x.toFixed(2)},${y.toFixed(2)}`;
-        })
-        .join(' ')
-    : '';
+  // Sparkline geometry — cases + deaths over time. Each series is normalised
+  // against the max of the cases series so death movement is visible on the
+  // same axis without overwhelming a death line that's an order of magnitude
+  // smaller than the cases line.
+  const seriesMax = trends.reduce((m, t) => Math.max(m, t.cases), 0);
+  const buildPoints = (key: 'cases' | 'deaths') =>
+    trends.length
+      ? trends
+          .slice()
+          .reverse()
+          .map((t, i) => {
+            const x = (i / Math.max(trends.length - 1, 1)) * 100;
+            const y = seriesMax === 0 ? 50 : 50 - (t[key] / seriesMax) * 45;
+            return `${x.toFixed(2)},${y.toFixed(2)}`;
+          })
+          .join(' ')
+      : '';
+  const casesPoints = buildPoints('cases');
+  const deathsPoints = buildPoints('deaths');
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-14">
@@ -82,6 +88,7 @@ export default function AnalyticsPage() {
         <SectionHeader
           index="001"
           label={trendType === 'weekly' ? 'Weekly series' : 'Monthly series'}
+          tone="signal"
         >
           <EditorialSelect
             value={trendType}
@@ -126,13 +133,6 @@ export default function AnalyticsPage() {
                   className="h-32 w-full"
                   aria-hidden
                 >
-                  <polyline
-                    fill="none"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth="0.8"
-                    points={sparkPoints}
-                    vectorEffect="non-scaling-stroke"
-                  />
                   <line
                     x1="0"
                     y1="49.5"
@@ -142,7 +142,36 @@ export default function AnalyticsPage() {
                     strokeWidth="0.5"
                     vectorEffect="non-scaling-stroke"
                   />
+                  <polyline
+                    fill="none"
+                    stroke="hsl(var(--chart-1))"
+                    strokeWidth="1"
+                    points={casesPoints}
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  <polyline
+                    fill="none"
+                    stroke="hsl(var(--chart-2))"
+                    strokeWidth="1"
+                    strokeDasharray="2 1.5"
+                    points={deathsPoints}
+                    vectorEffect="non-scaling-stroke"
+                  />
                 </svg>
+                <div className="flex items-center gap-5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  <span className="inline-flex items-center gap-2">
+                    <span aria-hidden className="inline-block size-2.5 bg-chart-1" />
+                    Cases
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <span
+                      aria-hidden
+                      className="inline-block h-[2px] w-3 bg-chart-2"
+                      style={{ background: 'repeating-linear-gradient(90deg, hsl(var(--chart-2)) 0 4px, transparent 4px 7px)' }}
+                    />
+                    Deaths
+                  </span>
+                </div>
                 <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground tabular-nums">
                   <span>{trends[trends.length - 1]?.period ?? '—'}</span>
                   <span>{trends[0]?.period ?? '—'}</span>
@@ -156,7 +185,7 @@ export default function AnalyticsPage() {
             </EditorialCard>
 
             {/* Section 002 — Table */}
-            <SectionHeader index="002" label="Periods">
+            <SectionHeader index="002" label="Periods" tone="signal">
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
                 {trends.length} rows
               </span>
