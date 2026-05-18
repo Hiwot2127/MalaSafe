@@ -1,14 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Activity, HeartPulse, Sparkles, TrendingUp } from 'lucide-react';
 import { analyticsApi } from '@/lib/api/analytics';
 import { TrendDataPoint } from '@/types/analytics';
 import {
+  AlertBanner,
   EditorialCard,
   EditorialSelect,
+  EmptyState,
+  LoadingScreen,
   Metric,
   PageHeader,
   SectionHeader,
+  StatCard,
 } from '@/components/editorial';
 
 type TrendType = 'weekly' | 'monthly';
@@ -83,6 +88,37 @@ export default function AnalyticsPage() {
         }
       />
 
+      {/* Headline tiles */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          eyebrow="Total cases"
+          value={totals.cases.toLocaleString()}
+          caption={`${trends.length} ${trendType === 'weekly' ? 'weeks' : 'months'}`}
+          icon={Activity}
+          tone="signal"
+        />
+        <StatCard
+          eyebrow="Total deaths"
+          value={totals.deaths.toLocaleString()}
+          caption={`CFR ${averageCfr}%`}
+          icon={HeartPulse}
+          tone={parseFloat(averageCfr) > 1 ? 'error' : 'valid'}
+        />
+        <StatCard
+          eyebrow="Avg CFR"
+          value={`${averageCfr}%`}
+          caption="Across window"
+          icon={TrendingUp}
+          tone={parseFloat(averageCfr) > 1 ? 'warn' : 'valid'}
+        />
+        <StatCard
+          eyebrow="Periods"
+          value={trends.length.toLocaleString()}
+          caption={trendType === 'weekly' ? 'Weekly bins' : 'Monthly bins'}
+          icon={Sparkles}
+        />
+      </section>
+
       {/* Section 001 - Series */}
       <section className="flex flex-col gap-5">
         <SectionHeader
@@ -102,19 +138,14 @@ export default function AnalyticsPage() {
         </SectionHeader>
 
         {loading ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-            Loading series…
-          </p>
+          <LoadingScreen caption="Loading series" />
         ) : error ? (
-          <div className="border border-status-error/40 bg-status-error-tint px-4 py-3 font-sans text-sm text-status-error">
-            {error}
-          </div>
+          <AlertBanner tone="error" title="Couldn't load trends" description={error} />
         ) : trends.length === 0 ? (
-          <EditorialCard className="px-6 py-10">
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-              No trend data available
-            </p>
-          </EditorialCard>
+          <EmptyState
+            title="No trend data available"
+            description="Upload a monthly malaria CSV to seed the trend series."
+          />
         ) : (
           <>
             {/* Sparkline strip + summary */}

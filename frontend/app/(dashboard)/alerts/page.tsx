@@ -4,10 +4,15 @@ import { useEffect, useState } from 'react';
 import { debounce, useQueryStates } from 'nuqs';
 import { alertsApi, type AlertsListResponse } from '@/lib/api/alerts';
 import { formatDateTime } from '@/lib/utils';
+import Link from 'next/link';
+import { ArrowUpRight } from 'lucide-react';
 import {
+  AlertBanner,
   EditorialCard,
   EditorialInput,
   EditorialSelect,
+  EmptyState,
+  LoadingScreen,
   Metric,
   PageHeader,
   SectionHeader,
@@ -193,69 +198,69 @@ export default function AlertsPage() {
         </SectionHeader>
 
         {loading ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-            Loading alerts…
-          </p>
+          <LoadingScreen caption="Loading alerts" />
         ) : error ? (
-          <div className="border border-status-error/40 bg-status-error-tint px-4 py-3 font-sans text-sm text-status-error">
-            {error}
-          </div>
+          <AlertBanner tone="error" title="Couldn't load alerts" description={error} />
         ) : data.alerts.length === 0 ? (
-          <EditorialCard className="px-6 py-10">
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-              No alerts found · last checked {formatDateTime(new Date())}
-            </p>
-          </EditorialCard>
+          <EmptyState
+            eyebrow={`Last checked ${formatDateTime(new Date())}`}
+            title="No alerts match the current filter"
+            description="Try widening the risk filter, switching to All, or clearing the search box."
+          />
         ) : (
-          <EditorialCard className="overflow-hidden">
-            <ul className="flex flex-col divide-y divide-border">
-              {data.alerts.map((alert, i) => (
-                <li
+          <div className="flex flex-col gap-3">
+            {data.alerts.map((alert, i) => {
+              const tone = riskStatus(alert.risk_level);
+              const banner = tone === 'neutral' ? 'info' : tone;
+              const index = String((page - 1) * pageSize + i + 1).padStart(3, '0');
+              const meta = [alert.region, formatDateTime(alert.created_at)]
+                .filter(Boolean)
+                .join(' · ');
+              return (
+                <AlertBanner
                   key={alert.id}
-                  className="grid grid-cols-[auto_1fr_auto] items-baseline gap-x-6 gap-y-2 px-5 py-4 transition-colors hover:bg-secondary/40"
-                >
-                  <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
-                    {String((page - 1) * pageSize + i + 1).padStart(3, '0')}
-                  </span>
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center gap-3">
-                      <p className="font-display font-semibold text-base leading-tight tracking-tight">
-                        {alert.district_name || 'Unknown district'}
-                      </p>
-                      <StatusPill kind={riskStatus(alert.risk_level)}>
-                        {riskLabel(alert.risk_level)}
-                      </StatusPill>
-                      {alert.is_active ? (
-                        <StatusPill kind="neutral">Active</StatusPill>
-                      ) : null}
+                  tone={banner}
+                  title={`${index} · ${alert.district_name || 'Unknown district'}`}
+                  description={
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-foreground/90">{alert.message}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusPill kind={riskStatus(alert.risk_level)}>
+                          {riskLabel(alert.risk_level)}
+                        </StatusPill>
+                        {alert.is_active ? (
+                          <StatusPill kind="neutral">Active</StatusPill>
+                        ) : null}
+                        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
+                          {meta}
+                        </span>
+                      </div>
                     </div>
-                    <p className="font-sans text-sm text-foreground/85">{alert.message}</p>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
-                      {alert.region ? `${alert.region} · ` : ''}
-                      {formatDateTime(alert.created_at)}
-                    </p>
-                  </div>
-                  <span
-                    aria-hidden
-                    className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground"
-                  >
-                    {alert.risk_level === 'very_high'
-                      ? '★★'
-                      : alert.risk_level === 'high'
-                        ? '★'
-                        : '·'}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <Pagination
-              page={page}
-              pageSize={pageSize}
-              total={data.total}
-              unit="alerts"
-              onChange={(next) => setParams({ page: next })}
-            />
-          </EditorialCard>
+                  }
+                  action={
+                    alert.district_id ? (
+                      <Link
+                        href={`/predictions?district=${alert.district_id}`}
+                        className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:text-muted-foreground"
+                      >
+                        View district
+                        <ArrowUpRight className="size-3.5" strokeWidth={1.5} aria-hidden />
+                      </Link>
+                    ) : undefined
+                  }
+                />
+              );
+            })}
+            <EditorialCard className="overflow-hidden p-0">
+              <Pagination
+                page={page}
+                pageSize={pageSize}
+                total={data.total}
+                unit="alerts"
+                onChange={(next) => setParams({ page: next })}
+              />
+            </EditorialCard>
+          </div>
         )}
       </section>
     </div>
