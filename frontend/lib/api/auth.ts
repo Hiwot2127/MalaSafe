@@ -1,5 +1,8 @@
 import { apiClient } from './client';
+import { setSessionCookie } from './session-cookie';
 import { LoginRequest, LoginResponse, User } from '@/types/auth';
+
+export { setSessionCookie };
 
 export const authApi = {
   login: async (data: LoginRequest): Promise<LoginResponse> => {
@@ -17,6 +20,7 @@ export const authApi = {
 
   logout: () => {
     if (typeof window !== 'undefined') {
+      setSessionCookie(null);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
