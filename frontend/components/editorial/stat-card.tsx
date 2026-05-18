@@ -12,16 +12,32 @@ const TONE_STRIP: Record<NonNullable<Tone>, string> = {
   error: "bg-status-error",
 };
 
+// Tinted-circle backgrounds for the icon when iconStyle="circle".
+// Falls back to a neutral primary tint when no tone is set.
+const TONE_CIRCLE: Record<NonNullable<Tone>, string> = {
+  signal: "bg-accent-signal-tint text-accent-signal",
+  valid: "bg-status-valid-tint status-valid",
+  warn: "bg-status-warn-tint status-warn",
+  error: "bg-status-error-tint status-error",
+};
+const NEUTRAL_CIRCLE = "bg-primary/10 text-primary";
+
 interface StatCardProps {
   eyebrow: string;
   value: React.ReactNode;
   caption?: React.ReactNode;
   /** Optional change indicator (e.g. +12.4% week-over-week). */
   delta?: { value: string; direction: "up" | "down" | "flat"; status?: StatusKind };
-  /** Optional lucide icon component, rendered top-right. */
+  /** Optional lucide icon component. */
   icon?: LucideIcon;
   /** Optional left tone strip. */
   tone?: Tone;
+  /**
+   * "topright" - icon sits muted in the top-right (original behaviour).
+   * "circle"   - icon sits inside a tinted square at the top-left, colored
+   *              from the tone palette. Default in new pages.
+   */
+  iconStyle?: "topright" | "circle";
   className?: string;
 }
 
@@ -32,10 +48,12 @@ export function StatCard({
   delta,
   icon: Icon,
   tone = null,
+  iconStyle = "circle",
   className,
 }: StatCardProps) {
   const DeltaIcon =
     delta?.direction === "up" ? ArrowUpRight : delta?.direction === "down" ? ArrowDownRight : Minus;
+  const circleClass = tone ? TONE_CIRCLE[tone] : NEUTRAL_CIRCLE;
 
   return (
     <EditorialCard className={cn("relative overflow-hidden p-5", className)}>
@@ -45,18 +63,39 @@ export function StatCard({
           className={cn("absolute inset-y-3 left-0 w-[3px] rounded-r", TONE_STRIP[tone])}
         />
       ) : null}
-      <div className="flex items-start justify-between gap-3">
-        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-          {eyebrow}
-        </p>
-        {Icon ? (
-          <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
-        ) : null}
-      </div>
-      <p className="mt-3 font-display text-3xl font-semibold leading-none tabular-nums tracking-[-0.022em] text-foreground">
+
+      {iconStyle === "circle" && Icon ? (
+        <div className="mb-3 flex items-center gap-3">
+          <span
+            aria-hidden
+            className={cn("inline-flex size-10 items-center justify-center rounded-xl", circleClass)}
+          >
+            <Icon className="size-5" strokeWidth={1.75} />
+          </span>
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+            {eyebrow}
+          </p>
+        </div>
+      ) : (
+        <div className="flex items-start justify-between gap-3">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+            {eyebrow}
+          </p>
+          {Icon ? (
+            <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+          ) : null}
+        </div>
+      )}
+
+      <p
+        className={cn(
+          "font-display text-3xl font-semibold leading-none tabular-nums tracking-[-0.022em] text-foreground",
+          iconStyle === "circle" ? "mt-0" : "mt-3",
+        )}
+      >
         {value}
       </p>
-      <div className="mt-3 flex items-center gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         {delta ? (
           <StatusPill kind={delta.status ?? (delta.direction === "down" ? "error" : "valid")}>
             <DeltaIcon className="mr-1 inline size-3" strokeWidth={2} />

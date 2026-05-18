@@ -414,6 +414,7 @@ export { AlertBanner } from "./alert-banner";
 export { Avatar } from "./avatar";
 export { NotificationBell } from "./notification-bell";
 export { AlertCard } from "./alert-card";
+export { ProfileCard } from "./profile-card";
 export {
   Accordion,
   AccordionItem,
