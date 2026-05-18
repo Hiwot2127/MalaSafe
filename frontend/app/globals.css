@@ -143,30 +143,30 @@
     /* Sharp keylines, not rounded SaaS pills. */
     --radius: 0.25rem;
 
-    /* Domain accents — used directly via Tailwind arbitrary values where needed. */
-    --status-valid: 145 22% 38%;       /* muted sage — Ethiopian highland field */
+    /* Domain accents - used directly via Tailwind arbitrary values where needed. */
+    --status-valid: 145 22% 38%;       /* muted sage - Ethiopian highland field */
     --status-warn: 38 56% 50%;         /* saffron, earth tone */
     --status-error: 12 50% 46%;        /* clay terracotta */
 
-    /* Signal accent — teal viridian. Used for links, focus rings, "cases" series. */
+    /* Signal accent - teal viridian. Used for links, focus rings, "cases" series. */
     --accent-signal: 184 58% 36%;
     --accent-signal-foreground: 40 32% 98%;
 
-    /* Chart series palette — five distinct, perceptually-separated hues. */
-    --chart-1: 184 58% 36%;            /* teal — cases */
-    --chart-2: 12 50% 46%;             /* terracotta — deaths */
-    --chart-3: 252 28% 48%;            /* muted violet — predictions */
-    --chart-4: 38 56% 50%;             /* saffron — drift */
-    --chart-5: 202 48% 42%;            /* slate blue — climate */
+    /* Chart series palette - five distinct, perceptually-separated hues. */
+    --chart-1: 184 58% 36%;            /* teal - cases */
+    --chart-2: 12 50% 46%;             /* terracotta - deaths */
+    --chart-3: 252 28% 48%;            /* muted violet - predictions */
+    --chart-4: 38 56% 50%;             /* saffron - drift */
+    --chart-5: 202 48% 42%;            /* slate blue - climate */
 
-    /* Map sequential risk ramp — 5 stops, low → very high. */
+    /* Map sequential risk ramp - 5 stops, low → very high. */
     --risk-1: 145 22% 52%;             /* sage */
     --risk-2: 75 30% 50%;              /* olive */
     --risk-3: 38 56% 50%;              /* saffron */
     --risk-4: 20 56% 50%;              /* orange-clay */
     --risk-5: 12 50% 46%;              /* terracotta */
 
-    /* Font stacks — wired via geist/font in the root layout. */
+    /* Font stacks - wired via geist/font in the root layout. */
     --font-display: var(--font-geist-sans), system-ui, sans-serif;
     --font-sans: var(--font-geist-sans), system-ui, sans-serif;
     --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Consolas, monospace;
@@ -233,7 +233,7 @@
     font-feature-settings: 'ss01', 'ss03';
   }
 
-  /* Display text — Geist Sans at semibold weight with tightened tracking. */
+  /* Display text - Geist Sans at semibold weight with tightened tracking. */
   h1, h2, h3 {
     font-family: var(--font-display);
     font-weight: 600;
@@ -243,13 +243,13 @@
   h2 { letter-spacing: -0.018em; }
   h3 { letter-spacing: -0.014em; }
 
-  /* Tabular numerals for data — counts, durations, IDs. */
+  /* Tabular numerals for data - counts, durations, IDs. */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
 }
 
-/* Section labels — small monospaced eyebrow above each section, like
+/* Section labels - small monospaced eyebrow above each section, like
    numbered footnote references in an editorial layout. */
 .section-label {
   font-family: var(--font-mono);
@@ -260,7 +260,7 @@
   color: hsl(var(--muted-foreground));
 }
 
-/* Status pills — used by the validation modal tabs. */
+/* Status pills - used by the validation modal tabs. */
 .status-valid { color: hsl(var(--status-valid)); }
 .status-warn { color: hsl(var(--status-warn)); }
 .status-error { color: hsl(var(--status-error)); }
@@ -269,7 +269,7 @@
 .bg-status-error-tint { background-color: hsl(var(--status-error) / 0.18); }
 .bg-accent-signal-tint { background-color: hsl(var(--accent-signal) / 0.10); }
 
-/* Timeline stage reveal — used by upload-timeline.tsx. */
+/* Timeline stage reveal - used by upload-timeline.tsx. */
 @keyframes stage-in {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -285,7 +285,7 @@
   z-index: 0;
 }
 
-/* Custom risk-marker hover card — strip leaflet's default tooltip chrome */
+/* Custom risk-marker hover card - strip leaflet's default tooltip chrome */
 .leaflet-tooltip.risk-tooltip,
 .leaflet-tooltip-top.risk-tooltip,
 .leaflet-tooltip-bottom.risk-tooltip,

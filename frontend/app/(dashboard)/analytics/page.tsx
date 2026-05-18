@@ -51,7 +51,7 @@ export default function AnalyticsPage() {
   const averageCfr =
     totals.cases > 0 ? ((totals.deaths / totals.cases) * 100).toFixed(2) : '0.00';
 
-  // Sparkline geometry — cases + deaths over time. Each series is normalised
+  // Sparkline geometry - cases + deaths over time. Each series is normalised
   // against the max of the cases series so death movement is visible on the
   // same axis without overwhelming a death line that's an order of magnitude
   // smaller than the cases line.
@@ -59,14 +59,14 @@ export default function AnalyticsPage() {
   const buildPoints = (key: 'cases' | 'deaths') =>
     trends.length
       ? trends
-          .slice()
-          .reverse()
-          .map((t, i) => {
-            const x = (i / Math.max(trends.length - 1, 1)) * 100;
-            const y = seriesMax === 0 ? 50 : 50 - (t[key] / seriesMax) * 45;
-            return `${x.toFixed(2)},${y.toFixed(2)}`;
-          })
-          .join(' ')
+        .slice()
+        .reverse()
+        .map((t, i) => {
+          const x = (i / Math.max(trends.length - 1, 1)) * 100;
+          const y = seriesMax === 0 ? 50 : 50 - (t[key] / seriesMax) * 45;
+          return `${x.toFixed(2)},${y.toFixed(2)}`;
+        })
+        .join(' ')
       : '';
   const casesPoints = buildPoints('cases');
   const deathsPoints = buildPoints('deaths');
@@ -83,7 +83,7 @@ export default function AnalyticsPage() {
         }
       />
 
-      {/* Section 001 — Series */}
+      {/* Section 001 - Series */}
       <section className="flex flex-col gap-5">
         <SectionHeader
           index="001"
@@ -92,12 +92,13 @@ export default function AnalyticsPage() {
         >
           <EditorialSelect
             value={trendType}
-            onChange={(e) => setTrendType(e.target.value as TrendType)}
+            onChange={(next) => setTrendType(next as TrendType)}
             aria-label="Trend type"
-          >
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-          </EditorialSelect>
+            options={[
+              { value: 'weekly', label: 'Weekly' },
+              { value: 'monthly', label: 'Monthly' },
+            ]}
+          />
         </SectionHeader>
 
         {loading ? (
@@ -173,8 +174,8 @@ export default function AnalyticsPage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground tabular-nums">
-                  <span>{trends[trends.length - 1]?.period ?? '—'}</span>
-                  <span>{trends[0]?.period ?? '—'}</span>
+                  <span>{trends[trends.length - 1]?.period ?? '-'}</span>
+                  <span>{trends[0]?.period ?? '-'}</span>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-px bg-border sm:grid-cols-3 lg:grid-cols-1 lg:divide-y lg:divide-border lg:bg-card">
@@ -184,7 +185,7 @@ export default function AnalyticsPage() {
               </div>
             </EditorialCard>
 
-            {/* Section 002 — Table */}
+            {/* Section 002 - Table */}
             <SectionHeader index="002" label="Periods" tone="signal">
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
                 {trends.length} rows
@@ -245,9 +246,8 @@ function Th({
 }) {
   return (
     <th
-      className={`px-4 py-3 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground ${
-        align === 'right' ? 'text-right' : 'text-left'
-      }`}
+      className={`px-4 py-3 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground ${align === 'right' ? 'text-right' : 'text-left'
+        }`}
     >
       {children}
     </th>
@@ -265,9 +265,8 @@ function Td({
 }) {
   return (
     <td
-      className={`px-4 py-3 font-sans text-sm text-foreground ${
-        align === 'right' ? 'text-right' : 'text-left'
-      } ${numeric ? 'font-mono tabular-nums' : ''}`}
+      className={`px-4 py-3 font-sans text-sm text-foreground ${align === 'right' ? 'text-right' : 'text-left'
+        } ${numeric ? 'font-mono tabular-nums' : ''}`}
     >
       {children}
     </td>

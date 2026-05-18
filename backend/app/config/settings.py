@@ -31,9 +31,6 @@ class Settings(BaseSettings):
     CORS_ALLOW_METHODS: List[str] = ["*"]
     CORS_ALLOW_HEADERS: List[str] = ["*"]
     
-    # Redis
-    REDIS_URL: str = "redis://localhost:6379/0"
-    
     # File Upload
     MAX_UPLOAD_SIZE: int = 10485760  # 10MB
     UPLOAD_DIR: str = "./uploads"
@@ -42,18 +39,16 @@ class Settings(BaseSettings):
     MODEL_PATH: str = "./models"
     MODEL_VERSION: str = "1.0.0"
 
-    # Monthly Close pipeline. ON by default now that migration 003 is applied
-    # and the model_versions row is seeded. The Celery task is currently a stub
-    # (Phase 7 fills in the orchestration); MonthlyClose rows will sit in
-    # `pending` status until then. Set MONTHLY_CLOSE_ENABLED=false to disable
-    # dispatch entirely (e.g. in a deploy without Redis available).
+    # Monthly Close pipeline. ON by default. Orchestration runs in-process
+    # via asyncio.create_task() from the upload service. Set to false to
+    # skip dispatch entirely (closes will sit in `pending`).
     MONTHLY_CLOSE_ENABLED: bool = True
     # Distinct (year, month) tuples above this count switch the upload from
     # "close" mode (backtest + drift + re-predict) to "backfill" mode (skip
     # backtest/drift, dispatch retrain).
     MONTHLY_CLOSE_MAX_MONTHS: int = 2
 
-    # Phase 4 — climate fetch pipeline. Paths default to bundled assets; the
+    # Phase 4 - climate fetch pipeline. Paths default to bundled assets; the
     # Copernicus CDS credentials are read from ~/.cdsapirc by the cdsapi
     # client, so URL/KEY env vars stay optional (only set them in deploys
     # where the rc file isn't present).

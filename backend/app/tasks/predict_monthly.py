@@ -4,14 +4,15 @@ For each district with a P-code, generate a prediction for next month. Climate
 for the target month is filled using climatological-normals (the predictor's
 features.py already falls back to baselines when ClimateData is missing).
 
-This task is idempotent on (district_id, prediction_date) -- safe to re-run.
+This task is idempotent on (district_id, prediction_date) — safe to re-run.
+
+Runs in-process via asyncio. Trigger via the admin endpoint
+`POST /monthly-close/predict-monthly` (see app/routes/monthly_close.py) or
+schedule it externally (system cron, GitHub Actions, deploy-platform cron).
 """
 from __future__ import annotations
 
-import asyncio
-from datetime import date, timedelta
-
-from app.tasks.celery_app import celery_app
+from datetime import date
 
 
 def _next_month(today: date) -> date:
@@ -20,10 +21,8 @@ def _next_month(today: date) -> date:
     return date(today.year, today.month + 1, 1)
 
 
-@celery_app.task(name="app.tasks.predict_monthly.run_monthly_predictions",
-                  bind=True, max_retries=2, default_retry_delay=600)
-def run_monthly_predictions(self, target_month: str | None = None) -> dict:
-    """Synchronous Celery wrapper that drives an async batch predict.
+async def run_monthly_predictions(target_month: str | None = None) -> dict:
+    """Drive an async batch predict for the next calendar month.
 
     Args:
       target_month: ISO date string (YYYY-MM-DD) of first-of-month; if None,
@@ -33,11 +32,8 @@ def run_monthly_predictions(self, target_month: str | None = None) -> dict:
       {"target_month": str, "n_districts": int}
     """
     tm = date.fromisoformat(target_month) if target_month else _next_month(date.today())
-    try:
-        n = asyncio.run(_run(tm))
-        return {"target_month": tm.isoformat(), "n_districts": n}
-    except Exception as exc:
-        raise self.retry(exc=exc)
+    n = await _run(tm)
+    return {"target_month": tm.isoformat(), "n_districts": n}
 
 
 async def _run(target_month: date) -> int:

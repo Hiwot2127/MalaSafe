@@ -2,9 +2,9 @@
 
 Ports `04_zonal_stats.py` for online use:
 
-  * ``aggregate_chirps`` — mean monthly rainfall (mm) per woreda from one
+  * ``aggregate_chirps`` - mean monthly rainfall (mm) per woreda from one
     CHIRPS GeoTIFF.
-  * ``aggregate_era5`` — per-woreda monthly mean temperature (°C), min/max
+  * ``aggregate_era5`` - per-woreda monthly mean temperature (°C), min/max
     proxies (AvgTemp ± 5°C, the offline pipeline's diurnal-range proxy),
     and Magnus-formula relative humidity (%) from one ERA5-Land NetCDF.
 
@@ -61,7 +61,7 @@ def aggregate_era5(
     ERA5-Land is ~9 km; centroid sampling is sufficient for woreda-level
     aggregates (matches the offline pipeline). The offline pipeline derives
     Min/Max from the monthly mean ± 5°C, the typical Ethiopian DTR
-    half-width — preserved here for feature parity with the trained model.
+    half-width - preserved here for feature parity with the trained model.
 
     Returns ``{ADM3_PCODE: {temperature, min_temp, max_temp, humidity}}``.
     Missing values are emitted as ``None``.
@@ -123,7 +123,7 @@ def aggregate_era5(
 def _load_features(shapefile_path: Path) -> list[dict]:
     """Read the woreda shapefile as a list of GeoJSON Feature dicts.
 
-    rasterstats requires the dicts to have a ``"type": "Feature"`` envelope —
+    rasterstats requires the dicts to have a ``"type": "Feature"`` envelope -
     fiona records don't expose that at the top level, so we materialize it.
     """
     with fiona.open(str(shapefile_path)) as src:

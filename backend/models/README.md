@@ -1,20 +1,20 @@
-# `backend/models/` — trained model artifacts
+# `backend/models/` - trained model artifacts
 
 Everything the predictor reads at startup. ~11 MB total; small enough to live in
-git (no LFS). Do not edit by hand — replace as a set after retraining.
+git (no LFS). Do not edit by hand - replace as a set after retraining.
 
 ## What's in this directory
 
 | File | Size | Source | Purpose |
 |---|---|---|---|
-| `lightgbm_main.txt` | 3.1 MB | climate-pipeline Stage 9 | Main Poisson booster — predicts case count |
+| `lightgbm_main.txt` | 3.1 MB | climate-pipeline Stage 9 | Main Poisson booster - predicts case count |
 | `lightgbm_q10.txt` | 2.7 MB | climate-pipeline Stage 9 | Quantile α=0.1, lower edge of confidence interval |
 | `lightgbm_q90.txt` | 2.7 MB | climate-pipeline Stage 9 | Quantile α=0.9, upper edge of confidence interval |
 | `lightgbm_coldstart.txt` | 2.1 MB | climate-pipeline Stage 9 | Fallback for facilities with no case history |
 | `risk_thresholds.json` | 108 KB | climate-pipeline Stage 9 | Per-woreda p50/p75/p95 cutoffs for risk binning |
 | `model_card.json` | 8 KB | climate-pipeline Stage 9 | Version, training metrics, feature list, gates |
 | `regional_baselines.json` | 808 KB | `scripts/compute_baselines.py` | Per-(P-code, month) climate means for anomaly features |
-| `README.md` | — | this file | — |
+| `README.md` | - | this file | - |
 
 ## `model_card.json` schema
 
@@ -60,7 +60,7 @@ Lookup order in the predictor: `by_pcode[district_code]` → `by_region[district
 | p75 < pred ≤ p95 | `high` |
 | > p95 | `very_high` |
 
-## `regional_baselines.json` — special case
+## `regional_baselines.json` - special case
 
 This file is **not** produced by the trainer. It's generated against the live
 DB by `scripts/compute_baselines.py`:

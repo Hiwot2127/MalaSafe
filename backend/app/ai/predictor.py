@@ -86,7 +86,7 @@ class MalariaPredictor:
             raw = self.cold.predict(df, num_iteration=self.cold.best_iteration)[0]
             pred = float(raw) * float(max(tests_hint, 1.0))
 
-        # 3. Confidence — quantile interval (warm only; cold gets a flat prior)
+        # 3. Confidence - quantile interval (warm only; cold gets a flat prior)
         if is_warm:
             df_full = to_dataframe(f, self.feats)
             q10_log = float(self.q10.predict(df_full, num_iteration=self.q10.best_iteration)[0])
@@ -129,7 +129,7 @@ class MalariaPredictor:
 
     def _explain(self, df: pd.DataFrame | None, feat_dict: dict, is_warm: bool) -> str:
         if not is_warm:
-            return "Cold-start prediction — limited case history; uses climate + geography only."
+            return "Cold-start prediction - limited case history; uses climate + geography only."
         # Compute SHAP via the booster's pred_contrib (no extra dep needed)
         contrib = self.main.predict(df, num_iteration=self.main.best_iteration,
                                      pred_contrib=True)[0]

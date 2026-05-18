@@ -260,14 +260,16 @@ class AnalyticsService:
     
     async def get_risk_map_data(
         self,
-        date_filter: Optional[date] = None
+        date_filter: Optional[date] = None,
+        region: Optional[str] = None,
     ) -> Tuple[List[Dict], Dict]:
         """
         Get risk map data for GIS visualization.
-        
+
         Args:
             date_filter: Filter predictions by date (default: today)
-            
+            region: Filter to a single region by exact name (optional)
+
         Returns:
             Tuple of (features, metadata)
         """
@@ -328,7 +330,10 @@ class AnalyticsService:
             District.region,
             District.district_name
         )
-        
+
+        if region:
+            query = query.where(District.region == region)
+
         result = await self.db.execute(query)
         rows = result.all()
         

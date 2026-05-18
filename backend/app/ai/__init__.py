@@ -1,4 +1,4 @@
-"""AI module — malaria risk predictor.
+"""AI module - malaria risk predictor.
 
 Singleton load: the LightGBM boosters are heavy enough (~10 MB) and the SHAP
 explainer is module-internal; we want one process-wide instance. First call

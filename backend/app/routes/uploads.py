@@ -32,7 +32,12 @@ async def trigger_prediction_processing(district_ids: list[str], db: AsyncSessio
     pass
 
 
-@router.post("/malaria/monthly", response_model=UploadResponse)
+@router.post(
+    "/malaria/monthly",
+    response_model=UploadResponse,
+    summary="Upload monthly malaria cases CSV",
+    responses={400: {"description": "Bad file or validation error"}, 403: {"description": "Public users cannot upload"}},
+)
 async def upload_monthly_malaria_data(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
@@ -45,7 +50,7 @@ async def upload_monthly_malaria_data(
     **Authorization:** Officials only (not public users)
     
     **CSV Format:**
-    - district_code: Ethiopian woreda code (e.g., ET140101 — see /uploads/templates/malaria/monthly)
+    - district_code: Ethiopian woreda code (e.g., ET140101 - see /uploads/templates/malaria/monthly)
     - month: Month number (1-12)
     - year: Year (2000-2100)
     - cases: Number of malaria cases (≥0)
@@ -95,9 +100,8 @@ async def upload_monthly_malaria_data(
          monthly_close_id, monthly_close_mode, stages) = \
             await upload_service.process_monthly_malaria_upload(content, file.filename)
 
-        # Monthly close orchestration is owned by Celery (app.tasks.monthly_close)
-        # when settings.MONTHLY_CLOSE_ENABLED is true. No FastAPI background task
-        # needed here — the upload service has already dispatched.
+        # Monthly close orchestration runs in-process via asyncio.create_task()
+        # from upload_service when settings.MONTHLY_CLOSE_ENABLED is true.
 
         return UploadResponse(
             success=success,
@@ -120,7 +124,12 @@ async def upload_monthly_malaria_data(
         )
 
 
-@router.post("/malaria/monthly/preview", response_model=UploadPreviewResponse)
+@router.post(
+    "/malaria/monthly/preview",
+    response_model=UploadPreviewResponse,
+    summary="Validate a malaria CSV (dry-run, no write)",
+    responses={400: {"description": "Bad file or validation error"}},
+)
 async def preview_monthly_malaria_upload(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
@@ -158,7 +167,12 @@ async def preview_monthly_malaria_upload(
         )
 
 
-@router.post("/climate", response_model=UploadResponse)
+@router.post(
+    "/climate",
+    response_model=UploadResponse,
+    summary="Upload climate data CSV (rainfall, temperature, etc.)",
+    responses={400: {"description": "Bad file or validation error"}, 403: {"description": "Public users cannot upload"}},
+)
 async def upload_climate_data(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
@@ -171,7 +185,7 @@ async def upload_climate_data(
     **Authorization:** Officials only (not public users)
     
     **CSV Format:**
-    - district_code: Ethiopian woreda code (e.g., ET140101 — see /uploads/templates/climate)
+    - district_code: Ethiopian woreda code (e.g., ET140101 - see /uploads/templates/climate)
     - date: Date in YYYY-MM-DD format
     - rainfall: Rainfall in mm (≥0)
     - temperature: Temperature in Celsius (-50 to 60)
@@ -243,7 +257,11 @@ async def upload_climate_data(
         )
 
 
-@router.get("/templates/malaria/monthly")
+@router.get(
+    "/templates/malaria/monthly",
+    summary="Download blank malaria monthly CSV template",
+    response_class=StreamingResponse,
+)
 async def download_monthly_malaria_template():
     """
     Download CSV template for monthly malaria data.
@@ -254,7 +272,7 @@ async def download_monthly_malaria_template():
     output = StringIO()
     writer = csv.writer(output)
     
-    # Headers — `tests` is optional. Officers who don't report exposure data
+    # Headers - `tests` is optional. Officers who don't report exposure data
     # can leave it blank; the predictor falls back to a cases*5 (TPR=20%) proxy.
     writer.writerow(['district_code', 'month', 'year', 'cases', 'deaths', 'tests'])
 
@@ -280,7 +298,11 @@ async def download_monthly_malaria_template():
     )
 
 
-@router.get("/templates/climate")
+@router.get(
+    "/templates/climate",
+    summary="Download blank climate CSV template",
+    response_class=StreamingResponse,
+)
 async def download_climate_template():
     """
     Download CSV template for climate data.

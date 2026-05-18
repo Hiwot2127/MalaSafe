@@ -8,7 +8,7 @@ import type { UploadError, UploadKind } from "@/types/upload";
  * so the modal can open immediately with row counts + obvious-format issues,
  * without waiting for a round-trip to the backend dry-run endpoint.
  *
- * The backend dry-run is still the source of truth — it runs full district +
+ * The backend dry-run is still the source of truth - it runs full district +
  * duplicate validation. This is a fast first read so the modal feels instant.
  */
 
@@ -112,7 +112,7 @@ export async function parseLocalPreview(
                 issues.push({ row: rowNumber, column: "tests", value: row.tests, error: "Tests must be numeric" });
               }
               if (row.month && row.year &&
-                  inRange(row.month, 1, 12) && inRange(row.year, 2000, 2100)) {
+                inRange(row.month, 1, 12) && inRange(row.year, 2000, 2100)) {
                 const m = String(Math.trunc(Number(row.month))).padStart(2, "0");
                 const y = String(Math.trunc(Number(row.year))).padStart(4, "0");
                 months.add(`${y}-${m}`);

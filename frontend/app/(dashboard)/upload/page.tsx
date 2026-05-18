@@ -39,7 +39,7 @@ export default function UploadPage() {
       // Open the modal immediately with a placeholder so the UI never blocks.
       setState({ kind: "previewing", file, local: null, server: null, loadingServer: uploadType === "monthly" });
 
-      // Client-side parse — should be sub-second even on large files.
+      // Client-side parse - should be sub-second even on large files.
       const local = await parseLocalPreview(file, uploadType);
       setState((prev) =>
         prev.kind === "previewing" && prev.file === file
@@ -92,7 +92,7 @@ export default function UploadPage() {
       if (response.success) {
         toast.success(`${response.records_created} rows imported`, {
           description: response.records_skipped > 0
-            ? `${response.records_skipped} rows skipped — see timeline.`
+            ? `${response.records_skipped} rows skipped - see timeline.`
             : undefined,
         });
       } else {
@@ -147,13 +147,13 @@ export default function UploadPage() {
         </p>
         <h1 className="font-display font-semibold text-4xl leading-[1.05] tracking-tight">Upload data</h1>
         <p className="max-w-prose font-sans text-base leading-relaxed text-muted-foreground">
-          Drop a malaria or climate CSV. Each row validates independently — defects are listed
+          Drop a malaria or climate CSV. Each row validates independently - defects are listed
           and skipped, the rest still imports. Monthly malaria uploads also trigger a backtest,
           drift check, and re-prediction for the following month.
         </p>
       </header>
 
-      {/* Section 001 — Type */}
+      {/* Section 001 - Type */}
       <section className="flex flex-col gap-5">
         <SectionHeader index="001" label="Data type" />
         <fieldset className="grid grid-cols-1 gap-px overflow-hidden border border-border bg-border sm:grid-cols-2">
@@ -172,7 +172,7 @@ export default function UploadPage() {
         </fieldset>
       </section>
 
-      {/* Section 002 — File */}
+      {/* Section 002 - File */}
       <section className="flex flex-col gap-5">
         <SectionHeader index="002" label="File">
           <button
@@ -194,7 +194,7 @@ export default function UploadPage() {
         )}
       </section>
 
-      {/* Section 003 — Timeline (only after a real upload) */}
+      {/* Section 003 - Timeline (only after a real upload) */}
       {state.kind === "done" && (
         <section className="flex flex-col gap-5">
           <SectionHeader index="003" label="Timeline">
@@ -217,7 +217,7 @@ export default function UploadPage() {
                 {state.result.errors.map((e, i) => (
                   <li key={i} className="flex items-start gap-4 border-b border-border/60 px-4 py-2.5 last:border-0">
                     <span className="w-12 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-                      row {e.row ?? "—"}
+                      row {e.row ?? "-"}
                     </span>
                     <p className="font-sans text-sm">{e.error}</p>
                   </li>

@@ -3,7 +3,7 @@
 Online port of `07_impute_climate.py`. The offline pipeline fills holes by
 group-mean fallback through four tiers:
 
-  1. (region, zone, month)  — closest spatial + temporal context
+  1. (region, zone, month)  - closest spatial + temporal context
   2. (region, month)
   3. (month) across the country
   4. (region) across all time
@@ -16,7 +16,7 @@ Input is a list of dicts, one per district:
     { "district_id", "adm3_pcode", "region", "zone", "rainfall", "temperature",
       "min_temp", "max_temp", "humidity", "data_source" }
 
-Output: the same list mutated in place — every numeric column that was
+Output: the same list mutated in place - every numeric column that was
 ``None`` is filled when possible, and ``data_source`` is updated to
 ``"imputed_hierarchical"`` (filled from a more local group) or
 ``"imputed_baseline"`` (fell through to the country-wide tier).

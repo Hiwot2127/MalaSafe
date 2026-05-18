@@ -13,7 +13,13 @@ from loguru import logger
 router = APIRouter(prefix="/mobile", tags=["Mobile"])
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Public self-registration (creates public_user)",
+    responses={400: {"description": "Email already exists or password too weak"}},
+)
 async def mobile_register(
     user_data: MobileRegisterRequest,
     db: AsyncSession = Depends(get_db)

@@ -1,4 +1,4 @@
-# `backend/scripts/` — operator CLIs for seeding and backfilling
+# `backend/scripts/` - operator CLIs for seeding and backfilling
 
 Idempotent command-line tools that populate the DB from the climate-pipeline
 workspace and run the predictor over historical months. All scripts accept
@@ -29,21 +29,21 @@ python scripts/backfill_predictions.py --limit 10 --start 2025-06-01 --end 2025-
 ### `seed_districts.py`
 
 - **Reads**: `reference_geo_names.csv` (1,082 rows) + `climate_per_woreda_monthly.csv` (for lat/lon/elevation centroids, no GDAL needed)
-- **Writes**: `districts` table — upserts on `district_code = ADM3_PCODE`
+- **Writes**: `districts` table - upserts on `district_code = ADM3_PCODE`
 - **Idempotent**: yes (unique constraint on `district_code`)
 - **Note**: 82 woredas have no lat/lon (post-2021 splits with no climate centroids); they're inserted with NULL geo and won't render as map markers
 
 ### `seed_climate_history.py`
 
 - **Reads**: `climate_per_woreda_monthly.csv` (49,390 rows)
-- **Writes**: `climate_data` table — one row per (district, month-start-date)
+- **Writes**: `climate_data` table - one row per (district, month-start-date)
 - **Idempotent**: yes (skips existing (district_id, date) pairs unless `--force`)
 - **Date handling**: converts EC strings ("Meskerem 2016") to Gregorian month-start dates inline using the same EC dict as `08_feature_engineering.py`
 
 ### `seed_malaria_history.py`
 
 - **Reads**: 5 files matching `final_processed_df_*EC_with_climate.csv` (60,940 facility-month rows)
-- **Aggregates**: sum of `Positive` per `(ADM3_PCODE, year, month)` — drops to 49,390 woreda-month rows
+- **Aggregates**: sum of `Positive` per `(ADM3_PCODE, year, month)` - drops to 49,390 woreda-month rows
 - **Writes**: `malaria_data` table with `source_type = 'historical_seed'`
 - **Idempotent**: yes (`--force` truncates rows tagged `historical_seed` first)
 - **Caveat**: MalariaData schema has no `tests` column, so `cases = sum(Positive)`, `deaths = 0`. The predictor's exposure-offset uses a regional median fallback at inference time.
@@ -51,7 +51,7 @@ python scripts/backfill_predictions.py --limit 10 --start 2025-06-01 --end 2025-
 ### `compute_baselines.py`
 
 - **Reads**: `climate_per_woreda_monthly.csv` + `reference_geo_names.csv` (region lookup)
-- **Filters**: train window only (`date ≤ 2024-12-31`) — matches Stage 8 anomaly baselines
+- **Filters**: train window only (`date ≤ 2024-12-31`) - matches Stage 8 anomaly baselines
 - **Writes**: `backend/models/regional_baselines.json` with three lookup tables (by_pcode_month / by_region_month / global_month)
 - **Idempotent**: yes (overwrites file each run)
 - **Re-run when**: districts change, climate window extends, or you want anomaly features to recalibrate
@@ -67,7 +67,7 @@ python scripts/backfill_predictions.py --limit 10 --start 2025-06-01 --end 2025-
 
 ### `_common.py`
 
-Shared helpers — `cli_argparser(name)`, `sync_session()` context manager (uses
+Shared helpers - `cli_argparser(name)`, `sync_session()` context manager (uses
 Alembic's sync engine, not the async one), `SEED_DATA_DIR` env var resolution.
 Not meant to run on its own.
 
@@ -76,7 +76,7 @@ Not meant to run on its own.
 | Symptom | Cause | Fix |
 |---|---|---|
 | `KeyError: 'SEED_DATA_DIR'` | Default path `~/Documents/second-brain/temp` doesn't exist | `export SEED_DATA_DIR=/path/to/your/temp` before running |
-| `seed_climate_history.py` skips ~3,600 rows | Imputed-climate rows from training have NULL `ADM3_PCODE` | Expected — they're the post-2021 split woredas; not a bug |
+| `seed_climate_history.py` skips ~3,600 rows | Imputed-climate rows from training have NULL `ADM3_PCODE` | Expected - they're the post-2021 split woredas; not a bug |
 | `backfill_predictions.py` warning: "pandas dtypes must be int, float or bool" | District has NULL lat/lon/elevation | Already handled by `features.py:to_dataframe` (coerces with `pd.to_numeric(errors='coerce')`) |
 | `regional_baselines.json` missing → bland anomaly features | Step 5 not run | `python scripts/compute_baselines.py` |
 | `risk_level` always "moderate" | Per-pcode threshold lookup falling back to global | Confirm `seed_districts.py` ran first (predictor reads `district.adm3_pcode`) |

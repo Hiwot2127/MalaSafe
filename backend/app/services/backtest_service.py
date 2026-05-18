@@ -39,7 +39,7 @@ class BacktestService:
         """Compute per-district error for the closed month, persist results,
         return a summary roll-up.
 
-        Re-running for the same `monthly_close_id` is safe — existing rows are
+        Re-running for the same `monthly_close_id` is safe - existing rows are
         wiped first so the result reflects the latest predictions on disk.
         """
         # Wipe prior results for idempotent re-runs.

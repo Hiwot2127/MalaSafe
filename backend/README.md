@@ -1,260 +1,220 @@
 # MalaSafe Backend API
 
-Production-ready FastAPI backend for malaria surveillance and prediction system.
+FastAPI backend for malaria surveillance and prediction. Ingests case + climate data,
+runs monthly ML predictions, raises alerts, and serves analytics + GIS maps to the
+web dashboard and mobile app.
+
+- **Production:** https://malasafe-api.onrender.com (`/api/v1` prefix)
+- **Interactive docs (prod):** https://malasafe-api.onrender.com/api/docs
+- **Interactive docs (local):** http://localhost:8000/api/docs
 
 ## Tech Stack
 
-- **FastAPI** - Modern, fast web framework
-- **PostgreSQL** - Relational database
-- **SQLAlchemy** - ORM with async support
-- **Alembic** - Database migrations
-- **Pydantic** - Data validation
-- **JWT** - Authentication
-- **Celery** - Background tasks
-- **Pandas & Scikit-learn** - AI/ML capabilities
+- **FastAPI** + Uvicorn — async HTTP API
+- **PostgreSQL 14+** with async **SQLAlchemy 2.x** + **Alembic**
+- **Pydantic v2** — request/response schemas
+- **JWT** — bearer-token auth (no sessions)
+- **LightGBM** — monthly risk-prediction model
+- **Pandas / NumPy** — feature engineering, backtests
+- **Loguru** — structured logging
+- Background work via **FastAPI BackgroundTasks** + in-process `asyncio.create_task`
+  (the previous Celery Beat schedule has been removed — see Monthly Pipeline below)
 
 ## Project Structure
 
 ```
 backend/
 ├── app/
-│   ├── main.py              # FastAPI application entry point
-│   ├── config/              # Configuration and settings
-│   ├── database/            # Database connection and session
-│   ├── models/              # SQLAlchemy models
-│   ├── schemas/             # Pydantic schemas
-│   ├── routes/              # API endpoints
-│   ├── services/            # Business logic
-│   ├── ai/                  # ML models and predictions
-│   ├── middleware/          # Custom middleware
-│   └── utils/               # Utility functions
+│   ├── main.py              # FastAPI app + router wiring + OpenAPI metadata
+│   ├── config/              # Pydantic-settings (env vars)
+│   ├── database/            # Async SQLAlchemy engine + session
+│   ├── models/              # ORM models (12 tables, see DATABASE_MODELS.md)
+│   ├── schemas/             # Pydantic request/response models
+│   ├── routes/              # 10 routers (health, auth, mobile, uploads,
+│   │                        #            analytics, maps, predictions, alerts,
+│   │                        #            monthly_close, protected_examples)
+│   ├── services/            # Business logic (upload, analytics, prediction)
+│   ├── ai/                  # Predictor + feature engineering + phrasebook
+│   ├── tasks/               # Background jobs (monthly_close, predict_monthly)
+│   ├── middleware/          # CORS setup
+│   └── utils/               # security (JWT/passwords), deps (RBAC),
+│                            # csv_parser, district_mapper, season_generator
 ├── alembic/                 # Database migrations
-├── requirements.txt         # Python dependencies
-├── .env.example            # Environment variables template
-└── README.md               # This file
+├── models/                  # Trained ML artifacts (.pkl/.joblib)
+├── data/                    # Reference data (district lookups, GeoJSON keys)
+├── scripts/                 # Operational scripts (training, backfills)
+├── requirements.txt
+└── *.md                     # Documentation (see below)
 ```
 
-## Setup Instructions
+## Documentation Map
+
+| Doc | What's inside |
+|---|---|
+| [README.md](./README.md) | You are here — orientation and setup |
+| [QUICKSTART.md](./QUICKSTART.md) | Minimal-steps local run |
+| [API_REFERENCE.md](./API_REFERENCE.md) | Every endpoint, grouped by router, with auth + payloads |
+| [AUTH_DOCUMENTATION.md](./AUTH_DOCUMENTATION.md) | Auth flow, roles, JWT details |
+| [AUTH_QUICKSTART.md](./AUTH_QUICKSTART.md) | Five-minute auth integration |
+| [CSV_UPLOAD_DOCUMENTATION.md](./CSV_UPLOAD_DOCUMENTATION.md) | CSV formats, validation, preview |
+| [DATABASE_MODELS.md](./DATABASE_MODELS.md) | All 12 ORM models, FKs, indexes |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | System architecture, request flow, ML pipeline |
+
+## Setup
 
 ### 1. Prerequisites
+- Python 3.10+
+- PostgreSQL 14+
 
-- Python 3.10 or higher
-- PostgreSQL 14 or higher
-- Redis (for background tasks)
-
-### 2. Clone and Navigate
+### 2. Create venv and install deps
 
 ```bash
 cd backend
-```
-
-### 3. Create Virtual Environment
-
-```bash
-# Windows
-python -m venv venv
-venv\Scripts\activate
-
-# Linux/Mac
 python3 -m venv venv
-source venv/bin/activate
-```
-
-### 4. Install Dependencies
-
-```bash
+source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 5. Configure Environment
+### 3. Configure environment
 
 ```bash
-# Copy the example environment file
-copy .env.example .env
-
-# Edit .env with your configuration
-# Update DATABASE_URL, SECRET_KEY, etc.
+cp .env.example .env
+# Edit .env:
+#   DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/malasafe
+#   DATABASE_URL_SYNC=postgresql://user:pass@host:5432/malasafe
+#   SECRET_KEY=$(openssl rand -hex 32)
+#   ENVIRONMENT=development
 ```
 
-### 6. Setup Database
+### 4. Database
 
 ```bash
-# Create PostgreSQL database
-createdb malasafe_db
-
-# Or using psql
-psql -U postgres
-CREATE DATABASE malasafe_db;
-\q
-```
-
-### 7. Run Migrations
-
-```bash
-# Initialize Alembic (already done)
-# alembic init alembic
-
-# Create initial migration
-alembic revision --autogenerate -m "Initial migration"
-
-# Apply migrations
+createdb malasafe                  # or via psql
 alembic upgrade head
+python create_admin.py             # creates the first admin account
 ```
 
-### 8. Create Required Directories
+### 5. Run
 
 ```bash
-mkdir logs
-mkdir uploads
-mkdir models
-```
-
-## Running the Application
-
-### Development Mode
-
-```bash
-# Using uvicorn directly
+# Dev (auto-reload)
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-# Or using the main.py script
-python app/main.py
-```
-
-### Production Mode
-
-```bash
-# Using uvicorn with workers
+# Prod
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
-
-# Or using gunicorn
+# or
 gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
 ```
 
-## API Documentation
+Visit http://localhost:8000/api/docs to verify.
 
-Once the server is running, access:
+## API Surface
 
-- **Swagger UI**: http://localhost:8000/api/docs
-- **ReDoc**: http://localhost:8000/api/redoc
-- **OpenAPI JSON**: http://localhost:8000/api/openapi.json
+All endpoints live under **`/api/v1`**. The interactive docs at `/api/docs` are the
+source of truth — paths and schemas are generated from the code on every boot.
 
-## Available Endpoints
+| Router | Prefix | Purpose |
+|---|---|---|
+| Health | `/health`, `/health/db` | Liveness + database probes |
+| Authentication | `/auth/*` | Login, admin user-creation, current user |
+| Mobile | `/mobile/register` | Public self-registration |
+| Uploads | `/uploads/*` | Malaria + climate CSV ingest, dry-run preview, templates |
+| Analytics | `/analytics/*` | Dashboard summary, weekly/monthly trends |
+| GIS Maps | `/maps/risk` | Risk map as GeoJSON FeatureCollection |
+| Predictions | `/predictions/*` | History, single + batch generation |
+| Alerts | `/alerts` | List active high-risk alerts |
+| Monthly Close | `/monthly-close/*` | Operational ML pipeline runs, backtests, drift |
+| Protected Examples | `/examples/*` | Reference endpoints for RBAC patterns |
 
-### Health Check
-- `GET /api/v1/health` - Basic health check
-- `GET /api/v1/health/db` - Health check with database connectivity
+Full reference with request/response bodies: [API_REFERENCE.md](./API_REFERENCE.md).
 
-### Authentication
-- `POST /api/v1/auth/register` - Register new user
-- `POST /api/v1/auth/login` - Login and get JWT token
-- `GET /api/v1/auth/me` - Get current user info (requires authentication)
+## Authentication
+
+JWT bearer tokens.
+
+1. `POST /api/v1/auth/login` with `{email, password}` → returns `access_token`
+2. Send `Authorization: Bearer <token>` on subsequent calls
+
+Roles: `admin`, `moh_officer`, `ephi_officer`, `regional_officer`, `public_user`.
+Most write endpoints require an "official" role (anything except `public_user`).
+See [AUTH_DOCUMENTATION.md](./AUTH_DOCUMENTATION.md) for the full role/permission matrix.
+
+## Monthly ML Pipeline
+
+End-of-month flow:
+
+1. Officials upload that month's malaria + climate CSVs via `/uploads/*`.
+2. The upload service creates a `monthly_close` row and dispatches
+   `app.tasks.monthly_close.run` in-process via `asyncio.create_task`.
+3. The task: trains/refreshes the LightGBM model, generates next-month predictions,
+   runs a backtest of the prior month, writes drift findings, and produces alerts.
+4. The dashboard polls `/monthly-close/*` to show status, backtest rows, and drift.
+
+To trigger the monthly forward predictions on a schedule, hit
+`POST /api/v1/monthly-close/predict-monthly` from a cron (e.g. Render Cron Jobs or
+GitHub Actions) on the 5th of each month. There is no longer an embedded Celery Beat.
 
 ## Database Migrations
 
 ```bash
-# Create a new migration
-alembic revision --autogenerate -m "description"
-
-# Apply migrations
-alembic upgrade head
-
-# Rollback one migration
-alembic downgrade -1
-
-# View migration history
-alembic history
-
-# View current revision
-alembic current
+alembic revision --autogenerate -m "add foo column"   # create
+alembic upgrade head                                  # apply
+alembic downgrade -1                                  # rollback one
+alembic history                                       # see history
+alembic current                                       # current rev
 ```
+
+When adding models, import them in [alembic/env.py](./alembic/env.py) so autogenerate sees them.
+
+## Environment Variables
+
+See `.env.example` for the full list. Key ones:
+
+| Variable | Notes |
+|---|---|
+| `DATABASE_URL` | Async DSN (`postgresql+asyncpg://...`) used at runtime |
+| `DATABASE_URL_SYNC` | Sync DSN used by Alembic |
+| `SECRET_KEY` | JWT signing key — `openssl rand -hex 32` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | JWT TTL |
+| `ENVIRONMENT` | `development` / `staging` / `production` |
+| `DEBUG` | `true` exposes exception details in error responses |
+| `CORS_ORIGINS` | Comma-separated list of allowed frontend origins |
+| `LOG_LEVEL`, `LOG_FILE` | Loguru configuration |
 
 ## Testing
 
 ```bash
-# Install test dependencies
 pip install pytest pytest-asyncio httpx
-
-# Run tests
-pytest
-
-# Run with coverage
-pytest --cov=app tests/
+pytest                          # smoke tests bundled in repo root
+pytest --cov=app
 ```
 
-## Environment Variables
+Three task-specific test scripts live in this directory: `test_auth.py`,
+`test_predictor.py`, `test_uploads.py`.
 
-Key environment variables (see `.env.example` for full list):
+## Logging + Monitoring
 
-- `DATABASE_URL` - PostgreSQL connection string (async)
-- `DATABASE_URL_SYNC` - PostgreSQL connection string (sync, for migrations)
-- `SECRET_KEY` - JWT secret key (generate with `openssl rand -hex 32`)
-- `DEBUG` - Enable debug mode (True/False)
-- `CORS_ORIGINS` - Allowed CORS origins
+- File logs rotate at 500 MB / 10-day retention (configured in `app/main.py`).
+- Structured logs via Loguru — JSON-friendly format ready for log shippers.
+- Production runs on Render; health checks hit `/api/v1/health/db`.
 
-## Security Notes
+## Security Checklist
 
-1. **Change SECRET_KEY** in production (generate with `openssl rand -hex 32`)
-2. **Use strong passwords** for database and admin accounts
-3. **Enable HTTPS** in production
-4. **Configure CORS** properly for your frontend domain
-5. **Keep dependencies updated** regularly
-
-## Background Tasks
-
-To run Celery workers for background tasks:
-
-```bash
-# Start Celery worker
-celery -A app.tasks worker --loglevel=info
-
-# Start Celery beat (for scheduled tasks)
-celery -A app.tasks beat --loglevel=info
-```
-
-## Monitoring
-
-- Logs are stored in `logs/app.log`
-- Configure log rotation in `app/main.py`
-- Use tools like Sentry for error tracking in production
-
-## Development Tips
-
-1. Use `--reload` flag during development for auto-reload
-2. Check API docs at `/api/docs` for interactive testing
-3. Use Alembic for all database schema changes
-4. Follow the clean architecture pattern
-5. Write tests for new features
+- [ ] `SECRET_KEY` generated per-environment, never committed
+- [ ] HTTPS enforced at the platform layer (Render terminates TLS)
+- [ ] `CORS_ORIGINS` set to the actual frontend domain(s), not `*`
+- [ ] DB user has least-privilege grants
+- [ ] `DEBUG=false` in production
+- [ ] Dependencies refreshed (`pip list --outdated`) periodically
 
 ## Troubleshooting
 
-### Database Connection Issues
-- Verify PostgreSQL is running
-- Check DATABASE_URL in .env
-- Ensure database exists
+**DB connection fails on boot** — verify `DATABASE_URL` uses the `+asyncpg` driver and the database exists.
 
-### Migration Issues
-- Check alembic/env.py imports all models
-- Verify DATABASE_URL_SYNC is correct
-- Try `alembic downgrade -1` then `alembic upgrade head`
+**Alembic autogenerate misses a model** — confirm the model is imported in [alembic/env.py](./alembic/env.py).
 
-### Import Errors
-- Ensure virtual environment is activated
-- Verify all dependencies are installed
-- Check Python path configuration
+**Monthly close stuck in `pending`** — re-dispatch with
+`POST /api/v1/monthly-close/{id}/run` (admin only).
 
-## Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Write/update tests
-4. Update documentation
-5. Submit a pull request
-
-## License
-
-[Your License Here]
-
-## Support
-
-For issues and questions, please contact [your-email@example.com]
+**429 / cold start on Render** — free-tier services sleep after inactivity; the first
+request can take ~30 s.

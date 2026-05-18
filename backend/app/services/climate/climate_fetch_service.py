@@ -229,7 +229,7 @@ class ClimateFetchService:
         # On (district_id, date) conflict: only update when the incoming row
         # is final (not provisional) OR the existing row is provisional.
         # This implements the offline pipeline's "final never overwritten"
-        # rule directly in SQL — no race window.
+        # rule directly in SQL - no race window.
         excluded = stmt.excluded
         stmt = stmt.on_conflict_do_update(
             constraint="uq_climate_data_district_date",

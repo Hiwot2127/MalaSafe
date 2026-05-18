@@ -33,7 +33,7 @@ export default function SettingsPage() {
         description="Account details, audit identifiers, and operational preferences."
       />
 
-      {/* Section 001 — Profile */}
+      {/* Section 001 - Profile */}
       <section className="flex flex-col gap-5">
         <SectionHeader index="001" label="Profile" />
         <EditorialCard>
@@ -45,7 +45,7 @@ export default function SettingsPage() {
         </EditorialCard>
       </section>
 
-      {/* Section 002 — Account */}
+      {/* Section 002 - Account */}
       <section className="flex flex-col gap-5">
         <SectionHeader index="002" label="Account" />
         <EditorialCard>
@@ -57,7 +57,7 @@ export default function SettingsPage() {
         </EditorialCard>
       </section>
 
-      {/* Section 003 — Preferences */}
+      {/* Section 003 - Preferences */}
       <section className="flex flex-col gap-5">
         <SectionHeader index="003" label="Preferences" />
         <EditorialCard className="px-6 py-6">
@@ -90,9 +90,10 @@ function Row({
         {label}
       </dt>
       <dd
-        className={`text-foreground ${
-          mono ? 'font-mono text-sm tabular-nums' : 'font-display font-semibold text-lg leading-tight tracking-[-0.014em]'
-        }`}
+        className={`text-foreground ${mono
+            ? 'font-mono text-sm tabular-nums'
+            : 'font-sans text-sm font-medium tabular-nums'
+          }`}
       >
         {value}
       </dd>

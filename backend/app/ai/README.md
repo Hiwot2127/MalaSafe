@@ -1,4 +1,4 @@
-# `app/ai/` — malaria risk predictor
+# `app/ai/` - malaria risk predictor
 
 Exposes a process-wide singleton that loads four trained LightGBM boosters at
 startup and returns `(risk_level, prediction_score, confidence_score,
@@ -10,7 +10,7 @@ asks about.
 | File | Role |
 |---|---|
 | `__init__.py` | `get_predictor()` lazy singleton; first call ≈ 1s, subsequent ≈ 5ms |
-| `predictor.py` | `MalariaPredictor` class — load + `predict_one(...)` |
+| `predictor.py` | `MalariaPredictor` class - load + `predict_one(...)` |
 | `features.py` | Builds the exact 76-column feature vector the boosters expect from DB rows |
 | `phrasebook.py` | Maps SHAP feature contributions to human-readable phrases for `prediction_reason` |
 
@@ -27,7 +27,7 @@ A single regressor only emits a point estimate. The `q10`/`q90` pair gives an 80
 
 ## Critical contract: `features.py` mirrors the training-side transform
 
-The columns produced here must match — name-for-name and dtype-for-dtype — what `temp/climate-pipeline/08_feature_engineering.py` produced when the model was trained. The source of truth is `models/model_card.json["features"]`. If you change one side without changing the other, predictions silently drift.
+The columns produced here must match - name-for-name and dtype-for-dtype - what `temp/climate-pipeline/08_feature_engineering.py` produced when the model was trained. The source of truth is `models/model_card.json["features"]`. If you change one side without changing the other, predictions silently drift.
 
 Lag/rolling features use prior months only (leak-safe). Anomalies key on `(ADM3_PCODE, month)` against the baselines in `models/regional_baselines.json` (computed from the train window).
 
@@ -43,6 +43,6 @@ The current model card describes test-set Spearman r 0.982, MAE 65.7 cases. See 
 
 ## Pointers
 
-- Artifact details and JSON shapes — `backend/models/README.md`
-- Bring-it-online checklist — `AI_INTEGRATION_NOTES.md` (repo root)
-- Standalone smoke test (no DB) — `backend/test_predictor.py`
+- Artifact details and JSON shapes - `backend/models/README.md`
+- Bring-it-online checklist - `AI_INTEGRATION_NOTES.md` (repo root)
+- Standalone smoke test (no DB) - `backend/test_predictor.py`

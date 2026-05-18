@@ -54,21 +54,54 @@ export interface DriftRow {
   created_at: string;
 }
 
+export interface PaginatedResponse<T> {
+  monthly_close_id: string;
+  count: number;
+  skip: number;
+  limit: number;
+  items: T[];
+}
+
+export interface PageParams {
+  skip?: number;
+  limit?: number;
+}
+
 export const monthlyCloseApi = {
-  get: async (id: string): Promise<MonthlyCloseDetail> => {
-    const r = await apiClient.get(`/monthly-close/${id}`);
+  get: async (
+    id: string,
+    options: { signal?: AbortSignal } = {},
+  ): Promise<MonthlyCloseDetail> => {
+    const r = await apiClient.get(`/monthly-close/${id}`, { signal: options.signal });
     return r.data;
   },
-  getBacktest: async (id: string, limit = 500): Promise<{ items: BacktestRow[]; count: number }> => {
-    const r = await apiClient.get(`/monthly-close/${id}/backtest`, { params: { limit } });
+
+  getBacktest: async (
+    id: string,
+    params: PageParams = {},
+    options: { signal?: AbortSignal } = {},
+  ): Promise<PaginatedResponse<BacktestRow>> => {
+    const r = await apiClient.get(`/monthly-close/${id}/backtest`, {
+      params: { skip: params.skip ?? 0, limit: params.limit ?? 50 },
+      signal: options.signal,
+    });
     return r.data;
   },
+
   getDrift: async (
     id: string,
-    severity?: "warn" | "critical",
-  ): Promise<{ items: DriftRow[]; count: number }> => {
+    params: PageParams & { severity?: "warn" | "critical" } = {},
+    options: { signal?: AbortSignal } = {},
+  ): Promise<PaginatedResponse<DriftRow>> => {
+    const { severity, skip, limit } = params;
+    const query: Record<string, unknown> = {
+      skip: skip ?? 0,
+      limit: limit ?? 50,
+    };
+    if (severity) query.severity = severity;
     const r = await apiClient.get(`/monthly-close/${id}/drift`, {
-      params: severity ? { severity } : undefined,
+      params: query,
+      signal: options.signal,
     });
     return r.data;
   },
