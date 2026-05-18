@@ -41,11 +41,12 @@ const REGIONS = [
   'Tigray',
 ];
 
-const LEGEND: Array<{ label: string; status: 'valid' | 'warn' | 'error'; key: string }> = [
-  { key: 'low', label: 'Low', status: 'valid' },
-  { key: 'medium', label: 'Medium', status: 'warn' },
-  { key: 'high', label: 'High', status: 'warn' },
-  { key: 'very_high', label: 'Very high', status: 'error' },
+const LEGEND: Array<{ key: string; label: string; risk: 1 | 2 | 3 | 4 | 5 }> = [
+  { key: 'low', label: 'Low', risk: 1 },
+  { key: 'moderate', label: 'Moderate', risk: 2 },
+  { key: 'medium', label: 'Medium', risk: 3 },
+  { key: 'high', label: 'High', risk: 4 },
+  { key: 'very_high', label: 'Very high', risk: 5 },
 ];
 
 export default function MapsPage() {
@@ -115,7 +116,11 @@ export default function MapsPage() {
 
       {/* Section 001 — Surface */}
       <section className="flex flex-col gap-5">
-        <SectionHeader index="001" label="Surface">
+        <SectionHeader
+          index="001"
+          label="Surface"
+          tone={summary && summary.veryHigh > 0 ? 'error' : summary && summary.elevated > 0 ? 'warn' : 'valid'}
+        >
           <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
             {districtCount} districts
           </span>
@@ -153,13 +158,7 @@ export default function MapsPage() {
                     >
                       <span
                         aria-hidden
-                        className={`inline-block size-2.5 ${
-                          item.status === 'valid'
-                            ? 'bg-status-valid'
-                            : item.status === 'warn'
-                              ? 'bg-status-warn'
-                              : 'bg-status-error'
-                        }`}
+                        className={`inline-block size-2.5 bg-risk-${item.risk}`}
                       />
                       {item.label}
                     </span>
@@ -200,7 +199,7 @@ export default function MapsPage() {
             ) : null}
 
             {/* Section 002 — Districts table */}
-            <SectionHeader index="002" label="Districts">
+            <SectionHeader index="002" label="Districts" tone="signal">
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
                 {districtCount} rows
               </span>

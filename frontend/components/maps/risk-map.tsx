@@ -5,12 +5,15 @@ import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { RiskMapResponse, RiskLevel } from '@/types/map';
 
+// 5-stop sequential ramp from low to very high. Pulled from the design tokens
+// in app/globals.css (--risk-1 … --risk-5) so the map circles, legend, and
+// table pills all share one palette.
 const RISK_COLORS: Record<RiskLevel, string> = {
-  low: '#22c55e',
-  moderate: '#eab308',
-  medium: '#eab308',
-  high: '#f97316',
-  very_high: '#ef4444',
+  low: 'hsl(145 22% 52%)',        // --risk-1 sage
+  moderate: 'hsl(75 30% 50%)',    // --risk-2 olive
+  medium: 'hsl(38 56% 50%)',      // --risk-3 saffron
+  high: 'hsl(20 56% 50%)',        // --risk-4 orange-clay
+  very_high: 'hsl(12 50% 46%)',   // --risk-5 terracotta
 };
 
 const RISK_LABELS: Record<RiskLevel, string> = {
@@ -145,7 +148,7 @@ export default function RiskMap({ data }: { data: RiskMapResponse }) {
 
   return (
     <>
-      <div className="h-[500px] w-full overflow-hidden rounded-lg">
+      <div className="h-full w-full overflow-hidden">
         <MapContainer
           center={ETHIOPIA_CENTER}
           zoom={ETHIOPIA_ZOOM}
@@ -185,8 +188,8 @@ export default function RiskMap({ data }: { data: RiskMapResponse }) {
         </MapContainer>
       </div>
       {points.length === 0 && (
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          No district coordinates returned from the API — markers can&apos;t be plotted.
+        <p className="border-t border-border bg-card px-4 py-3 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+          No district coordinates returned — markers can&apos;t be plotted.
         </p>
       )}
     </>
