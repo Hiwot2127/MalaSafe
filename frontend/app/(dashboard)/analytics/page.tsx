@@ -3,7 +3,17 @@
 import { useEffect, useState } from 'react';
 import { analyticsApi } from '@/lib/api/analytics';
 import { TrendDataPoint } from '@/types/analytics';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, Loader2, TrendingUp } from 'lucide-react';
+import { getApiErrorMessage } from '@/lib/utils';
+import { PageHeader } from '@/components/ui/page-header';
+import { AlertBanner } from '@/components/ui/alert-banner';
+import { EmptyState } from '@/components/ui/empty-state';
+import { StatCard } from '@/components/ui/stat-card';
+
+function yearFromPeriod(period: string): string {
+  const y = period.split('-')[0];
+  return /^\d{4}$/.test(y) ? y : '—';
+}
 
 export default function AnalyticsPage() {
   const [trendType, setTrendType] = useState<'weekly' | 'monthly'>('weekly');
@@ -17,143 +27,109 @@ export default function AnalyticsPage() {
       setError(null);
       try {
         const response = await analyticsApi.getTrends({
-          trend_type: trendType,
+          period_type: trendType,
           limit: 20,
         });
-        setTrends(response.trends);
-      } catch (err: any) {
-        setError(err.response?.data?.detail || 'Failed to fetch trends');
+        setTrends(Array.isArray(response.data) ? response.data : []);
+      } catch (err: unknown) {
+        setError(getApiErrorMessage(err, 'Failed to fetch trends'));
+        setTrends([]);
       } finally {
         setLoading(false);
       }
     };
-
     fetchTrends();
   }, [trendType]);
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Analytics</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Malaria trends and insights
-          </p>
-        </div>
+  const totalCases = trends.reduce((s, t) => s + t.cases, 0);
+  const totalDeaths = trends.reduce((s, t) => s + t.deaths, 0);
 
-        <select
-          value={trendType}
-          onChange={(e) => setTrendType(e.target.value as 'weekly' | 'monthly')}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-        >
-          <option value="weekly">Weekly Trends</option>
-          <option value="monthly">Monthly Trends</option>
-        </select>
-      </div>
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        title="Analytics"
+        description="Malaria trends and case fatality insights"
+        icon={BarChart3}
+        actions={
+          <select
+            value={trendType}
+            onChange={(e) => setTrendType(e.target.value as 'weekly' | 'monthly')}
+            className="ms-select min-w-[160px]"
+          >
+            <option value="weekly">Weekly trends</option>
+            <option value="monthly">Monthly trends</option>
+          </select>
+        }
+      />
 
       {loading && (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg text-gray-600 dark:text-gray-400">Loading trends...</div>
+        <div className="flex h-48 items-center justify-center gap-2 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          Loading trends…
         </div>
       )}
 
-      {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg">
-          {error}
-        </div>
-      )}
+      {error && <AlertBanner variant="error">{error}</AlertBanner>}
 
       {!loading && !error && trends.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
-          <BarChart3 className="w-16 h-16 mb-4" />
-          <p>No trend data available</p>
-        </div>
+        <EmptyState
+          icon={BarChart3}
+          title="No trend data yet"
+          description="Upload malaria CSV data from the Upload page to see trends here."
+        />
       )}
 
       {!loading && !error && trends.length > 0 && (
-        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            {trendType === 'weekly' ? 'Weekly' : 'Monthly'} Trends
-          </h2>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700 dark:text-gray-300">
-                    Period
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700 dark:text-gray-300">
-                    Year
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-700 dark:text-gray-300">
-                    Cases
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-700 dark:text-gray-300">
-                    Deaths
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-700 dark:text-gray-300">
-                    CFR (%)
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {trends.map((trend, index) => {
-                  const cfr = trend.cases > 0 ? ((trend.deaths / trend.cases) * 100).toFixed(2) : '0.00';
-                  return (
-                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-4 py-3 text-gray-900 dark:text-gray-100">
-                        {trendType === 'weekly' ? `Week ${trend.week}` : `Month ${trend.month}`}
-                      </td>
-                      <td className="px-4 py-3 text-gray-900 dark:text-gray-100">
-                        {trend.year}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                        {trend.cases.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                        {trend.deaths.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                        {cfr}%
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Summary Statistics */}
-      {!loading && !error && trends.length > 0 && (
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Cases</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
-              {trends.reduce((sum, t) => sum + t.cases, 0).toLocaleString()}
-            </p>
+        <>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatCard label="Total cases" value={totalCases} icon={BarChart3} variant="blue" />
+            <StatCard label="Total deaths" value={totalDeaths} icon={TrendingUp} variant="red" />
+            <StatCard
+              label="Average CFR"
+              value={`${totalCases > 0 ? ((totalDeaths / totalCases) * 100).toFixed(2) : '0.00'}%`}
+              icon={BarChart3}
+              variant="amber"
+            />
           </div>
 
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Deaths</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
-              {trends.reduce((sum, t) => sum + t.deaths, 0).toLocaleString()}
-            </p>
+          <div className="ms-card p-6">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              {trendType === 'weekly' ? 'Weekly' : 'Monthly'} trends
+            </h2>
+            <div className="ms-table-wrap">
+              <table className="ms-table">
+                <thead>
+                  <tr>
+                    <th>Period</th>
+                    <th>Year</th>
+                    <th className="text-right">Cases</th>
+                    <th className="text-right">Deaths</th>
+                    <th className="text-right">CFR (%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {trends.map((trend, index) => {
+                    const cfr =
+                      typeof trend.case_fatality_rate === 'number'
+                        ? trend.case_fatality_rate.toFixed(2)
+                        : trend.cases > 0
+                          ? ((trend.deaths / trend.cases) * 100).toFixed(2)
+                          : '0.00';
+                    return (
+                      <tr key={`${trend.period}-${index}`}>
+                        <td className="font-medium">{trend.period}</td>
+                        <td>{yearFromPeriod(trend.period)}</td>
+                        <td className="text-right tabular-nums">{trend.cases.toLocaleString()}</td>
+                        <td className="text-right tabular-nums">{trend.deaths.toLocaleString()}</td>
+                        <td className="text-right tabular-nums">{cfr}%</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Average CFR</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
-              {(() => {
-                const totalCases = trends.reduce((sum, t) => sum + t.cases, 0);
-                const totalDeaths = trends.reduce((sum, t) => sum + t.deaths, 0);
-                return totalCases > 0 ? ((totalDeaths / totalCases) * 100).toFixed(2) : '0.00';
-              })()}%
-            </p>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );
