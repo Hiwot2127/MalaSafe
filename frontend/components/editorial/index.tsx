@@ -6,6 +6,10 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+// ─── Shared shell metrics ──────────────────────────────────────────────────
+
+export const SHELL_BAR_HEIGHT = "h-[4.5rem]";
+
 // ─── Page header ───────────────────────────────────────────────────────────
 
 interface PageHeaderProps {
@@ -28,7 +32,9 @@ export function PageHeader({ eyebrow, title, description, actions, className }: 
         <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
           {eyebrow}
         </p>
-        <h1 className="font-display text-4xl leading-[1.05] tracking-tight">{title}</h1>
+        <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-[-0.022em]">
+          {title}
+        </h1>
         {description ? (
           <p className="max-w-prose font-sans text-base leading-relaxed text-muted-foreground">
             {description}
@@ -42,14 +48,30 @@ export function PageHeader({ eyebrow, title, description, actions, className }: 
 
 // ─── Section header ────────────────────────────────────────────────────────
 
+type SectionTone = "signal" | "valid" | "warn" | "error" | null;
+
+const SECTION_TONE_CLASS: Record<NonNullable<SectionTone>, string> = {
+  signal: "bg-accent-signal",
+  valid: "bg-status-valid",
+  warn: "bg-status-warn",
+  error: "bg-status-error",
+};
+
 interface SectionHeaderProps {
   index: string;
   label: string;
+  tone?: SectionTone;
   children?: React.ReactNode;
   className?: string;
 }
 
-export function SectionHeader({ index, label, children, className }: SectionHeaderProps) {
+export function SectionHeader({
+  index,
+  label,
+  tone = null,
+  children,
+  className,
+}: SectionHeaderProps) {
   return (
     <div
       className={cn(
@@ -58,6 +80,12 @@ export function SectionHeader({ index, label, children, className }: SectionHead
       )}
     >
       <div className="flex items-baseline gap-3.5">
+        {tone ? (
+          <span
+            aria-hidden
+            className={cn("inline-block h-3 w-[3px] self-center", SECTION_TONE_CLASS[tone])}
+          />
+        ) : null}
         <span className="font-mono text-[11px] tabular-nums text-muted-foreground">{index}</span>
         <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-foreground">
           {label}
@@ -87,7 +115,7 @@ export function EditorialCard({
     <Tag
       className={cn(
         "border border-border bg-card",
-        hover && "transition-colors hover:bg-secondary/40",
+        hover && "transition-colors hover:bg-accent-signal-tint",
         className,
       )}
       {...rest}
@@ -114,7 +142,9 @@ export function Metric({ eyebrow, value, caption, status, statusLabel, className
       <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
         {eyebrow}
       </p>
-      <p className="font-display text-3xl leading-none tabular-nums tracking-tight">{value}</p>
+      <p className="font-display text-3xl font-semibold leading-none tabular-nums tracking-[-0.022em]">
+        {value}
+      </p>
       <div className="flex items-center gap-2 pt-1">
         {status ? <StatusPill kind={status}>{statusLabel ?? status}</StatusPill> : null}
         {caption ? (
@@ -211,7 +241,7 @@ export function EditorialSelect({ className, children, ...rest }: EditorialSelec
     <select
       {...rest}
       className={cn(
-        "appearance-none border border-input bg-card px-3 py-1.5 pr-8 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-secondary/40 focus:outline-none focus:ring-1 focus:ring-ring",
+        "appearance-none border border-input bg-card px-3 py-1.5 pr-8 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-secondary/40 focus:outline-none focus:ring-1 focus:ring-accent-signal",
         // Caret hint via background-image
         "bg-[length:9px_9px] bg-[position:right_0.5rem_center] bg-no-repeat",
         "bg-[url('data:image/svg+xml;utf8,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%208%208%22%3E%3Cpath%20d=%22M1%202.5L4%205.5L7%202.5%22%20stroke=%22%23555%22%20stroke-width=%221%22%20fill=%22none%22/%3E%3C/svg%3E')]",
@@ -234,7 +264,7 @@ export const EditorialInput = React.forwardRef<HTMLInputElement, EditorialInputP
         ref={ref}
         {...rest}
         className={cn(
-          "block w-full border border-input bg-card px-3 py-2.5 font-sans text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors focus:outline-none focus:ring-1 focus:ring-ring",
+          "block w-full border border-input bg-card px-3 py-2.5 font-sans text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors focus:outline-none focus:ring-1 focus:ring-accent-signal",
           className,
         )}
       />
