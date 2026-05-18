@@ -96,7 +96,11 @@ export default function AlertsPage() {
 
       {/* Section 001 — Summary */}
       <section className="flex flex-col gap-5">
-        <SectionHeader index="001" label="Summary">
+        <SectionHeader
+          index="001"
+          label="Summary"
+          tone={totals.veryHigh > 0 ? 'error' : totals.active > 0 ? 'warn' : 'valid'}
+        >
           <StatusPill kind={totals.veryHigh > 0 ? 'error' : totals.active > 0 ? 'warn' : 'valid'}>
             {totals.veryHigh > 0
               ? 'Critical'
@@ -138,7 +142,7 @@ export default function AlertsPage() {
 
       {/* Section 002 — Active alerts */}
       <section className="flex flex-col gap-5">
-        <SectionHeader index="002" label="Roster">
+        <SectionHeader index="002" label="Roster" tone="signal">
           <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
             {totals.total} rows
           </span>
@@ -171,7 +175,7 @@ export default function AlertsPage() {
                   </span>
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center gap-3">
-                      <p className="font-display text-base leading-tight tracking-tight">
+                      <p className="font-display font-semibold text-base leading-tight tracking-tight">
                         {alert.district_name || 'Unknown district'}
                       </p>
                       <StatusPill kind={riskStatus(alert.risk_level)}>

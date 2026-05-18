@@ -86,7 +86,7 @@ export default function MonthlyClosePage() {
           <ArrowLeft className="size-4" /> back to upload
         </Link>
         <div className="border border-status-error/40 bg-status-error-tint p-6">
-          <p className="font-display text-xl">Could not load this close</p>
+          <p className="font-display font-semibold text-xl">Could not load this close</p>
           <p className="mt-2 font-sans text-sm text-muted-foreground">{error ?? "Unknown error"}</p>
         </div>
       </div>
@@ -112,7 +112,7 @@ export default function MonthlyClosePage() {
         <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
           MalaSafe · Close pipeline · {close.mode}
         </p>
-        <h1 className="font-display text-4xl leading-[1.05] tracking-tight">{monthLabel}</h1>
+        <h1 className="font-display font-semibold text-4xl leading-[1.05] tracking-tight">{monthLabel}</h1>
         <p className="font-mono text-xs text-muted-foreground tabular-nums">{close.id}</p>
       </header>
 
@@ -228,7 +228,7 @@ function StageList({ close }: { close: MonthlyCloseDetail }) {
                 />
               )}
             </div>
-            <p className="font-display text-base">{stage.label}</p>
+            <p className="font-display font-semibold text-base">{stage.label}</p>
           </li>
         );
       })}
@@ -377,7 +377,7 @@ function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1.5 bg-card px-5 py-4">
       <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">{label}</p>
-      <p className="font-display text-2xl leading-none tabular-nums">{value}</p>
+      <p className="font-display font-semibold text-2xl leading-none tabular-nums">{value}</p>
     </div>
   );
 }

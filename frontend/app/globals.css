@@ -15,14 +15,28 @@
 }
 
 @theme {
-  --font-display: var(--font-fraunces), Georgia, serif;
-  --font-sans:
-    var(--font-manrope), -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: var(--font-plex-mono), JetBrains Mono, monospace;
+  --font-display: var(--font-geist-sans), system-ui, sans-serif;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
 
   --color-status-valid: hsl(var(--status-valid));
   --color-status-warn: hsl(var(--status-warn));
   --color-status-error: hsl(var(--status-error));
+
+  --color-accent-signal: hsl(var(--accent-signal));
+  --color-accent-signal-foreground: hsl(var(--accent-signal-foreground));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+
+  --color-risk-1: hsl(var(--risk-1));
+  --color-risk-2: hsl(var(--risk-2));
+  --color-risk-3: hsl(var(--risk-3));
+  --color-risk-4: hsl(var(--risk-4));
+  --color-risk-5: hsl(var(--risk-5));
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
@@ -134,10 +148,28 @@
     --status-warn: 38 56% 50%;         /* saffron, earth tone */
     --status-error: 12 50% 46%;        /* clay terracotta */
 
-    /* Font stacks — wired via next/font in the root layout. */
-    --font-display: var(--font-fraunces), Georgia, 'Times New Roman', serif;
-    --font-sans: var(--font-manrope), -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-mono: var(--font-plex-mono), 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    /* Signal accent — teal viridian. Used for links, focus rings, "cases" series. */
+    --accent-signal: 184 58% 36%;
+    --accent-signal-foreground: 40 32% 98%;
+
+    /* Chart series palette — five distinct, perceptually-separated hues. */
+    --chart-1: 184 58% 36%;            /* teal — cases */
+    --chart-2: 12 50% 46%;             /* terracotta — deaths */
+    --chart-3: 252 28% 48%;            /* muted violet — predictions */
+    --chart-4: 38 56% 50%;             /* saffron — drift */
+    --chart-5: 202 48% 42%;            /* slate blue — climate */
+
+    /* Map sequential risk ramp — 5 stops, low → very high. */
+    --risk-1: 145 22% 52%;             /* sage */
+    --risk-2: 75 30% 50%;              /* olive */
+    --risk-3: 38 56% 50%;              /* saffron */
+    --risk-4: 20 56% 50%;              /* orange-clay */
+    --risk-5: 12 50% 46%;              /* terracotta */
+
+    /* Font stacks — wired via geist/font in the root layout. */
+    --font-display: var(--font-geist-sans), system-ui, sans-serif;
+    --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+    --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Consolas, monospace;
   }
 
   .dark {
@@ -173,6 +205,21 @@
     --status-valid: 145 22% 56%;
     --status-warn: 38 56% 60%;
     --status-error: 12 50% 58%;
+
+    --accent-signal: 184 50% 52%;
+    --accent-signal-foreground: 220 24% 9%;
+
+    --chart-1: 184 50% 52%;
+    --chart-2: 12 50% 58%;
+    --chart-3: 252 32% 64%;
+    --chart-4: 38 56% 60%;
+    --chart-5: 202 48% 58%;
+
+    --risk-1: 145 22% 56%;
+    --risk-2: 75 30% 58%;
+    --risk-3: 38 56% 60%;
+    --risk-4: 20 56% 58%;
+    --risk-5: 12 50% 58%;
   }
 }
 
@@ -183,17 +230,18 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
-    font-feature-settings: 'cv11', 'ss01', 'ss03';
+    font-feature-settings: 'ss01', 'ss03';
   }
 
-  /* Display text — Fraunces with opinionated optical sizing. */
+  /* Display text — Geist Sans at semibold weight with tightened tracking. */
   h1, h2, h3 {
     font-family: var(--font-display);
-    font-feature-settings: 'ss01', 'ss02', 'ss03';
+    font-weight: 600;
+    letter-spacing: -0.014em;
   }
-  h1 { font-variation-settings: 'opsz' 96, 'SOFT' 30, 'WONK' 0; }
-  h2 { font-variation-settings: 'opsz' 48, 'SOFT' 30, 'WONK' 0; }
-  h3 { font-variation-settings: 'opsz' 24, 'SOFT' 30, 'WONK' 0; }
+  h1 { letter-spacing: -0.022em; }
+  h2 { letter-spacing: -0.018em; }
+  h3 { letter-spacing: -0.014em; }
 
   /* Tabular numerals for data — counts, durations, IDs. */
   .tabular-nums {
@@ -216,9 +264,10 @@
 .status-valid { color: hsl(var(--status-valid)); }
 .status-warn { color: hsl(var(--status-warn)); }
 .status-error { color: hsl(var(--status-error)); }
-.bg-status-valid-tint { background-color: hsl(var(--status-valid) / 0.12); }
-.bg-status-warn-tint { background-color: hsl(var(--status-warn) / 0.12); }
-.bg-status-error-tint { background-color: hsl(var(--status-error) / 0.12); }
+.bg-status-valid-tint { background-color: hsl(var(--status-valid) / 0.18); }
+.bg-status-warn-tint { background-color: hsl(var(--status-warn) / 0.18); }
+.bg-status-error-tint { background-color: hsl(var(--status-error) / 0.18); }
+.bg-accent-signal-tint { background-color: hsl(var(--accent-signal) / 0.10); }
 
 /* Timeline stage reveal — used by upload-timeline.tsx. */
 @keyframes stage-in {

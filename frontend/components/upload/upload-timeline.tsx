@@ -43,7 +43,7 @@ export function UploadTimeline({ stages, monthlyCloseId, monthlyCloseMode }: Upl
             {/* Stage body */}
             <div className={cn("flex-1 pb-6", last && "pb-1")}>
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="font-display text-base leading-none text-foreground">
+                <span className="font-display font-semibold text-base leading-none text-foreground">
                   {STAGE_TITLES[stage.name] ?? stage.name}
                 </span>
                 {typeof stage.count === "number" && (

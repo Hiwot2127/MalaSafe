@@ -145,7 +145,7 @@ export default function UploadPage() {
         <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
           MalaSafe · Surveillance ingest
         </p>
-        <h1 className="font-display text-4xl leading-[1.05] tracking-tight">Upload data</h1>
+        <h1 className="font-display font-semibold text-4xl leading-[1.05] tracking-tight">Upload data</h1>
         <p className="max-w-prose font-sans text-base leading-relaxed text-muted-foreground">
           Drop a malaria or climate CSV. Each row validates independently — defects are listed
           and skipped, the rest still imports. Monthly malaria uploads also trigger a backtest,
@@ -290,7 +290,7 @@ function TypeOption({ kind, checked, onSelect }: TypeOptionProps) {
       <span className="font-mono text-[10px] uppercase tracking-[0.22em] opacity-60">
         {kind}
       </span>
-      <span className="font-display text-base leading-tight">
+      <span className="font-display font-semibold text-base leading-tight">
         {KIND_LABEL[kind]}
       </span>
     </button>

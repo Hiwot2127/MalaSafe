@@ -61,7 +61,7 @@ function LoginForm() {
           <p className="font-mono text-[10px] uppercase tracking-[0.28em] opacity-70">
             Field report 01 / 06
           </p>
-          <h2 className="font-display text-5xl leading-[1.02] tracking-tight">
+          <h2 className="font-display font-semibold text-5xl leading-[1.02] tracking-tight">
             Watch the rains.
             <br />
             Predict the cases.
@@ -78,19 +78,19 @@ function LoginForm() {
             <dt className="font-mono text-[10px] uppercase tracking-[0.22em] opacity-60">
               Districts
             </dt>
-            <dd className="font-display text-2xl tabular-nums tracking-tight">1,158</dd>
+            <dd className="font-display font-semibold text-2xl tabular-nums tracking-tight">1,158</dd>
           </div>
           <div className="flex flex-col gap-1">
             <dt className="font-mono text-[10px] uppercase tracking-[0.22em] opacity-60">
               Coverage
             </dt>
-            <dd className="font-display text-2xl tabular-nums tracking-tight">12 reg.</dd>
+            <dd className="font-display font-semibold text-2xl tabular-nums tracking-tight">12 reg.</dd>
           </div>
           <div className="flex flex-col gap-1">
             <dt className="font-mono text-[10px] uppercase tracking-[0.22em] opacity-60">
               Model
             </dt>
-            <dd className="font-display text-2xl tabular-nums tracking-tight">LGBM</dd>
+            <dd className="font-display font-semibold text-2xl tabular-nums tracking-tight">LGBM</dd>
           </div>
         </dl>
       </aside>
@@ -102,7 +102,7 @@ function LoginForm() {
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
               MalaSafe · Console
             </p>
-            <h1 className="font-display text-3xl leading-[1.05] tracking-tight">
+            <h1 className="font-display font-semibold text-3xl leading-[1.05] tracking-tight">
               Sign in
             </h1>
             <p className="font-sans text-sm leading-relaxed text-muted-foreground">

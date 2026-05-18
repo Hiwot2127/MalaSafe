@@ -73,7 +73,7 @@ export function UploadDropzone({
           )}
           strokeWidth={1.25}
         />
-        <p className="font-display text-lg leading-tight text-foreground">
+        <p className="font-display font-semibold text-lg leading-tight text-foreground">
           {isDragActive ? "Drop to open the review modal" : "Drop a CSV here"}
         </p>
         <p className="mt-1.5 text-sm text-muted-foreground">
