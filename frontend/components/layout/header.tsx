@@ -10,13 +10,13 @@ export default function Header() {
   const role = user?.role?.replace(/_/g, ' ').toUpperCase() ?? 'USER';
 
   return (
-    <header className="flex items-center justify-between gap-6 border-b border-border bg-background px-8 py-5">
-      <div className="flex flex-col gap-1">
+    <header className="flex h-[4.5rem] shrink-0 items-center justify-between gap-6 border-b border-border bg-background px-8">
+      <div className="flex flex-col gap-0.5">
         <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           Signed in
         </p>
-        <div className="flex items-baseline gap-3">
-          <p className="font-display text-lg leading-tight tracking-tight">
+        <div className="flex items-center gap-3">
+          <p className="font-display text-base font-semibold leading-tight tracking-[-0.018em]">
             {user?.full_name || 'User'}
           </p>
           <StatusPill kind="neutral">{role}</StatusPill>
