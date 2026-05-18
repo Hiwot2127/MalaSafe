@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Upload, Download, FileText } from 'lucide-react';
 import { uploadsApi } from '@/lib/api/uploads';
+import { formatApiError } from '@/lib/utils';
 
 export default function UploadPage() {
   const [uploadType, setUploadType] = useState<'weekly' | 'monthly' | 'climate'>('weekly');
@@ -53,7 +54,7 @@ export default function UploadPage() {
     } catch (err: any) {
       setMessage({
         type: 'error',
-        text: err.response?.data?.detail || 'Upload failed',
+        text: formatApiError(err.response?.data?.detail, 'Upload failed'),
       });
     } finally {
       setLoading(false);

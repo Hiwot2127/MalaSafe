@@ -2,22 +2,27 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Upload, 
-  BarChart3, 
-  Map, 
-  AlertTriangle, 
-  Settings 
+import {
+  LayoutDashboard,
+  Upload,
+  BarChart3,
+  Map,
+  AlertTriangle,
+  Settings,
+  BrainCircuit,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Logo } from '@/components/brand/logo';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Upload Data', href: '/upload', icon: Upload },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { name: 'Predictions', href: '/predictions', icon: BrainCircuit },
   { name: 'Risk Maps', href: '/maps', icon: Map },
   { name: 'Alerts', href: '/alerts', icon: AlertTriangle },
+  { name: 'Reports', href: '/reports', icon: FileText },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
@@ -25,14 +30,17 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
-      <div className="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-          MalaSafe
-        </h1>
+    <aside className="flex w-64 flex-col border-r border-border/80 bg-card/80 backdrop-blur-xl">
+      <div className="border-b border-border/80 px-4 py-5">
+        <Link href="/dashboard" className="block">
+          <Logo size="sm" />
+        </Link>
       </div>
 
-      <nav className="flex-1 px-4 py-6 space-y-2">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          Navigation
+        </p>
         {navigation.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
@@ -42,24 +50,23 @@ export default function Sidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                'flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors',
-                isActive
-                  ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
-                  : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
+                'ms-sidebar-link',
+                isActive ? 'ms-sidebar-link-active' : 'ms-sidebar-link-inactive'
               )}
             >
-              <Icon className="w-5 h-5 mr-3" />
+              <Icon className={cn('h-5 w-5', isActive && 'text-primary')} />
               {item.name}
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-          © 2026 MalaSafe
+      <div className="border-t border-border/80 p-4">
+        <p className="text-center text-[10px] font-medium text-muted-foreground">
+          Ethiopia · Malaria surveillance
         </p>
+        <p className="mt-1 text-center text-[10px] text-muted-foreground/70">© 2026 MalaSafe</p>
       </div>
-    </div>
+    </aside>
   );
 }

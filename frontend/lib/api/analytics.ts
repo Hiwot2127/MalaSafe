@@ -12,7 +12,7 @@ export const analyticsApi = {
   },
 
   getTrends: async (params: {
-    trend_type: 'weekly' | 'monthly';
+    period_type: 'weekly' | 'monthly';
     region?: string;
     year?: number;
     limit?: number;

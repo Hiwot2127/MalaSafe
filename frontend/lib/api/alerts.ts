@@ -6,11 +6,16 @@ export const alertsApi = {
     region?: string;
     risk_level?: string;
     is_active?: boolean;
-    skip?: number;
     limit?: number;
   }): Promise<Alert[]> => {
-    const response = await apiClient.get('/alerts', { params });
-    return response.data;
+    const { is_active, ...rest } = params ?? {};
+    const response = await apiClient.get('/alerts', {
+      params: {
+        ...rest,
+        active_only: is_active !== undefined ? is_active : true,
+      },
+    });
+    return response.data.alerts ?? [];
   },
 
   getPredictionHistory: async (districtId: string): Promise<Prediction[]> => {

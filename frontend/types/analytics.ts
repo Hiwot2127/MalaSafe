@@ -7,19 +7,18 @@ export interface DashboardSummary {
   period: string;
 }
 
+/** Matches GET /analytics/trends `data` items */
 export interface TrendDataPoint {
   period: string;
   cases: number;
   deaths: number;
-  week?: number;
-  month?: number;
-  year: number;
+  case_fatality_rate: number;
 }
 
 export interface TrendsResponse {
-  trends: TrendDataPoint[];
-  trend_type: 'weekly' | 'monthly';
-  region?: string;
+  period_type: 'weekly' | 'monthly' | string;
+  data: TrendDataPoint[];
+  total_periods: number;
 }
 
 export interface DashboardResponse {

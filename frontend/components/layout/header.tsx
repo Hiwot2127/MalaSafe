@@ -1,34 +1,48 @@
 'use client';
 
+import { useTheme } from 'next-themes';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, Moon, Sun, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  const roleLabel = user?.role?.replace(/_/g, ' ') ?? 'User';
 
   return (
-    <header className="flex items-center justify-between h-16 px-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-border/80 bg-card/60 px-6 backdrop-blur-md">
       <div>
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-          Welcome back, {user?.full_name || 'User'}
+        <h2 className="text-base font-semibold text-foreground">
+          Welcome back, {user?.full_name?.split(' ')[0] || 'User'}
         </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {user?.role?.replace('_', ' ').toUpperCase() || 'User'}
-        </p>
+        <p className="text-xs capitalize text-muted-foreground">{roleLabel}</p>
       </div>
 
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300">
-          <User className="w-4 h-4" />
-          <span>{user?.email}</span>
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="hidden items-center gap-2 rounded-lg border border-border/80 bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground sm:flex">
+          <User className="h-3.5 w-3.5" />
+          <span className="max-w-[180px] truncate">{user?.email}</span>
         </div>
 
-        <button
-          onClick={logout}
-          className="flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Logout
+        {mounted && (
+          <button
+            type="button"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="ms-btn-ghost h-10 w-10 p-0"
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+        )}
+
+        <button type="button" onClick={logout} className="ms-btn-secondary !h-10 !px-3 text-destructive hover:bg-destructive/10">
+          <LogOut className="h-4 w-4" />
+          <span className="hidden sm:inline">Logout</span>
         </button>
       </div>
     </header>
