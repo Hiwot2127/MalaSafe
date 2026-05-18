@@ -72,7 +72,7 @@ export default function MapsPage() {
       </div>
 
       {loading && (
-        <div className="flex items-center justify-center h-96 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="flex items-center justify-center h-96 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
           <div className="text-lg text-gray-600 dark:text-gray-400">Loading map data...</div>
         </div>
       )}
@@ -84,7 +84,7 @@ export default function MapsPage() {
       )}
 
       {!loading && !error && (!mapData || mapData.features.length === 0) && (
-        <div className="flex flex-col items-center justify-center h-96 bg-white dark:bg-gray-800 rounded-lg shadow text-gray-500 dark:text-gray-400">
+        <div className="flex flex-col items-center justify-center h-96 bg-white dark:bg-gray-800 rounded-lg shadow-sm text-gray-500 dark:text-gray-400">
           <MapIcon className="w-16 h-16 mb-4" />
           <p>No map data available</p>
         </div>
@@ -93,7 +93,7 @@ export default function MapsPage() {
       {!loading && !error && mapData && mapData.features.length > 0 && (
         <>
           {/* Map */}
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
             <RiskMap data={mapData} />
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               {mapData.features.length} districts loaded
@@ -101,7 +101,7 @@ export default function MapsPage() {
           </div>
 
           {/* Legend */}
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Risk Level Legend
             </h2>
@@ -126,7 +126,7 @@ export default function MapsPage() {
           </div>
 
           {/* District List */}
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Districts ({mapData.features.length})
             </h2>

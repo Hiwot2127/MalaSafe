@@ -17,7 +17,7 @@ export default function SettingsPage() {
       </div>
 
       {/* User Profile */}
-      <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+      <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
           User Profile
         </h2>
@@ -74,7 +74,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Account Information */}
-      <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+      <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Account Information
         </h2>
@@ -85,7 +85,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Preferences */}
-      <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+      <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Preferences
         </h2>

@@ -53,7 +53,7 @@ export function UploadDropzone({
           "border border-dashed border-border bg-card px-8 py-14 text-center",
           "transition-colors duration-200",
           isDragActive && "border-primary bg-status-valid-tint",
-          isFocused && "outline-none ring-1 ring-ring",
+          isFocused && "outline-hidden ring-1 ring-ring",
           disabled && "pointer-events-none opacity-50",
         )}
       >

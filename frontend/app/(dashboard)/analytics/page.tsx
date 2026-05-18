@@ -71,7 +71,7 @@ export default function AnalyticsPage() {
       )}
 
       {!loading && !error && trends.length > 0 && (
-        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
             {trendType === 'weekly' ? 'Weekly' : 'Monthly'} Trends
           </h2>
@@ -129,21 +129,21 @@ export default function AnalyticsPage() {
       {/* Summary Statistics */}
       {!loading && !error && trends.length > 0 && (
         <div className="grid gap-6 md:grid-cols-3">
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Cases</p>
             <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
               {trends.reduce((sum, t) => sum + t.cases, 0).toLocaleString()}
             </p>
           </div>
 
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Deaths</p>
             <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
               {trends.reduce((sum, t) => sum + t.deaths, 0).toLocaleString()}
             </p>
           </div>
 
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Average CFR</p>
             <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
               {(() => {

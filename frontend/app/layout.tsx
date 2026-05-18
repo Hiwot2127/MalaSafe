@@ -57,7 +57,7 @@ export default function RootLayout({
             position="bottom-right"
             toastOptions={{
               classNames: {
-                toast: "border border-border bg-background text-foreground rounded-sm shadow-sm",
+                toast: "border border-border bg-background text-foreground rounded-sm shadow-xs",
                 title: "font-sans text-sm",
                 description: "font-sans text-xs text-muted-foreground",
               },

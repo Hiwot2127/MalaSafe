@@ -52,7 +52,7 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {/* Total Cases Card */}
-        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -72,7 +72,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Total Deaths Card */}
-        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -92,7 +92,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Active Alerts Card */}
-        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -112,7 +112,7 @@ export default function DashboardPage() {
         </div>
 
         {/* High Risk Districts Card */}
-        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -133,7 +133,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Additional Info */}
-      <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+      <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Quick Actions
         </h2>

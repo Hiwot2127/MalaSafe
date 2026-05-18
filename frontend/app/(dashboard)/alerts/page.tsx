@@ -95,7 +95,7 @@ export default function AlertsPage() {
           {alerts.map((alert) => (
             <div
               key={alert.id}
-              className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow"
+              className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-4 flex-1">
@@ -149,21 +149,21 @@ export default function AlertsPage() {
       {/* Summary */}
       {!loading && !error && alerts.length > 0 && (
         <div className="grid gap-6 md:grid-cols-3">
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Alerts</p>
             <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
               {alerts.length}
             </p>
           </div>
 
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Alerts</p>
             <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
               {alerts.filter(a => a.is_active).length}
             </p>
           </div>
 
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">High Risk</p>
             <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
               {alerts.filter(a => a.risk_level === 'high' || a.risk_level === 'very_high').length}
