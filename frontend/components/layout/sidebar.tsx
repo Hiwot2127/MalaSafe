@@ -9,6 +9,8 @@ import {
   Map,
   AlertTriangle,
   Settings,
+  Activity,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LogoMark } from '@/components/brand/logo';
@@ -25,8 +27,10 @@ const navigation: NavItem[] = [
   { index: '02', name: 'Upload', href: '/upload', icon: Upload },
   { index: '03', name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { index: '04', name: 'Risk maps', href: '/maps', icon: Map },
-  { index: '05', name: 'Alerts', href: '/alerts', icon: AlertTriangle },
-  { index: '06', name: 'Settings', href: '/settings', icon: Settings },
+  { index: '05', name: 'Predictions', href: '/predictions', icon: Activity },
+  { index: '06', name: 'Reports', href: '/reports', icon: FileText },
+  { index: '07', name: 'Alerts', href: '/alerts', icon: AlertTriangle },
+  { index: '08', name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export default function Sidebar() {
@@ -64,17 +68,17 @@ export default function Sidebar() {
                 <span
                   aria-hidden
                   className={cn(
-                    'absolute inset-y-1 left-0 w-[2px] bg-foreground transition-opacity',
+                    'absolute inset-y-1 left-0 w-[2px] bg-primary transition-opacity',
                     isActive ? 'opacity-100' : 'opacity-0',
                   )}
                 />
                 <Link
                   href={item.href}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2.5 transition-colors',
+                    'mx-1 flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors',
                     isActive
-                      ? 'bg-secondary text-foreground'
-                      : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground',
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground',
                   )}
                 >
                   <Icon className="size-4 shrink-0" strokeWidth={1.5} />
