@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useQueryStates } from "nuqs";
 import Link from "next/link";
 import { ArrowLeft, RefreshCw, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 
@@ -10,8 +11,17 @@ import {
   type MonthlyCloseDetail,
   type BacktestRow,
   type DriftRow,
+  type PaginatedResponse,
 } from "@/lib/api/monthly-close";
 import { cn } from "@/lib/utils";
+import { Pagination } from "@/components/Pagination";
+import { EditorialSelect } from "@/components/editorial";
+import {
+  pageToSkip,
+  parseAsPage,
+  parseAsPageSize,
+  parseAsStringLiteral,
+} from "@/lib/url-state";
 
 // Stage order matches backend MonthlyClose state machine. Each entry maps to
 // a status enum value the orchestrator writes as it walks the pipeline.
@@ -25,30 +35,52 @@ const STAGES: Array<{ key: MonthlyCloseDetail["status"]; label: string }> = [
 ];
 
 const TERMINAL: ReadonlyArray<MonthlyCloseDetail["status"]> = ["completed", "failed"];
+const SEVERITY_OPTIONS = ["", "warn", "critical"] as const;
+
+const EMPTY_BT: PaginatedResponse<BacktestRow> = {
+  monthly_close_id: "",
+  count: 0,
+  skip: 0,
+  limit: 25,
+  items: [],
+};
+const EMPTY_DR: PaginatedResponse<DriftRow> = {
+  monthly_close_id: "",
+  count: 0,
+  skip: 0,
+  limit: 25,
+  items: [],
+};
 
 export default function MonthlyClosePage() {
   const params = useParams<{ id: string }>();
   const id = params?.id;
 
+  const [tableState, setTableState] = useQueryStates(
+    {
+      bt_page: parseAsPage,
+      bt_size: parseAsPageSize(25, 200),
+      dr_page: parseAsPage,
+      dr_size: parseAsPageSize(25, 200),
+      severity: parseAsStringLiteral(SEVERITY_OPTIONS).withDefault(""),
+    },
+    { history: "replace" },
+  );
+  const { bt_page, bt_size, dr_page, dr_size, severity } = tableState;
+
   const [close, setClose] = useState<MonthlyCloseDetail | null>(null);
-  const [backtest, setBacktest] = useState<BacktestRow[]>([]);
-  const [drift, setDrift] = useState<DriftRow[]>([]);
+  const [backtest, setBacktest] = useState<PaginatedResponse<BacktestRow>>(EMPTY_BT);
+  const [drift, setDrift] = useState<PaginatedResponse<DriftRow>>(EMPTY_DR);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(async () => {
+  // Pipeline detail poll - runs once + on demand, plus the auto-poll effect
+  // below kicks it every 4s while the pipeline isn't in a terminal state.
+  const refreshClose = useCallback(async () => {
     if (!id) return;
     try {
       const detail = await monthlyCloseApi.get(id);
       setClose(detail);
-      if (TERMINAL.includes(detail.status)) {
-        const [bt, dr] = await Promise.all([
-          monthlyCloseApi.getBacktest(id).catch(() => ({ items: [], count: 0 })),
-          monthlyCloseApi.getDrift(id).catch(() => ({ items: [], count: 0 })),
-        ]);
-        setBacktest(bt.items);
-        setDrift(dr.items);
-      }
       setError(null);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Could not load close";
@@ -59,15 +91,57 @@ export default function MonthlyClosePage() {
   }, [id]);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    refreshClose();
+  }, [refreshClose]);
 
-  // Auto-poll until the pipeline reaches a terminal state.
+  // Auto-poll the pipeline until it terminates.
   useEffect(() => {
     if (!close || TERMINAL.includes(close.status)) return;
-    const t = setInterval(refresh, 4_000);
+    const t = setInterval(refreshClose, 4_000);
     return () => clearInterval(t);
-  }, [close, refresh]);
+  }, [close, refreshClose]);
+
+  // Backtest fetch - only after the pipeline reaches a terminal state, then
+  // re-runs on page or page-size change. AbortController cancels in-flight
+  // requests when the user clicks Next/Prev quickly.
+  const isTerminal = !!close && TERMINAL.includes(close.status);
+  useEffect(() => {
+    if (!id || !isTerminal) return;
+    const controller = new AbortController();
+    monthlyCloseApi
+      .getBacktest(
+        id,
+        { skip: pageToSkip(bt_page, bt_size), limit: bt_size },
+        { signal: controller.signal },
+      )
+      .then((data) => setBacktest(data))
+      .catch(() => {
+        if (!controller.signal.aborted) setBacktest(EMPTY_BT);
+      });
+    return () => controller.abort();
+  }, [id, isTerminal, bt_page, bt_size]);
+
+  // Drift fetch - same shape, plus severity filter. Severity changes reset
+  // dr_page to 1 at the caller site.
+  useEffect(() => {
+    if (!id || !isTerminal) return;
+    const controller = new AbortController();
+    monthlyCloseApi
+      .getDrift(
+        id,
+        {
+          skip: pageToSkip(dr_page, dr_size),
+          limit: dr_size,
+          ...(severity ? { severity: severity as "warn" | "critical" } : {}),
+        },
+        { signal: controller.signal },
+      )
+      .then((data) => setDrift(data))
+      .catch(() => {
+        if (!controller.signal.aborted) setDrift(EMPTY_DR);
+      });
+    return () => controller.abort();
+  }, [id, isTerminal, dr_page, dr_size, severity]);
 
   if (loading && !close) {
     return (
@@ -121,7 +195,7 @@ export default function MonthlyClosePage() {
         <SectionHeader index="001" label="Pipeline status">
           <button
             type="button"
-            onClick={refresh}
+            onClick={refreshClose}
             className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
           >
             <RefreshCw aria-hidden className="size-3.5" strokeWidth={1.5} />
@@ -151,15 +225,51 @@ export default function MonthlyClosePage() {
         ) : (
           <EmptyNote text={close.status === "completed" ? "No backtest stats recorded." : "Not yet computed."} />
         )}
-        {backtest.length > 0 && <BacktestRows rows={backtest.slice(0, 10)} totalCount={backtest.length} />}
+        {isTerminal && backtest.count > 0 ? (
+          <div className="overflow-hidden border border-border bg-card">
+            <BacktestRowsTable rows={backtest.items} />
+            <Pagination
+              page={bt_page}
+              pageSize={bt_size}
+              total={backtest.count}
+              unit="districts"
+              onChange={(next) => setTableState({ bt_page: next })}
+            />
+          </div>
+        ) : null}
       </section>
 
       {/* Drift */}
       <section className="flex flex-col gap-5">
-        <SectionHeader index="004" label="Drift findings" />
+        <SectionHeader index="004" label="Drift findings">
+          <EditorialSelect
+            value={severity}
+            onChange={(next) =>
+              setTableState({
+                severity: next as (typeof SEVERITY_OPTIONS)[number],
+                dr_page: 1,
+              })
+            }
+            aria-label="Severity filter"
+            options={[
+              { value: "", label: "All severity" },
+              { value: "warn", label: "Warn only" },
+              { value: "critical", label: "Critical only" },
+            ]}
+          />
+        </SectionHeader>
         {driftStats ? <DriftSummary stats={driftStats} /> : null}
-        {drift.length > 0 ? (
-          <DriftRows rows={drift.slice(0, 20)} totalCount={drift.length} />
+        {isTerminal && drift.count > 0 ? (
+          <div className="overflow-hidden border border-border bg-card">
+            <DriftRowsTable rows={drift.items} />
+            <Pagination
+              page={dr_page}
+              pageSize={dr_size}
+              total={drift.count}
+              unit="findings"
+              onChange={(next) => setTableState({ dr_page: next })}
+            />
+          </div>
         ) : (
           <EmptyNote text={close.status === "completed" ? "No drift findings." : "Not yet computed."} />
         )}
@@ -200,10 +310,10 @@ function StageList({ close }: { close: MonthlyCloseDetail }) {
         const Icon = done
           ? CheckCircle2
           : failedHere
-          ? AlertTriangle
-          : active
-          ? Loader2
-          : null;
+            ? AlertTriangle
+            : active
+              ? Loader2
+              : null;
 
         return (
           <li
@@ -284,37 +394,30 @@ function BacktestSummary({ stats }: { stats: Record<string, unknown> }) {
   );
 }
 
-function BacktestRows({ rows, totalCount }: { rows: BacktestRow[]; totalCount: number }) {
+function BacktestRowsTable({ rows }: { rows: BacktestRow[] }) {
   return (
-    <div className="overflow-hidden border border-border bg-card">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-border">
-            <th className="px-4 py-2.5 text-left font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">District</th>
-            <th className="px-4 py-2.5 text-right font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Actual</th>
-            <th className="px-4 py-2.5 text-right font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Predicted</th>
-            <th className="px-4 py-2.5 text-right font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Abs error</th>
-            <th className="px-4 py-2.5 text-right font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">In Q10–Q90</th>
+    <table className="w-full">
+      <thead>
+        <tr className="border-b border-border">
+          <th className="px-4 py-2.5 text-left font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">District</th>
+          <th className="px-4 py-2.5 text-right font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Actual</th>
+          <th className="px-4 py-2.5 text-right font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Predicted</th>
+          <th className="px-4 py-2.5 text-right font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Abs error</th>
+          <th className="px-4 py-2.5 text-right font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">In Q10–Q90</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.id} className="border-b border-border/60 last:border-0">
+            <td className="px-4 py-2 font-mono text-xs text-muted-foreground tabular-nums">{r.district_id.slice(0, 8)}</td>
+            <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.actual_cases}</td>
+            <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.predicted_cases ?? "-"}</td>
+            <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.abs_error ?? "-"}</td>
+            <td className="px-4 py-2 text-right font-mono text-xs uppercase tracking-[0.18em]">{r.within_q10_q90 === null ? "-" : r.within_q10_q90 ? "yes" : "no"}</td>
           </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.id} className="border-b border-border/60 last:border-0">
-              <td className="px-4 py-2 font-mono text-xs text-muted-foreground tabular-nums">{r.district_id.slice(0, 8)}</td>
-              <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.actual_cases}</td>
-              <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.predicted_cases ?? "-"}</td>
-              <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.abs_error ?? "-"}</td>
-              <td className="px-4 py-2 text-right font-mono text-xs uppercase tracking-[0.18em]">{r.within_q10_q90 === null ? "-" : r.within_q10_q90 ? "yes" : "no"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {totalCount > rows.length && (
-        <p className="border-t border-border bg-card px-4 py-2 font-mono text-[11px] text-muted-foreground">
-          Showing top {rows.length} by absolute error (total {totalCount}).
-        </p>
-      )}
-    </div>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
@@ -327,8 +430,8 @@ function DriftSummary({ stats }: { stats: Record<string, unknown> }) {
     typeof stats.n_warn === "number"
       ? stats.n_warn
       : findings !== null && critical !== null
-      ? findings - critical
-      : null;
+        ? findings - critical
+        : null;
   return (
     <div className="grid grid-cols-3 gap-px overflow-hidden border border-border bg-border">
       <Metric label="Findings" value={asNumber(findings)} />
@@ -338,38 +441,31 @@ function DriftSummary({ stats }: { stats: Record<string, unknown> }) {
   );
 }
 
-function DriftRows({ rows, totalCount }: { rows: DriftRow[]; totalCount: number }) {
+function DriftRowsTable({ rows }: { rows: DriftRow[] }) {
   return (
-    <div className="overflow-hidden border border-border bg-card">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-border">
-            <th className="px-4 py-2.5 text-left font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">District</th>
-            <th className="px-4 py-2.5 text-left font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Metric</th>
-            <th className="px-4 py-2.5 text-right font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">z-score</th>
-            <th className="px-4 py-2.5 text-right font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Severity</th>
+    <table className="w-full">
+      <thead>
+        <tr className="border-b border-border">
+          <th className="px-4 py-2.5 text-left font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">District</th>
+          <th className="px-4 py-2.5 text-left font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Metric</th>
+          <th className="px-4 py-2.5 text-right font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">z-score</th>
+          <th className="px-4 py-2.5 text-right font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Severity</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.id} className="border-b border-border/60 last:border-0">
+            <td className="px-4 py-2 font-mono text-xs text-muted-foreground tabular-nums">{r.district_id.slice(0, 8)}</td>
+            <td className="px-4 py-2 font-mono text-xs uppercase tracking-[0.18em]">{r.metric}</td>
+            <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.z_score.toFixed(2)}</td>
+            <td className={cn(
+              "px-4 py-2 text-right font-mono text-xs uppercase tracking-[0.18em]",
+              r.severity === "critical" ? "text-status-error" : "text-status-warn",
+            )}>{r.severity}</td>
           </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.id} className="border-b border-border/60 last:border-0">
-              <td className="px-4 py-2 font-mono text-xs text-muted-foreground tabular-nums">{r.district_id.slice(0, 8)}</td>
-              <td className="px-4 py-2 font-mono text-xs uppercase tracking-[0.18em]">{r.metric}</td>
-              <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.z_score.toFixed(2)}</td>
-              <td className={cn(
-                "px-4 py-2 text-right font-mono text-xs uppercase tracking-[0.18em]",
-                r.severity === "critical" ? "text-status-error" : "text-status-warn",
-              )}>{r.severity}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {totalCount > rows.length && (
-        <p className="border-t border-border bg-card px-4 py-2 font-mono text-[11px] text-muted-foreground">
-          Showing top {rows.length} by z-score (total {totalCount}).
-        </p>
-      )}
-    </div>
+        ))}
+      </tbody>
+    </table>
   );
 }
 

@@ -59,14 +59,14 @@ export default function AnalyticsPage() {
   const buildPoints = (key: 'cases' | 'deaths') =>
     trends.length
       ? trends
-          .slice()
-          .reverse()
-          .map((t, i) => {
-            const x = (i / Math.max(trends.length - 1, 1)) * 100;
-            const y = seriesMax === 0 ? 50 : 50 - (t[key] / seriesMax) * 45;
-            return `${x.toFixed(2)},${y.toFixed(2)}`;
-          })
-          .join(' ')
+        .slice()
+        .reverse()
+        .map((t, i) => {
+          const x = (i / Math.max(trends.length - 1, 1)) * 100;
+          const y = seriesMax === 0 ? 50 : 50 - (t[key] / seriesMax) * 45;
+          return `${x.toFixed(2)},${y.toFixed(2)}`;
+        })
+        .join(' ')
       : '';
   const casesPoints = buildPoints('cases');
   const deathsPoints = buildPoints('deaths');
@@ -92,12 +92,13 @@ export default function AnalyticsPage() {
         >
           <EditorialSelect
             value={trendType}
-            onChange={(e) => setTrendType(e.target.value as TrendType)}
+            onChange={(next) => setTrendType(next as TrendType)}
             aria-label="Trend type"
-          >
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-          </EditorialSelect>
+            options={[
+              { value: 'weekly', label: 'Weekly' },
+              { value: 'monthly', label: 'Monthly' },
+            ]}
+          />
         </SectionHeader>
 
         {loading ? (
@@ -245,9 +246,8 @@ function Th({
 }) {
   return (
     <th
-      className={`px-4 py-3 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground ${
-        align === 'right' ? 'text-right' : 'text-left'
-      }`}
+      className={`px-4 py-3 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground ${align === 'right' ? 'text-right' : 'text-left'
+        }`}
     >
       {children}
     </th>
@@ -265,9 +265,8 @@ function Td({
 }) {
   return (
     <td
-      className={`px-4 py-3 font-sans text-sm text-foreground ${
-        align === 'right' ? 'text-right' : 'text-left'
-      } ${numeric ? 'font-mono tabular-nums' : ''}`}
+      className={`px-4 py-3 font-sans text-sm text-foreground ${align === 'right' ? 'text-right' : 'text-left'
+        } ${numeric ? 'font-mono tabular-nums' : ''}`}
     >
       {children}
     </td>

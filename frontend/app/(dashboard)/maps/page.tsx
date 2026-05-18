@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useQueryState } from 'nuqs';
 import { mapsApi } from '@/lib/api/maps';
 import { RiskMapResponse } from '@/types/map';
+import { parseAsString } from '@/lib/url-state';
 import {
   EditorialCard,
   EditorialSelect,
@@ -53,25 +55,30 @@ export default function MapsPage() {
   const [mapData, setMapData] = useState<RiskMapResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedRegion, setSelectedRegion] = useState<string>('');
+  const [selectedRegion, setSelectedRegion] = useQueryState(
+    'region',
+    parseAsString.withDefault('Addis Ababa'),
+  );
 
   useEffect(() => {
-    const fetchMapData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const params = selectedRegion ? { region: selectedRegion } : undefined;
-        const response = await mapsApi.getRiskMap(params);
-        setMapData(response);
-      } catch (err: unknown) {
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    mapsApi
+      .getRiskMap(
+        selectedRegion ? { region: selectedRegion } : {},
+        { signal: controller.signal },
+      )
+      .then((response) => setMapData(response))
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
         const maybe = err as { response?: { data?: { detail?: string } } };
         setError(maybe?.response?.data?.detail || 'Failed to fetch map data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMapData();
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
   }, [selectedRegion]);
 
   const summary = useMemo(() => {
@@ -101,16 +108,14 @@ export default function MapsPage() {
         actions={
           <EditorialSelect
             value={selectedRegion}
-            onChange={(e) => setSelectedRegion(e.target.value)}
+            onChange={setSelectedRegion}
             aria-label="Region filter"
-          >
-            <option value="">All regions</option>
-            {REGIONS.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </EditorialSelect>
+            options={[
+              { value: '', label: 'All regions' },
+              ...REGIONS.map((r) => ({ value: r, label: r })),
+            ]}
+          />
+
         }
       />
 
@@ -255,9 +260,8 @@ function Th({
 }) {
   return (
     <th
-      className={`px-4 py-3 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground ${
-        align === 'right' ? 'text-right' : 'text-left'
-      }`}
+      className={`px-4 py-3 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground ${align === 'right' ? 'text-right' : 'text-left'
+        }`}
     >
       {children}
     </th>
@@ -277,11 +281,9 @@ function Td({
 }) {
   return (
     <td
-      className={`px-4 py-3 font-sans text-sm ${
-        muted ? 'text-muted-foreground' : 'text-foreground'
-      } ${align === 'right' ? 'text-right' : 'text-left'} ${
-        numeric ? 'font-mono tabular-nums' : ''
-      }`}
+      className={`px-4 py-3 font-sans text-sm ${muted ? 'text-muted-foreground' : 'text-foreground'
+        } ${align === 'right' ? 'text-right' : 'text-left'} ${numeric ? 'font-mono tabular-nums' : ''
+        }`}
     >
       {children}
     </td>

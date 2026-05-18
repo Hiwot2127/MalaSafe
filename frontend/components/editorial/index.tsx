@@ -4,6 +4,8 @@
 // /upload and /monthly-close are the design references.
 
 import * as React from "react";
+import * as SelectPrimitive from "@radix-ui/react-select";
+import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Shared shell metrics ──────────────────────────────────────────────────
@@ -232,24 +234,111 @@ export function MonoAction({
   );
 }
 
-// ─── Editorial select (replaces shadcn dropdown for now) ───────────────────
+// ─── Editorial select (Radix-backed, fully themed popover) ─────────────────
+//
+// Native <select> popovers can't be styled, so the chooser uses Radix Select
+// for both the trigger and the option panel. Existing call sites pass an
+// `options` array; the API is otherwise close to a controlled <select>.
 
-type EditorialSelectProps = React.SelectHTMLAttributes<HTMLSelectElement>;
+export interface EditorialSelectOption {
+  value: string;
+  label: string;
+  disabled?: boolean;
+}
 
-export function EditorialSelect({ className, children, ...rest }: EditorialSelectProps) {
+export interface EditorialSelectProps {
+  value: string;
+  onChange: (next: string) => void;
+  options: ReadonlyArray<EditorialSelectOption>;
+  placeholder?: string;
+  "aria-label"?: string;
+  className?: string;
+  disabled?: boolean;
+  // Width of the popup. By default Radix matches the trigger width which
+  // is fine for short labels; pass `auto` to let the panel size to content.
+  contentWidth?: "trigger" | "auto";
+}
+
+export function EditorialSelect({
+  value,
+  onChange,
+  options = [],
+  placeholder,
+  className,
+  disabled,
+  contentWidth = "trigger",
+  ...rest
+}: EditorialSelectProps) {
+  const ariaLabel = rest["aria-label"];
+  // Radix uses empty string as the "no value" sentinel and forbids it for
+  // <Item value="">, so we remap an empty value to a non-empty token at the
+  // item level. The user-facing value stays as the original string.
+  const EMPTY_TOKEN = "__editorial_empty__";
+  const radixValue = value === "" ? EMPTY_TOKEN : value;
+
   return (
-    <select
-      {...rest}
-      className={cn(
-        "appearance-none border border-input bg-card px-3 py-1.5 pr-8 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-secondary/40 focus:outline-none focus:ring-1 focus:ring-accent-signal",
-        // Caret hint via background-image
-        "bg-[length:9px_9px] bg-[position:right_0.5rem_center] bg-no-repeat",
-        "bg-[url('data:image/svg+xml;utf8,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%208%208%22%3E%3Cpath%20d=%22M1%202.5L4%205.5L7%202.5%22%20stroke=%22%23555%22%20stroke-width=%221%22%20fill=%22none%22/%3E%3C/svg%3E')]",
-        className,
-      )}
+    <SelectPrimitive.Root
+      value={radixValue}
+      onValueChange={(next) => onChange(next === EMPTY_TOKEN ? "" : next)}
+      disabled={disabled}
     >
-      {children}
-    </select>
+      <SelectPrimitive.Trigger
+        aria-label={ariaLabel}
+        className={cn(
+          "inline-flex items-center justify-between gap-2 border border-input bg-card px-3 py-1.5 pr-2.5",
+          "font-mono text-[11px] uppercase tracking-[0.18em] text-foreground",
+          "transition-colors hover:bg-secondary/40",
+          "focus:outline-none focus:ring-1 focus:ring-accent-signal",
+          "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50",
+          "[&>span]:line-clamp-1",
+          className,
+        )}
+      >
+        <SelectPrimitive.Value placeholder={placeholder} />
+        <SelectPrimitive.Icon asChild>
+          <ChevronDown aria-hidden className="size-3.5 text-muted-foreground" strokeWidth={1.5} />
+        </SelectPrimitive.Icon>
+      </SelectPrimitive.Trigger>
+      <SelectPrimitive.Portal>
+        <SelectPrimitive.Content
+          position="popper"
+          sideOffset={4}
+          className={cn(
+            "relative z-50 overflow-hidden border border-border bg-card text-foreground",
+            "shadow-[0_8px_20px_-6px_rgba(0,0,0,0.18),0_4px_8px_-4px_rgba(0,0,0,0.10)]",
+            "data-[state=open]:animate-in data-[state=closed]:animate-out",
+            "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+            contentWidth === "trigger" && "min-w-[var(--radix-select-trigger-width)]",
+          )}
+        >
+          <SelectPrimitive.Viewport className="p-1">
+            {options.map((opt) => {
+              const itemValue = opt.value === "" ? EMPTY_TOKEN : opt.value;
+              return (
+                <SelectPrimitive.Item
+                  key={itemValue}
+                  value={itemValue}
+                  disabled={opt.disabled}
+                  className={cn(
+                    "relative flex w-full cursor-default select-none items-center gap-2 px-2.5 py-1.5 pr-7",
+                    "font-mono text-[11px] uppercase tracking-[0.18em] text-foreground",
+                    "outline-none transition-colors",
+                    "data-[highlighted]:bg-secondary/60 data-[highlighted]:text-foreground",
+                    "data-[state=checked]:text-foreground",
+                    "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40",
+                  )}
+                >
+                  <SelectPrimitive.ItemText>{opt.label}</SelectPrimitive.ItemText>
+                  <SelectPrimitive.ItemIndicator className="absolute right-2.5 inline-flex">
+                    <Check aria-hidden className="size-3.5 text-accent-signal" strokeWidth={2} />
+                  </SelectPrimitive.ItemIndicator>
+                </SelectPrimitive.Item>
+              );
+            })}
+          </SelectPrimitive.Viewport>
+        </SelectPrimitive.Content>
+      </SelectPrimitive.Portal>
+    </SelectPrimitive.Root>
   );
 }
 
