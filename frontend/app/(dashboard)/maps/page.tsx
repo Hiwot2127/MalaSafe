@@ -6,12 +6,16 @@ import { useQueryState } from 'nuqs';
 import { mapsApi } from '@/lib/api/maps';
 import { RiskMapResponse } from '@/types/map';
 import { parseAsString } from '@/lib/url-state';
+import { Activity, Layers, ShieldAlert, TrendingUp } from 'lucide-react';
 import {
+  AlertBanner,
   EditorialCard,
   EditorialSelect,
-  Metric,
+  EmptyState,
+  LoadingScreen,
   PageHeader,
   SectionHeader,
+  StatCard,
   StatusPill,
   riskLabel,
   riskStatus,
@@ -132,21 +136,15 @@ export default function MapsPage() {
         </SectionHeader>
 
         {loading ? (
-          <EditorialCard className="flex h-96 items-center justify-center">
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-              Loading surface…
-            </p>
-          </EditorialCard>
+          <LoadingScreen caption="Loading risk surface" />
         ) : error ? (
-          <div className="border border-status-error/40 bg-status-error-tint px-4 py-3 font-sans text-sm text-status-error">
-            {error}
-          </div>
+          <AlertBanner tone="error" title="Couldn't load the risk surface" description={error} />
         ) : !mapData || mapData.features.length === 0 ? (
-          <EditorialCard className="flex h-96 items-center justify-center">
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-              No map data available
-            </p>
-          </EditorialCard>
+          <EmptyState
+            icon={Layers}
+            title="No map data for this region"
+            description="Try switching to All regions or another region from the filter."
+          />
         ) : (
           <>
             {/* Map + legend */}
@@ -175,32 +173,38 @@ export default function MapsPage() {
               </div>
             </EditorialCard>
 
-            {/* Summary strip */}
+            {/* Summary strip - StatCards with tinted icon circles. */}
             {summary ? (
-              <EditorialCard>
-                <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 sm:divide-x lg:grid-cols-4">
-                  <Metric eyebrow="Districts" value={districtCount.toLocaleString()} />
-                  <Metric
-                    eyebrow="Recent cases"
-                    value={summary.cases.toLocaleString()}
-                    caption="Sum across surface"
-                  />
-                  <Metric
-                    eyebrow="Elevated"
-                    value={summary.elevated.toLocaleString()}
-                    caption="Medium / high"
-                    status={summary.elevated > 0 ? 'warn' : 'valid'}
-                    statusLabel={summary.elevated > 0 ? 'watch' : 'clear'}
-                  />
-                  <Metric
-                    eyebrow="Very high"
-                    value={summary.veryHigh.toLocaleString()}
-                    caption="Critical districts"
-                    status={summary.veryHigh > 0 ? 'error' : 'valid'}
-                    statusLabel={summary.veryHigh > 0 ? 'critical' : 'clear'}
-                  />
-                </div>
-              </EditorialCard>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <StatCard
+                  eyebrow="Districts"
+                  value={districtCount.toLocaleString()}
+                  caption="On surface"
+                  icon={Layers}
+                  tone="signal"
+                />
+                <StatCard
+                  eyebrow="Recent cases"
+                  value={summary.cases.toLocaleString()}
+                  caption="Sum across surface"
+                  icon={Activity}
+                  tone="signal"
+                />
+                <StatCard
+                  eyebrow="Elevated"
+                  value={summary.elevated.toLocaleString()}
+                  caption="Medium / high"
+                  icon={TrendingUp}
+                  tone={summary.elevated > 0 ? 'warn' : 'valid'}
+                />
+                <StatCard
+                  eyebrow="Very high"
+                  value={summary.veryHigh.toLocaleString()}
+                  caption="Critical districts"
+                  icon={ShieldAlert}
+                  tone={summary.veryHigh > 0 ? 'error' : 'valid'}
+                />
+              </div>
             ) : null}
 
             {/* Section 002 - Districts table */}
