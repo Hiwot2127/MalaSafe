@@ -404,3 +404,10 @@ export function riskStatus(riskLevel: string): StatusKind {
 export function riskLabel(riskLevel: string): string {
   return riskLevel.replace(/_/g, " ").toUpperCase();
 }
+
+// ─── Re-exports for the domain primitives in sibling files ─────────────────
+
+export { StatCard } from "./stat-card";
+export { EmptyState } from "./empty-state";
+export { LoadingScreen } from "./loading-screen";
+export { AlertBanner } from "./alert-banner";
