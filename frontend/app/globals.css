@@ -109,62 +109,62 @@
 
 @layer base {
   :root {
-    /* Surface: warm off-white, like uncoated journal stock. */
-    --background: 40 32% 98%;
-    --foreground: 220 16% 14%;
+    /* Surface: cool off-white, clinical paper. */
+    --background: 210 30% 99%;
+    --foreground: 220 35% 14%;
 
-    --card: 40 32% 98%;
-    --card-foreground: 220 16% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 35% 14%;
 
-    --popover: 40 36% 99%;
-    --popover-foreground: 220 16% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 35% 14%;
 
-    /* Primary: deep WHO-style navy. Used for buttons, primary actions. */
-    --primary: 220 38% 22%;
-    --primary-foreground: 40 32% 98%;
+    /* Primary: brand blue - shield + map pin from the logo. */
+    --primary: 205 75% 56%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 40 18% 92%;
-    --secondary-foreground: 220 16% 14%;
+    --secondary: 210 25% 95%;
+    --secondary-foreground: 220 35% 14%;
 
-    --muted: 40 16% 94%;
-    --muted-foreground: 220 10% 38%;
+    --muted: 210 25% 95%;
+    --muted-foreground: 220 12% 42%;
 
-    --accent: 40 18% 92%;
-    --accent-foreground: 220 16% 14%;
+    --accent: 210 30% 96%;
+    --accent-foreground: 220 35% 14%;
 
-    /* Destructive: terracotta, not screaming hex-red. */
-    --destructive: 12 50% 46%;
-    --destructive-foreground: 40 32% 98%;
+    /* Destructive: mockup red, higher saturation than the old terracotta. */
+    --destructive: 0 75% 58%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 38 16% 84%;
-    --input: 38 16% 84%;
-    --ring: 220 38% 22%;
+    --border: 210 20% 90%;
+    --input: 210 20% 90%;
+    --ring: 205 75% 56%;
 
-    /* Sharp keylines, not rounded SaaS pills. */
-    --radius: 0.25rem;
+    /* Softer keylines - cards breathe, inputs/buttons stay snappy. */
+    --radius: 0.625rem;
 
-    /* Domain accents - used directly via Tailwind arbitrary values where needed. */
-    --status-valid: 145 22% 38%;       /* muted sage - Ethiopian highland field */
-    --status-warn: 38 56% 50%;         /* saffron, earth tone */
-    --status-error: 12 50% 46%;        /* clay terracotta */
+    /* Domain accents - tuned to mockup signal palette. */
+    --status-valid: 145 55% 42%;       /* mockup green - LOW risk */
+    --status-warn: 35 90% 55%;         /* mockup amber - MODERATE */
+    --status-error: 0 75% 58%;         /* mockup red - HIGH */
 
-    /* Signal accent - teal viridian. Used for links, focus rings, "cases" series. */
-    --accent-signal: 184 58% 36%;
-    --accent-signal-foreground: 40 32% 98%;
+    /* Signal accent - aligned with primary brand blue. */
+    --accent-signal: 205 75% 56%;
+    --accent-signal-foreground: 0 0% 100%;
 
-    /* Chart series palette - five distinct, perceptually-separated hues. */
-    --chart-1: 184 58% 36%;            /* teal - cases */
-    --chart-2: 12 50% 46%;             /* terracotta - deaths */
-    --chart-3: 252 28% 48%;            /* muted violet - predictions */
-    --chart-4: 38 56% 50%;             /* saffron - drift */
-    --chart-5: 202 48% 42%;            /* slate blue - climate */
+    /* Chart series palette - blue-led, brand-coherent. */
+    --chart-1: 205 75% 56%;            /* brand blue - cases */
+    --chart-2: 0 75% 58%;              /* red - deaths */
+    --chart-3: 252 60% 60%;            /* violet - predictions */
+    --chart-4: 35 90% 55%;             /* amber - drift */
+    --chart-5: 175 60% 42%;            /* teal - climate */
 
-    /* Map sequential risk ramp - 5 stops, low → very high. */
-    --risk-1: 145 22% 52%;             /* sage */
-    --risk-2: 75 30% 50%;              /* olive */
-    --risk-3: 38 56% 50%;              /* saffron */
-    --risk-4: 20 56% 50%;              /* orange-clay */
-    --risk-5: 12 50% 46%;              /* terracotta */
+    /* Map sequential risk ramp - 5 stops, low → very high (mockup palette). */
+    --risk-1: 145 55% 50%;             /* green */
+    --risk-2: 80 60% 50%;              /* lime-green */
+    --risk-3: 35 90% 55%;              /* amber */
+    --risk-4: 18 85% 55%;              /* orange */
+    --risk-5: 0 75% 58%;               /* red */
 
     /* Font stacks - wired via geist/font in the root layout. */
     --font-display: var(--font-geist-sans), system-ui, sans-serif;
@@ -173,53 +173,54 @@
   }
 
   .dark {
-    /* Dark surface: deep slate, not pure black. */
-    --background: 220 24% 9%;
-    --foreground: 40 16% 92%;
+    /* Dark surface: cool deep slate, not pure black. */
+    --background: 220 25% 8%;
+    --foreground: 210 25% 95%;
 
-    --card: 220 24% 9%;
-    --card-foreground: 40 16% 92%;
+    --card: 220 22% 11%;
+    --card-foreground: 210 25% 95%;
 
-    --popover: 220 24% 11%;
-    --popover-foreground: 40 16% 92%;
+    --popover: 220 22% 11%;
+    --popover-foreground: 210 25% 95%;
 
-    --primary: 40 32% 92%;
-    --primary-foreground: 220 38% 18%;
+    /* Brand blue, brightened for dark surfaces. */
+    --primary: 205 80% 62%;
+    --primary-foreground: 220 25% 8%;
 
-    --secondary: 220 16% 18%;
-    --secondary-foreground: 40 16% 92%;
+    --secondary: 220 18% 16%;
+    --secondary-foreground: 210 25% 95%;
 
-    --muted: 220 16% 16%;
-    --muted-foreground: 40 8% 64%;
+    --muted: 220 18% 14%;
+    --muted-foreground: 210 12% 64%;
 
-    --accent: 220 16% 18%;
-    --accent-foreground: 40 16% 92%;
+    --accent: 220 18% 16%;
+    --accent-foreground: 210 25% 95%;
 
-    --destructive: 12 44% 50%;
-    --destructive-foreground: 40 32% 96%;
+    --destructive: 0 70% 62%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 20%;
-    --input: 220 14% 20%;
-    --ring: 40 16% 80%;
+    --border: 220 16% 20%;
+    --input: 220 16% 20%;
+    --ring: 205 80% 62%;
 
-    --status-valid: 145 22% 56%;
-    --status-warn: 38 56% 60%;
-    --status-error: 12 50% 58%;
+    --status-valid: 145 50% 52%;
+    --status-warn: 35 85% 62%;
+    --status-error: 0 70% 64%;
 
-    --accent-signal: 184 50% 52%;
-    --accent-signal-foreground: 220 24% 9%;
+    --accent-signal: 205 80% 62%;
+    --accent-signal-foreground: 220 25% 8%;
 
-    --chart-1: 184 50% 52%;
-    --chart-2: 12 50% 58%;
-    --chart-3: 252 32% 64%;
-    --chart-4: 38 56% 60%;
-    --chart-5: 202 48% 58%;
+    --chart-1: 205 80% 62%;
+    --chart-2: 0 70% 64%;
+    --chart-3: 252 65% 70%;
+    --chart-4: 35 85% 62%;
+    --chart-5: 175 55% 52%;
 
-    --risk-1: 145 22% 56%;
-    --risk-2: 75 30% 58%;
-    --risk-3: 38 56% 60%;
-    --risk-4: 20 56% 58%;
-    --risk-5: 12 50% 58%;
+    --risk-1: 145 50% 56%;
+    --risk-2: 80 55% 56%;
+    --risk-3: 35 85% 62%;
+    --risk-4: 18 80% 60%;
+    --risk-5: 0 70% 64%;
   }
 }
 
