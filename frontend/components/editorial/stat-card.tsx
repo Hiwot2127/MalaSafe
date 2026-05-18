@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Minus, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EditorialCard, StatusPill, type StatusKind } from "./index";
 
@@ -19,7 +19,7 @@ interface StatCardProps {
   /** Optional change indicator (e.g. +12.4% week-over-week). */
   delta?: { value: string; direction: "up" | "down" | "flat"; status?: StatusKind };
   /** Optional lucide icon component, rendered top-right. */
-  icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  icon?: LucideIcon;
   /** Optional left tone strip. */
   tone?: Tone;
   className?: string;

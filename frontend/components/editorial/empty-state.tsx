@@ -1,10 +1,11 @@
 import * as React from "react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EditorialCard } from "./index";
 
 interface EmptyStateProps {
   /** Lucide icon component. Rendered large + muted at the top. */
-  icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  icon?: LucideIcon;
   eyebrow?: string;
   title: string;
   description?: React.ReactNode;

@@ -11,6 +11,7 @@ import {
   Settings,
   Activity,
   FileText,
+  type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LogoMark } from '@/components/brand/logo';
@@ -19,7 +20,7 @@ interface NavItem {
   index: string;
   name: string;
   href: string;
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  icon: LucideIcon;
 }
 
 const navigation: NavItem[] = [
