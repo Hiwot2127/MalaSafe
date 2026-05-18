@@ -1,34 +1,41 @@
 'use client';
 
 import { useAuth } from '@/lib/hooks/use-auth';
-import { LogOut, User } from 'lucide-react';
+import { LogOut } from 'lucide-react';
+import { StatusPill } from '@/components/editorial';
 
 export default function Header() {
   const { user, logout } = useAuth();
 
+  const role = user?.role?.replace(/_/g, ' ').toUpperCase() ?? 'USER';
+
   return (
-    <header className="flex items-center justify-between h-16 px-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div>
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-          Welcome back, {user?.full_name || 'User'}
-        </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {user?.role?.replace('_', ' ').toUpperCase() || 'User'}
+    <header className="flex h-[4.5rem] shrink-0 items-center justify-between gap-6 border-b border-border bg-background px-8">
+      <div className="flex flex-col gap-0.5">
+        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+          Signed in
         </p>
+        <div className="flex items-center gap-3">
+          <p className="font-display text-base font-semibold leading-tight tracking-[-0.018em]">
+            {user?.full_name || 'User'}
+          </p>
+          <StatusPill kind="neutral">{role}</StatusPill>
+        </div>
       </div>
 
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300">
-          <User className="w-4 h-4" />
-          <span>{user?.email}</span>
-        </div>
-
+      <div className="flex items-center gap-5">
+        {user?.email ? (
+          <span className="font-mono text-xs text-muted-foreground tabular-nums">
+            {user.email}
+          </span>
+        ) : null}
         <button
+          type="button"
           onClick={logout}
-          className="flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+          className="inline-flex items-center gap-2 border border-border bg-card px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.22em] text-foreground transition-colors hover:bg-secondary"
         >
-          <LogOut className="w-4 h-4 mr-2" />
-          Logout
+          <LogOut className="size-3.5" strokeWidth={1.5} aria-hidden />
+          Log out
         </button>
       </div>
     </header>

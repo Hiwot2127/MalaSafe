@@ -118,7 +118,7 @@ export function UploadPreviewDialog({
           <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
             Review · {kind} upload
           </p>
-          <DialogTitle className="font-display text-2xl leading-tight">
+          <DialogTitle className="font-display font-semibold text-2xl leading-tight">
             {fileName}
           </DialogTitle>
           <DialogDescription asChild>
@@ -155,7 +155,7 @@ export function UploadPreviewDialog({
         {confirming && (
           <div className="flex flex-col items-center justify-center gap-4 border-b border-border px-6 py-16 text-center">
             <Loader2 aria-hidden className="size-7 animate-spin text-muted-foreground" strokeWidth={1.5} />
-            <p className="font-display text-lg">Importing…</p>
+            <p className="font-display font-semibold text-lg">Importing…</p>
             <p className="max-w-sm font-sans text-sm text-muted-foreground">
               Writing rows to the database, then dispatching the close pipeline. This usually finishes in a few seconds.
             </p>
@@ -170,7 +170,7 @@ export function UploadPreviewDialog({
               className="border-status-error/40 bg-status-error-tint text-foreground"
             >
               <AlertTriangle aria-hidden className="size-4" />
-              <AlertTitle className="font-display">File cannot be imported</AlertTitle>
+              <AlertTitle className="font-display font-semibold">File cannot be imported</AlertTitle>
               <AlertDescription className="font-sans text-sm">
                 {fileErrors.map((e, i) => (
                   <span key={i} className="block">{e.error}</span>
@@ -386,7 +386,7 @@ function EmptyTab({ icon: Icon, label, hint, tone }: EmptyTabProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-2.5 py-16 text-center">
       <Icon aria-hidden className={`size-6 ${toneClass}`} strokeWidth={1.5} />
-      <p className="font-display text-base">{label}</p>
+      <p className="font-display font-semibold text-base">{label}</p>
       <p className="max-w-xs font-sans text-sm text-muted-foreground">{hint}</p>
     </div>
   );

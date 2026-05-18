@@ -99,3 +99,6 @@ Thumbs.db
 logs/
 tmp/
 .tmp/
+
+# UI review artifacts (local screenshots from agent-browser)
+.ui-review/

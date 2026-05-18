@@ -1,16 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { AlertTriangle, Bell } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { alertsApi } from '@/lib/api/alerts';
 import { Alert } from '@/types/map';
-import { getRiskBadgeColor, formatDateTime } from '@/lib/utils';
+import { formatDateTime } from '@/lib/utils';
+import {
+  EditorialCard,
+  EditorialSelect,
+  Metric,
+  PageHeader,
+  SectionHeader,
+  StatusPill,
+  riskLabel,
+  riskStatus,
+} from '@/components/editorial';
+
+type ActiveFilter = 'all' | 'active' | 'inactive';
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filterActive, setFilterActive] = useState<boolean | undefined>(true);
+  const [filterActive, setFilterActive] = useState<ActiveFilter>('active');
   const [filterRisk, setFilterRisk] = useState<string>('');
 
   useEffect(() => {
@@ -18,14 +29,20 @@ export default function AlertsPage() {
       setLoading(true);
       setError(null);
       try {
-        const params: any = {};
-        if (filterActive !== undefined) params.is_active = filterActive;
+        const params: Record<string, unknown> = {};
+        if (filterActive !== 'all') params.is_active = filterActive === 'active';
         if (filterRisk) params.risk_level = filterRisk;
-
         const response = await alertsApi.getAlerts(params);
-        setAlerts(response);
-      } catch (err: any) {
-        setError(err.response?.data?.detail || 'Failed to fetch alerts');
+        // Backend may return either a bare array or { data: [...] } / { items: [...] }.
+        const list: Alert[] = Array.isArray(response)
+          ? response
+          : ((response as unknown as { data?: Alert[]; items?: Alert[] })?.data ??
+              (response as unknown as { items?: Alert[] })?.items ??
+              []);
+        setAlerts(list);
+      } catch (err: unknown) {
+        const maybe = err as { response?: { data?: { detail?: string } } };
+        setError(maybe?.response?.data?.detail || 'Failed to fetch alerts');
       } finally {
         setLoading(false);
       }
@@ -34,143 +51,155 @@ export default function AlertsPage() {
     fetchAlerts();
   }, [filterActive, filterRisk]);
 
+  const totals = useMemo(() => {
+    return {
+      total: alerts.length,
+      active: alerts.filter((a) => a.is_active).length,
+      highRisk: alerts.filter(
+        (a) => a.risk_level === 'high' || a.risk_level === 'very_high',
+      ).length,
+      veryHigh: alerts.filter((a) => a.risk_level === 'very_high').length,
+    };
+  }, [alerts]);
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Alerts</h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Malaria outbreak alerts and notifications
-        </p>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-4">
-        <select
-          value={filterActive === undefined ? 'all' : filterActive ? 'active' : 'inactive'}
-          onChange={(e) => {
-            const value = e.target.value;
-            setFilterActive(value === 'all' ? undefined : value === 'active');
-          }}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-        >
-          <option value="all">All Alerts</option>
-          <option value="active">Active Only</option>
-          <option value="inactive">Inactive Only</option>
-        </select>
-
-        <select
-          value={filterRisk}
-          onChange={(e) => setFilterRisk(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-        >
-          <option value="">All Risk Levels</option>
-          <option value="low">Low Risk</option>
-          <option value="medium">Medium Risk</option>
-          <option value="high">High Risk</option>
-          <option value="very_high">Very High Risk</option>
-        </select>
-      </div>
-
-      {loading && (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg text-gray-600 dark:text-gray-400">Loading alerts...</div>
-        </div>
-      )}
-
-      {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg">
-          {error}
-        </div>
-      )}
-
-      {!loading && !error && alerts.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
-          <Bell className="w-16 h-16 mb-4" />
-          <p>No alerts found</p>
-        </div>
-      )}
-
-      {!loading && !error && alerts.length > 0 && (
-        <div className="space-y-4">
-          {alerts.map((alert) => (
-            <div
-              key={alert.id}
-              className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+    <div className="mx-auto flex max-w-6xl flex-col gap-14">
+      <PageHeader
+        eyebrow="MalaSafe · Outbreak watch"
+        title="Alerts"
+        description="Standing list of district-level outbreak alerts opened by the surveillance pipeline. Acknowledge from the district console."
+        actions={
+          <div className="flex items-center gap-2">
+            <EditorialSelect
+              value={filterActive}
+              onChange={(e) => setFilterActive(e.target.value as ActiveFilter)}
+              aria-label="Status filter"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-4 flex-1">
-                  <div className={`p-3 rounded-full ${
-                    alert.risk_level === 'very_high' ? 'bg-red-100 dark:bg-red-900/20' :
-                    alert.risk_level === 'high' ? 'bg-orange-100 dark:bg-orange-900/20' :
-                    alert.risk_level === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/20' :
-                    'bg-green-100 dark:bg-green-900/20'
-                  }`}>
-                    <AlertTriangle className={`w-6 h-6 ${
-                      alert.risk_level === 'very_high' ? 'text-red-600 dark:text-red-400' :
-                      alert.risk_level === 'high' ? 'text-orange-600 dark:text-orange-400' :
-                      alert.risk_level === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
-                      'text-green-600 dark:text-green-400'
-                    }`} />
-                  </div>
+              <option value="all">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </EditorialSelect>
+            <EditorialSelect
+              value={filterRisk}
+              onChange={(e) => setFilterRisk(e.target.value)}
+              aria-label="Risk filter"
+            >
+              <option value="">All risk</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="very_high">Very high</option>
+            </EditorialSelect>
+          </div>
+        }
+      />
 
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        {alert.district_name || 'Unknown District'}
-                      </h3>
-                      <span className={`px-2 py-1 text-xs font-medium rounded ${getRiskBadgeColor(alert.risk_level)}`}>
-                        {alert.risk_level.replace('_', ' ').toUpperCase()}
-                      </span>
-                      {alert.is_active && (
-                        <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                          ACTIVE
-                        </span>
-                      )}
+      {/* Section 001 — Summary */}
+      <section className="flex flex-col gap-5">
+        <SectionHeader
+          index="001"
+          label="Summary"
+          tone={totals.veryHigh > 0 ? 'error' : totals.active > 0 ? 'warn' : 'valid'}
+        >
+          <StatusPill kind={totals.veryHigh > 0 ? 'error' : totals.active > 0 ? 'warn' : 'valid'}>
+            {totals.veryHigh > 0
+              ? 'Critical'
+              : totals.active > 0
+                ? `${totals.active} open`
+                : 'All clear'}
+          </StatusPill>
+        </SectionHeader>
+        <EditorialCard>
+          <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 sm:divide-x lg:grid-cols-4">
+            <Metric
+              eyebrow="Total alerts"
+              value={totals.total.toLocaleString()}
+              caption="In window"
+            />
+            <Metric
+              eyebrow="Active"
+              value={totals.active.toLocaleString()}
+              status={totals.active === 0 ? 'valid' : 'warn'}
+              statusLabel={totals.active === 0 ? 'clear' : 'open'}
+            />
+            <Metric
+              eyebrow="High risk"
+              value={totals.highRisk.toLocaleString()}
+              caption="High + very high"
+              status={totals.highRisk === 0 ? 'valid' : 'warn'}
+              statusLabel={totals.highRisk === 0 ? 'stable' : 'watch'}
+            />
+            <Metric
+              eyebrow="Very high"
+              value={totals.veryHigh.toLocaleString()}
+              caption="Critical districts"
+              status={totals.veryHigh === 0 ? 'valid' : 'error'}
+              statusLabel={totals.veryHigh === 0 ? 'stable' : 'critical'}
+            />
+          </div>
+        </EditorialCard>
+      </section>
+
+      {/* Section 002 — Active alerts */}
+      <section className="flex flex-col gap-5">
+        <SectionHeader index="002" label="Roster" tone="signal">
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
+            {totals.total} rows
+          </span>
+        </SectionHeader>
+
+        {loading ? (
+          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            Loading alerts…
+          </p>
+        ) : error ? (
+          <div className="border border-status-error/40 bg-status-error-tint px-4 py-3 font-sans text-sm text-status-error">
+            {error}
+          </div>
+        ) : alerts.length === 0 ? (
+          <EditorialCard className="px-6 py-10">
+            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+              No alerts found · last checked {formatDateTime(new Date())}
+            </p>
+          </EditorialCard>
+        ) : (
+          <EditorialCard className="overflow-hidden">
+            <ul className="flex flex-col divide-y divide-border">
+              {alerts.map((alert, i) => (
+                <li
+                  key={alert.id}
+                  className="grid grid-cols-[auto_1fr_auto] items-baseline gap-x-6 gap-y-2 px-5 py-4 transition-colors hover:bg-secondary/40"
+                >
+                  <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+                    {String(i + 1).padStart(3, '0')}
+                  </span>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-3">
+                      <p className="font-display font-semibold text-base leading-tight tracking-tight">
+                        {alert.district_name || 'Unknown district'}
+                      </p>
+                      <StatusPill kind={riskStatus(alert.risk_level)}>
+                        {riskLabel(alert.risk_level)}
+                      </StatusPill>
+                      {alert.is_active ? (
+                        <StatusPill kind="neutral">Active</StatusPill>
+                      ) : null}
                     </div>
-
-                    <p className="text-gray-700 dark:text-gray-300 mb-2">
-                      {alert.message}
+                    <p className="font-sans text-sm text-foreground/85">{alert.message}</p>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
+                      {alert.region ? `${alert.region} · ` : ''}
+                      {formatDateTime(alert.created_at)}
                     </p>
-
-                    <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-                      {alert.region && (
-                        <span>Region: {alert.region}</span>
-                      )}
-                      <span>Created: {formatDateTime(alert.created_at)}</span>
-                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Summary */}
-      {!loading && !error && alerts.length > 0 && (
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Alerts</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
-              {alerts.length}
-            </p>
-          </div>
-
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Alerts</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
-              {alerts.filter(a => a.is_active).length}
-            </p>
-          </div>
-
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">High Risk</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
-              {alerts.filter(a => a.risk_level === 'high' || a.risk_level === 'very_high').length}
-            </p>
-          </div>
-        </div>
-      )}
+                  <span aria-hidden className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                    {alert.risk_level === 'very_high' ? '★★' : alert.risk_level === 'high' ? '★' : '·'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </EditorialCard>
+        )}
+      </section>
     </div>
   );
 }
