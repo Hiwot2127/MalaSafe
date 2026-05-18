@@ -40,7 +40,7 @@ function LoginForm() {
       const maybe = err as { response?: { data?: { detail?: string } } };
       setError(
         maybe?.response?.data?.detail ||
-          'Login failed. Please check your credentials.',
+        'Login failed. Please check your credentials.',
       );
     } finally {
       setLoading(false);

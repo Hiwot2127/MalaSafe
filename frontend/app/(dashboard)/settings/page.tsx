@@ -90,11 +90,10 @@ function Row({
         {label}
       </dt>
       <dd
-        className={`text-foreground ${
-          mono
+        className={`text-foreground ${mono
             ? 'font-mono text-sm tabular-nums'
             : 'font-sans text-sm font-medium tabular-nums'
-        }`}
+          }`}
       >
         {value}
       </dd>

@@ -267,8 +267,8 @@ export function UploadPreviewDialog({
             {confirming
               ? "Don't close this tab until the import finishes."
               : summary.valid > 0
-              ? `${summary.valid} row${summary.valid === 1 ? "" : "s"} will be imported. Bad rows are listed but skipped.`
-              : "Nothing to import yet."}
+                ? `${summary.valid} row${summary.valid === 1 ? "" : "s"} will be imported. Bad rows are listed but skipped.`
+                : "Nothing to import yet."}
           </p>
           <div className="flex gap-2">
             <Button
