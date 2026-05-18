@@ -116,8 +116,8 @@ export function EditorialCard({
   return (
     <Tag
       className={cn(
-        "border border-border bg-card",
-        hover && "transition-colors hover:bg-accent-signal-tint",
+        "rounded-[var(--radius)] border border-border bg-card shadow-sm",
+        hover && "transition-all hover:shadow-md hover:border-primary/30",
         className,
       )}
       {...rest}
@@ -285,10 +285,10 @@ export function EditorialSelect({
       <SelectPrimitive.Trigger
         aria-label={ariaLabel}
         className={cn(
-          "inline-flex items-center justify-between gap-2 border border-input bg-card px-3 py-1.5 pr-2.5",
+          "inline-flex items-center justify-between gap-2 rounded-md border border-input bg-card px-3 py-2 pr-2.5",
           "font-mono text-[11px] uppercase tracking-[0.18em] text-foreground",
           "transition-colors hover:bg-secondary/40",
-          "focus:outline-none focus:ring-1 focus:ring-accent-signal",
+          "focus:outline-none focus:ring-2 focus:ring-accent-signal/40",
           "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50",
           "[&>span]:line-clamp-1",
           className,
@@ -304,7 +304,7 @@ export function EditorialSelect({
           position="popper"
           sideOffset={4}
           className={cn(
-            "relative z-50 overflow-hidden border border-border bg-card text-foreground",
+            "relative z-50 overflow-hidden rounded-md border border-border bg-popover text-popover-foreground",
             "shadow-[0_8px_20px_-6px_rgba(0,0,0,0.18),0_4px_8px_-4px_rgba(0,0,0,0.10)]",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -353,7 +353,7 @@ export const EditorialInput = React.forwardRef<HTMLInputElement, EditorialInputP
         ref={ref}
         {...rest}
         className={cn(
-          "block w-full border border-input bg-card px-3 py-2.5 font-sans text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors focus:outline-none focus:ring-1 focus:ring-accent-signal",
+          "block w-full rounded-md border border-input bg-card px-3 py-2.5 font-sans text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors focus:outline-none focus:ring-2 focus:ring-accent-signal/40",
           className,
         )}
       />
@@ -377,7 +377,7 @@ export function PrimaryButton({
     <button
       {...rest}
       className={cn(
-        "inline-flex items-center justify-center gap-2 bg-primary px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.22em] text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 font-sans text-sm font-medium tracking-tight text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow disabled:cursor-not-allowed disabled:opacity-50",
         fullWidth && "w-full",
         className,
       )}
@@ -393,7 +393,7 @@ const RISK_TO_STATUS: Record<string, StatusKind> = {
   low: "valid",
   medium: "warn",
   moderate: "warn",
-  high: "warn",
+  high: "error",
   very_high: "error",
 };
 
