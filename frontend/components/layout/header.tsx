@@ -1,15 +1,23 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { LogOut, Moon, Sun } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { StatusPill } from '@/components/editorial';
+import { useNotificationCount } from '@/lib/hooks/use-notification-count';
+import { Avatar, NotificationBell, StatusPill } from '@/components/editorial';
+
+function firstNameOf(full: string | null | undefined): string {
+  if (!full) return 'there';
+  return full.trim().split(/\s+/)[0] ?? 'there';
+}
 
 export default function Header() {
   const { user, logout } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const count = useNotificationCount();
 
   useEffect(() => setMounted(true), []);
 
@@ -20,22 +28,18 @@ export default function Header() {
     <header className="flex h-[4.5rem] shrink-0 items-center justify-between gap-6 border-b border-border bg-background px-8">
       <div className="flex flex-col gap-0.5">
         <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-          Signed in
+          Welcome back
         </p>
         <div className="flex items-center gap-3">
           <p className="font-display text-base font-semibold leading-tight tracking-[-0.018em]">
-            {user?.full_name || 'User'}
+            {firstNameOf(user?.full_name)}
           </p>
           <StatusPill kind="neutral">{role}</StatusPill>
         </div>
       </div>
 
-      <div className="flex items-center gap-5">
-        {user?.email ? (
-          <span className="font-mono text-xs text-muted-foreground tabular-nums">
-            {user.email}
-          </span>
-        ) : null}
+      <div className="flex items-center gap-3">
+        <NotificationBell count={count} />
 
         <button
           type="button"
@@ -54,13 +58,22 @@ export default function Header() {
           )}
         </button>
 
+        <Link
+          href="/settings"
+          aria-label="Open settings"
+          className="rounded-full transition-opacity hover:opacity-80"
+        >
+          <Avatar name={user?.full_name} size="md" />
+        </Link>
+
         <button
           type="button"
           onClick={logout}
-          className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.22em] text-foreground transition-colors hover:bg-secondary"
+          aria-label="Log out"
+          title="Log out"
+          className="inline-flex size-9 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:bg-secondary"
         >
-          <LogOut className="size-3.5" strokeWidth={1.5} aria-hidden />
-          Log out
+          <LogOut className="size-4" strokeWidth={1.5} aria-hidden />
         </button>
       </div>
     </header>
