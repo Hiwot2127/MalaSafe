@@ -1,13 +1,20 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
+import { LogOut, Moon, Sun } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { LogOut } from 'lucide-react';
 import { StatusPill } from '@/components/editorial';
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const role = user?.role?.replace(/_/g, ' ').toUpperCase() ?? 'USER';
+  const isDark = mounted && resolvedTheme === 'dark';
 
   return (
     <header className="flex h-[4.5rem] shrink-0 items-center justify-between gap-6 border-b border-border bg-background px-8">
@@ -29,10 +36,28 @@ export default function Header() {
             {user.email}
           </span>
         ) : null}
+
+        <button
+          type="button"
+          onClick={() => setTheme(isDark ? 'light' : 'dark')}
+          aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+          className="inline-flex size-9 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:bg-secondary"
+        >
+          {mounted ? (
+            isDark ? (
+              <Sun className="size-4" strokeWidth={1.75} aria-hidden />
+            ) : (
+              <Moon className="size-4" strokeWidth={1.75} aria-hidden />
+            )
+          ) : (
+            <span className="size-4" aria-hidden />
+          )}
+        </button>
+
         <button
           type="button"
           onClick={logout}
-          className="inline-flex items-center gap-2 border border-border bg-card px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.22em] text-foreground transition-colors hover:bg-secondary"
+          className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.22em] text-foreground transition-colors hover:bg-secondary"
         >
           <LogOut className="size-3.5" strokeWidth={1.5} aria-hidden />
           Log out
