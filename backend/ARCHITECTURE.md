@@ -1,409 +1,255 @@
 # MalaSafe Backend Architecture
 
-## 🏗️ System Architecture
+How the MalaSafe backend is laid out, how requests flow through it, and how the
+monthly ML pipeline runs.
+
+## System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        Client Layer                          │
-│  (Web Browser, Mobile App, External Services)               │
+│  Clients                                                     │
+│  • Web dashboard (Next.js)   • Mobile app   • Cron triggers │
 └────────────────────────┬────────────────────────────────────┘
-                         │ HTTP/HTTPS
+                         │ HTTPS, JWT bearer
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                     FastAPI Application                      │
+│  FastAPI app (uvicorn / gunicorn on Render)                 │
 │                                                              │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │              API Layer (Routes)                       │  │
-│  │  • /api/v1/health  • /api/v1/auth  • /api/v1/...    │  │
-│  └────────────────────┬─────────────────────────────────┘  │
-│                       │                                      │
-│  ┌────────────────────▼─────────────────────────────────┐  │
-│  │           Middleware Layer                            │  │
-│  │  • CORS  • Authentication  • Logging  • Error        │  │
-│  └────────────────────┬─────────────────────────────────┘  │
-│                       │                                      │
-│  ┌────────────────────▼─────────────────────────────────┐  │
-│  │           Service Layer (Business Logic)              │  │
-│  │  • User Service  • Prediction Service  • ...         │  │
-│  └────────────────────┬─────────────────────────────────┘  │
-│                       │                                      │
-│  ┌────────────────────▼─────────────────────────────────┐  │
-│  │           Data Layer (Models & Schemas)               │  │
-│  │  • SQLAlchemy Models  • Pydantic Schemas             │  │
-│  └────────────────────┬─────────────────────────────────┘  │
-└────────────────────────┼────────────────────────────────────┘
-                         │
-         ┌───────────────┼───────────────┐
-         │               │               │
-         ▼               ▼               ▼
-    ┌─────────┐    ┌─────────┐    ┌─────────┐
-    │PostgreSQL│    │  Redis  │    │AI Models│
-    │ Database │    │  Cache  │    │  (ML)   │
-    └─────────┘    └─────────┘    └─────────┘
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ Routers  (/api/v1/...)                                 │ │
+│  │  health · auth · mobile · uploads · analytics · maps   │ │
+│  │  predictions · alerts · monthly-close · examples       │ │
+│  └────────────────────────┬───────────────────────────────┘ │
+│                           │                                  │
+│  ┌────────────────────────▼───────────────────────────────┐ │
+│  │ Middleware                                              │ │
+│  │  CORS · JWT auth (via Depends) · global error handler   │ │
+│  └────────────────────────┬───────────────────────────────┘ │
+│                           │                                  │
+│  ┌────────────────────────▼───────────────────────────────┐ │
+│  │ Services  (business logic, no FastAPI)                  │ │
+│  │  UploadService · AnalyticsService · PredictionService   │ │
+│  └────────────┬─────────────┬───────────────┬─────────────┘ │
+│               │             │               │                │
+│  ┌────────────▼──┐  ┌──────▼─────┐  ┌─────▼──────────────┐ │
+│  │ Models +      │  │ AI module   │  │ Background tasks   │ │
+│  │ Schemas       │  │ predictor / │  │ monthly_close.run  │ │
+│  │ (SQLAlchemy + │  │ features /  │  │ predict_monthly    │ │
+│  │  Pydantic)    │  │ phrasebook  │  │ (asyncio tasks)    │ │
+│  └──────┬────────┘  └─────────────┘  └────────────────────┘ │
+└─────────┼───────────────────────────────────────────────────┘
+          │
+          ▼
+   ┌─────────────┐                ┌───────────────────────┐
+   │ PostgreSQL  │                │ Trained LightGBM      │
+   │ (Async      │                │ artifacts (models/)   │
+   │  SQLAlchemy)│                │ — model versions in DB│
+   └─────────────┘                └───────────────────────┘
 ```
 
-## 📂 Directory Structure Explained
+No Redis, no Celery — background work runs in-process via `asyncio.create_task`.
+Scheduled runs come from external cron (Render Cron Jobs, GitHub Actions) hitting
+`POST /monthly-close/predict-monthly`.
 
-### `/app` - Main Application Directory
-
-#### `main.py` - Application Entry Point
-- FastAPI app initialization
-- Middleware configuration
-- Router registration
-- Startup/shutdown events
-- Global exception handlers
-
-#### `/config` - Configuration Management
-```python
-settings.py          # Pydantic settings from environment
-__init__.py         # Export settings instance
-```
-**Purpose**: Centralized configuration using environment variables
-
-#### `/database` - Database Layer
-```python
-base.py             # SQLAlchemy engine, session, Base class
-__init__.py         # Export database utilities
-```
-**Features**:
-- Async engine for FastAPI
-- Sync engine for Alembic
-- Session factory
-- Dependency injection for DB sessions
-
-#### `/models` - SQLAlchemy ORM Models
-```python
-user.py             # User model (example)
-__init__.py         # Export all models
-```
-**Purpose**: Database table definitions and relationships
-
-#### `/schemas` - Pydantic Schemas
-```python
-user.py             # User validation schemas
-__init__.py         # Export all schemas
-```
-**Purpose**: Request/response validation and serialization
-
-#### `/routes` - API Endpoints
-```python
-health.py           # Health check endpoints
-auth.py             # Authentication endpoints
-__init__.py         # Export all routers
-```
-**Purpose**: HTTP endpoint definitions and routing
-
-#### `/services` - Business Logic
-```python
-# Add service classes here
-user_service.py     # User-related business logic
-prediction_service.py  # ML prediction logic
-```
-**Purpose**: Reusable business logic separated from routes
-
-#### `/middleware` - Custom Middleware
-```python
-cors.py             # CORS configuration
-__init__.py         # Export middleware setup
-```
-**Purpose**: Request/response processing pipeline
-
-#### `/utils` - Utility Functions
-```python
-security.py         # JWT and password utilities
-__init__.py         # Export utilities
-```
-**Purpose**: Reusable helper functions
-
-#### `/ai` - Machine Learning
-```python
-# Add ML models and prediction logic
-models.py           # ML model loading and inference
-preprocessing.py    # Data preprocessing
-```
-**Purpose**: AI/ML functionality for malaria prediction
-
-### `/alembic` - Database Migrations
+## Directory Layout
 
 ```
-env.py              # Alembic environment configuration
-script.py.mako      # Migration template
-versions/           # Migration files (auto-generated)
+app/
+├── main.py            # FastAPI app, OpenAPI metadata, router wiring, exception handler
+├── config/            # Pydantic-Settings from environment
+├── database/          # Async engine + session factory + get_db dependency
+├── middleware/        # CORS setup (called from main.py)
+├── models/            # 12 SQLAlchemy ORM models (see DATABASE_MODELS.md)
+├── schemas/           # Pydantic v2 request/response models
+├── routes/            # 10 routers (one APIRouter per file)
+├── services/          # Business logic, called from routes
+│   ├── upload_service.py        # CSV parsing, validation, persistence, dispatch
+│   ├── analytics_service.py     # Dashboard, trends, risk map aggregation
+│   └── prediction_service.py    # Single + batch prediction generation
+├── ai/                # ML inference + helpers (separate from training scripts)
+│   ├── predictor.py             # Loads active ModelVersion, runs inference
+│   ├── features.py              # Feature engineering shared between train + infer
+│   └── phrasebook.py            # prediction_reason text templates
+├── tasks/             # In-process background jobs
+│   ├── monthly_close.py         # Orchestrates a close: backtest → drift → predict
+│   └── predict_monthly.py       # Generates next-month predictions for all districts
+└── utils/             # security (JWT/bcrypt), dependencies (RBAC), csv_parser,
+                       # district_mapper, season_generator
 ```
 
-## 🔄 Request Flow
+External:
 
-### 1. Authentication Flow
 ```
-Client
-  │
-  ├─► POST /api/v1/auth/register
-  │     │
-  │     ├─► Pydantic validates UserCreate schema
-  │     ├─► Check if user exists (database query)
-  │     ├─► Hash password (bcrypt)
-  │     ├─► Create user in database
-  │     └─► Return UserResponse
-  │
-  ├─► POST /api/v1/auth/login
-  │     │
-  │     ├─► Validate credentials
-  │     ├─► Verify password hash
-  │     ├─► Generate JWT tokens (access + refresh)
-  │     └─► Return Token response
-  │
-  └─► GET /api/v1/auth/me (with Bearer token)
-        │
-        ├─► Extract token from Authorization header
-        ├─► Decode and verify JWT
-        ├─► Get user from database
-        └─► Return UserResponse
+alembic/         # Migrations
+data/            # Reference data (district lookups, GeoJSON keys)
+models/          # Trained ML artifact bundles, referenced by ModelVersion.artifacts_path
+scripts/         # One-off operational scripts (training runs, backfills, seeds)
+logs/            # Loguru log files (rotated)
 ```
 
-### 2. Protected Endpoint Flow
+## Request Flow
+
+A typical authenticated request:
+
 ```
-Client Request with JWT
-        │
-        ▼
-  CORS Middleware
-        │
-        ▼
-  OAuth2 Token Extraction
-        │
-        ▼
-  JWT Verification (utils/security.py)
-        │
-        ▼
-  Get User from DB (get_current_user)
-        │
-        ▼
-  Route Handler
-        │
-        ▼
-  Service Layer (business logic)
-        │
-        ▼
-  Database Operations
-        │
-        ▼
-  Pydantic Response Schema
-        │
-        ▼
-  JSON Response to Client
+client                             FastAPI                              Postgres
+  │  POST /api/v1/predictions/generate                                       │
+  │  Authorization: Bearer <JWT>                                             │
+  ├───────────────────────────────────►                                      │
+  │            ┌─ CORS middleware ────────┐                                  │
+  │            ├─ JWT decode (Depends)    │                                  │
+  │            │  get_current_user        │                                  │
+  │            ├─ require_roles(...)      │  ◄── 403 if wrong role           │
+  │            ├─ Pydantic body validate  │  ◄── 422 on schema fail          │
+  │            │                          │                                  │
+  │            │  route handler ──────────┼──► PredictionService.generate_one│
+  │            │                          │       │                          │
+  │            │                          │       │  SELECT district ───────►│
+  │            │                          │       │  ◄────── 404 if missing  │
+  │            │                          │       │  load active ModelVersion│
+  │            │                          │       │  predictor.predict()     │
+  │            │                          │       │  INSERT prediction ─────►│
+  │            │  PredictionResultResponse│                                  │
+  │  ◄─────────┴──────────────────────────┘                                  │
+  │  201 Created                                                             │
 ```
 
-## 🔐 Security Architecture
+`Depends(get_current_user)` and `Depends(require_roles(...))` are reusable across
+routes — see [app/utils/dependencies.py](./app/utils/dependencies.py).
 
-### Authentication & Authorization
+## Auth Model
+
+- Stateless JWT. Login (`/auth/login`) returns an `access_token` containing
+  `user_id`, `email`, and `role` claims.
+- Tokens are HS256-signed with `SECRET_KEY`; expiry from `ACCESS_TOKEN_EXPIRE_MINUTES`.
+- Every protected route declares its policy via dependency:
+  - `Depends(get_current_user)` — must be logged in
+  - `Depends(require_admin)` / `require_official` — role gates
+  - `Depends(require_roles(UserRole.X, UserRole.Y))` — explicit allow-list
+- Public users self-register via `/mobile/register`. Officials are provisioned by
+  admins via `/auth/create-official`.
+
+See [AUTH_DOCUMENTATION.md](./AUTH_DOCUMENTATION.md).
+
+## Data Ingest Path
+
 ```
-┌─────────────────────────────────────────┐
-│         JWT Token Structure              │
-├─────────────────────────────────────────┤
-│ Header:                                  │
-│   - Algorithm: HS256                     │
-│   - Type: JWT                            │
-├─────────────────────────────────────────┤
-│ Payload:                                 │
-│   - sub: user_id                         │
-│   - username: username                   │
-│   - exp: expiration_timestamp            │
-│   - type: "access" or "refresh"          │
-├─────────────────────────────────────────┤
-│ Signature:                               │
-│   - HMACSHA256(header + payload, secret) │
-└─────────────────────────────────────────┘
-```
-
-### Password Security
-- **Hashing**: bcrypt with automatic salt
-- **Rounds**: Default bcrypt rounds (secure)
-- **Storage**: Only hashed passwords in database
-- **Verification**: Constant-time comparison
-
-## 🗄️ Database Architecture
-
-### Connection Management
-```
-┌──────────────────────────────────────┐
-│      Application Layer                │
-├──────────────────────────────────────┤
-│  Async Operations (FastAPI)          │
-│    ↓                                  │
-│  AsyncSessionLocal                    │
-│    ↓                                  │
-│  async_engine (asyncpg)               │
-│    ↓                                  │
-│  PostgreSQL Database                  │
-├──────────────────────────────────────┤
-│  Sync Operations (Alembic)            │
-│    ↓                                  │
-│  SessionLocal                         │
-│    ↓                                  │
-│  sync_engine (psycopg2)               │
-│    ↓                                  │
-│  PostgreSQL Database                  │
-└──────────────────────────────────────┘
+official user
+   │
+   │  multipart POST /uploads/malaria/monthly (.csv)
+   ▼
+UploadService
+   │  1. parse + validate every row (csv_parser, district_mapper)
+   │  2. compute month_span across the file
+   │  3. insert MalariaData rows
+   │  4. insert UploadedFile provenance row
+   │  5. if month_span <= 2  →  CLOSE mode:
+   │         create MonthlyClose(status='pending')
+   │         asyncio.create_task(monthly_close.run(id))
+   │     else                →  BACKFILL mode (no close dispatched)
+   ▼
+202/200 response with counts + file_id
 ```
 
-### Connection Pool Settings
-- **Pool Size**: 10 connections
-- **Max Overflow**: 20 additional connections
-- **Pre-ping**: Enabled (connection health check)
-- **Echo**: Enabled in DEBUG mode
+Climate uploads follow the same shape but target `climate_data` and never dispatch
+a close.
 
-## 🚀 Deployment Architecture
+## Monthly Close Pipeline
 
-### Development
-```
-Developer Machine
-    │
-    ├─► FastAPI (uvicorn --reload)
-    ├─► PostgreSQL (local)
-    └─► Redis (local)
-```
+Orchestrator: [app/tasks/monthly_close.py](./app/tasks/monthly_close.py).
 
-### Production
 ```
-Load Balancer
-    │
-    ├─► FastAPI Instance 1 (gunicorn + uvicorn workers)
-    ├─► FastAPI Instance 2 (gunicorn + uvicorn workers)
-    └─► FastAPI Instance N (gunicorn + uvicorn workers)
-         │
-         ├─► PostgreSQL (managed service)
-         ├─► Redis (managed service)
-         └─► Object Storage (for uploads)
+MonthlyClose status transitions
+─────────────────────────────────
+
+  pending ──► climate_fetching ──► backtesting ──► drift_checking
+                                                         │
+                                                         ▼
+                                              predicting ──► completed
+                                                         │
+                                                (any step) ▼
+                                                       failed (error captured)
 ```
 
-## 📊 Data Flow Patterns
+For each close:
 
-### CRUD Operations
-```python
-# Create
-route → service → model → database → response
+1. **climate_fetching** — top up `climate_data` for the close month (manual or
+   CHIRPS-final supersede; current implementation is manual_upload-only).
+2. **backtesting** — score the previous month's predictions against newly-arrived
+   actuals; write `BacktestResult` rows.
+3. **drift_checking** — compute z-scores for `cases`, `rainfall`, `temp`, `humidity`
+   against the training-window baseline; write `DriftFinding` rows where
+   `|z| ≥ 2` (warn) or `≥ 3` (critical).
+4. **predicting** — generate next-month predictions for every mapped district
+   (`adm3_pcode IS NOT NULL`) using the active `ModelVersion`. Writes to
+   `predictions`; risk-band alerts get a row in `alerts`.
 
-# Read
-route → service → database query → model → schema → response
+Admin can re-run a stuck close via `POST /monthly-close/{id}/run`.
+Admin can manually trigger only the prediction batch via
+`POST /monthly-close/predict-monthly` — used by external cron in lieu of Celery Beat.
 
-# Update
-route → service → database query → update model → commit → response
+## ML Inference
 
-# Delete
-route → service → database query → delete → commit → response
-```
+[app/ai/predictor.py](./app/ai/predictor.py) loads the row from `model_versions`
+where `status='active'`. The bundle pointed to by `artifacts_path` contains the
+LightGBM booster, calibrated risk thresholds, and feature transforms. Inference
+shares feature engineering with training via [app/ai/features.py](./app/ai/features.py).
 
-### AI Prediction Flow
-```
-Client Request (symptoms, location, etc.)
-    │
-    ▼
-API Endpoint (/api/v1/predict)
-    │
-    ▼
-Validation (Pydantic Schema)
-    │
-    ▼
-Prediction Service
-    │
-    ├─► Load ML Model (from /models)
-    ├─► Preprocess Input Data
-    ├─► Run Prediction
-    └─► Post-process Results
-    │
-    ▼
-Store Prediction (Database)
-    │
-    ▼
-Return Response (Pydantic Schema)
-```
+Cold-start fallback: if a district has insufficient history for full feature
+extraction, the predictor falls back to a regional baseline and tags the prediction
+with `prediction_reason: "cold-start: ..."`. The API surfaces this via the
+`is_warm` field on `PredictionResultResponse`.
 
-## 🔧 Configuration Management
+Quantile bounds (`q10`, `q90`) come from a parallel quantile-loss booster and are
+used by the dashboard to render uncertainty intervals.
 
-### Environment-Based Settings
-```
-.env (local development)
-    ↓
-Settings Class (Pydantic)
-    ↓
-Cached Instance (lru_cache)
-    ↓
-Used Throughout Application
-```
+## Background Tasks
 
-### Configuration Hierarchy
-1. Environment variables (.env file)
-2. Default values (in Settings class)
-3. Runtime overrides (if needed)
+| Trigger | What runs | Where |
+|---|---|---|
+| Successful malaria CSV upload (close mode) | `monthly_close.run` | in-process |
+| `POST /predictions/generate-batch` | `_run_batch_predict` | in-process via `BackgroundTasks` |
+| `POST /monthly-close/{id}/run` | `monthly_close.run` (re-dispatch) | in-process |
+| `POST /monthly-close/predict-monthly` | `predict_monthly.run_monthly_predictions` | in-process |
+| External cron (Render / GHA) | hits `predict-monthly` | external |
 
-## 📈 Scalability Considerations
+All tasks open their own DB session (`AsyncSessionLocal`) — the request session is
+gone by the time they run.
 
-### Horizontal Scaling
-- Stateless application design
-- JWT tokens (no server-side sessions)
-- Database connection pooling
-- Redis for shared state (if needed)
+## Deployment
 
-### Vertical Scaling
-- Async operations for I/O
-- Connection pooling
-- Efficient database queries
-- Caching strategies
+- **Platform**: Render.com (web service, Python runtime)
+- **Process**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- **DB**: Render Postgres (or Supabase, per `DATABASE_URL`)
+- **TLS**: terminated at Render's edge
+- **Cron**: external — Render Cron Jobs or GitHub Actions hitting
+  `/monthly-close/predict-monthly`
 
-### Performance Optimization
-- Database indexes on frequently queried fields
-- Lazy loading for relationships
-- Pagination for large datasets
-- Background tasks for heavy operations (Celery)
+Health probes:
+- `/api/v1/health` — process liveness
+- `/api/v1/health/db` — DB connectivity (preferred for load balancers)
 
-## 🧪 Testing Strategy
+## Observability
 
-### Unit Tests
-- Test individual functions
-- Mock database calls
-- Test business logic in services
+- Loguru → stdout + `logs/app.log`, 500 MB rotation, 10-day retention.
+- Configuration in [app/main.py](./app/main.py).
+- Recommended additions for production: Sentry for errors, an APM agent for
+  request tracing.
 
-### Integration Tests
-- Test API endpoints
-- Test database operations
-- Test authentication flow
+## Conventions
 
-### End-to-End Tests
-- Test complete user flows
-- Test with real database (test DB)
-- Test error scenarios
+- **Models** stay thin — no business logic in `app/models/`.
+- **Services** are stateless classes that take a DB session in their constructor.
+- **Routes** do auth, validation, response shaping. They do not contain SQL beyond
+  trivial lookups (district by id, exists checks).
+- **Schemas** are Pydantic v2 — separate request and response types when they
+  differ (don't reuse ORM models as response shapes).
+- **All write paths are idempotent where possible** (`MonthlyClose.idempotency_key`,
+  the `(district_id, target_month)` constraint on predictions).
+- **Background tasks open their own session** — never pass the request session.
 
-## 📝 Code Organization Principles
-
-### Separation of Concerns
-- **Routes**: HTTP handling only
-- **Services**: Business logic
-- **Models**: Data structure
-- **Schemas**: Validation
-- **Utils**: Reusable functions
-
-### Dependency Injection
-- Database sessions via `Depends(get_db)`
-- Current user via `Depends(get_current_user)`
-- Settings via `Depends(get_settings)`
-
-### Type Safety
-- Type hints throughout
-- Pydantic for runtime validation
-- SQLAlchemy for database types
-
-## 🎯 Best Practices Implemented
-
-1. **Clean Architecture**: Clear separation of layers
-2. **Async/Await**: Non-blocking I/O operations
-3. **Type Hints**: Better IDE support and type checking
-4. **Pydantic Validation**: Automatic request/response validation
-5. **Environment Config**: 12-factor app methodology
-6. **Database Migrations**: Version-controlled schema changes
-7. **Security**: JWT, password hashing, CORS
-8. **Logging**: Structured logging with Loguru
-9. **Error Handling**: Global exception handlers
-10. **API Versioning**: Future-proof API design
-
----
-
-This architecture provides a solid foundation for building a scalable, maintainable, and secure malaria surveillance and prediction system.
+For deeper guidance on a specific subsystem, see:
+- [AUTH_DOCUMENTATION.md](./AUTH_DOCUMENTATION.md)
+- [CSV_UPLOAD_DOCUMENTATION.md](./CSV_UPLOAD_DOCUMENTATION.md)
+- [DATABASE_MODELS.md](./DATABASE_MODELS.md)
+- [API_REFERENCE.md](./API_REFERENCE.md)
