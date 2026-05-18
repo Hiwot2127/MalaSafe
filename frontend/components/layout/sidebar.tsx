@@ -11,6 +11,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LogoMark } from '@/components/brand/logo';
 
 interface NavItem {
   index: string;
@@ -35,13 +36,16 @@ export default function Sidebar() {
     <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-card">
       {/* Brand block — locked to the same height as the top bar so the rule
           across the top of the app is continuous. */}
-      <div className="flex h-[4.5rem] shrink-0 flex-col justify-center gap-0.5 border-b border-border px-6">
-        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-          MalaSafe · 01
-        </p>
-        <p className="font-display text-base font-semibold leading-tight tracking-[-0.018em] text-foreground">
-          Surveillance
-        </p>
+      <div className="flex h-[4.5rem] shrink-0 items-center gap-3 border-b border-border px-6">
+        <LogoMark size={32} />
+        <div className="flex flex-col gap-0.5 leading-none">
+          <p className="font-display text-base font-semibold tracking-[-0.018em] text-foreground">
+            MalaSafe
+          </p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+            Surveillance · 01
+          </p>
+        </div>
       </div>
 
       <nav className="flex-1 px-3 py-6">

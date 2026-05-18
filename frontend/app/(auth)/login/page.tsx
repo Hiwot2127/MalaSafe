@@ -7,6 +7,7 @@ import {
   EditorialInput,
   PrimaryButton,
 } from '@/components/editorial';
+import { LogoMark, LogoWordmark } from '@/components/brand/logo';
 
 export default function LoginPage() {
   return (
@@ -50,11 +51,14 @@ function LoginForm() {
     <div className="grid min-h-screen grid-cols-1 bg-background text-foreground lg:grid-cols-[1.05fr_1fr]">
       {/* Editorial column — visible on lg+ */}
       <aside className="relative hidden flex-col justify-between bg-primary px-12 py-14 text-primary-foreground lg:flex">
-        <div className="flex flex-col gap-3">
-          <p className="font-mono text-[11px] uppercase tracking-[0.22em] opacity-70">
-            MalaSafe · Surveillance
-          </p>
-          <p className="font-mono text-[11px] tabular-nums opacity-70">v.1 · 2026</p>
+        <div className="flex flex-col gap-5">
+          <LogoMark size={56} variant="outline" className="text-primary-foreground" />
+          <div className="flex flex-col gap-2">
+            <p className="font-mono text-[11px] uppercase tracking-[0.22em] opacity-70">
+              MalaSafe · Surveillance
+            </p>
+            <p className="font-mono text-[11px] tabular-nums opacity-70">v.1 · 2026</p>
+          </div>
         </div>
 
         <div className="flex max-w-md flex-col gap-6">
@@ -98,8 +102,9 @@ function LoginForm() {
       {/* Form column */}
       <section className="flex items-center justify-center px-6 py-12 sm:px-10">
         <div className="flex w-full max-w-sm flex-col gap-10">
-          <header className="flex flex-col gap-3">
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+          <header className="flex flex-col gap-4">
+            <LogoWordmark caption="Console · Sign in" size={32} className="lg:hidden" />
+            <p className="hidden font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground lg:block">
               MalaSafe · Console
             </p>
             <h1 className="font-display font-semibold text-3xl leading-[1.05] tracking-tight">
