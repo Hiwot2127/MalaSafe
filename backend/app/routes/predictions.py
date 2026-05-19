@@ -17,6 +17,7 @@ from app.schemas.predictions import (
     BatchGenerateResponse,
 )
 from app.services.prediction_service import PredictionService
+from app.services.analytics_service import AnalyticsService
 from app.ai import get_predictor
 from typing import Optional
 from datetime import date, datetime, timedelta
@@ -32,6 +33,7 @@ router = APIRouter(prefix="/predictions", tags=["Predictions"])
 )
 async def get_prediction_history(
     district_id: str = Path(..., description="District ID (UUID)"),
+    skip: int = Query(0, ge=0, description="Offset for pagination"),
     limit: int = Query(30, ge=1, le=365, description="Number of predictions to return"),
     start_date: Optional[date] = Query(None, description="Start date filter (YYYY-MM-DD)"),
     end_date: Optional[date] = Query(None, description="End date filter (YYYY-MM-DD)"),
@@ -95,12 +97,27 @@ async def get_prediction_history(
     
     if start_date:
         query = query.where(Prediction.prediction_date >= start_date)
-    
+
     if end_date:
         query = query.where(Prediction.prediction_date <= end_date)
-    
-    query = query.order_by(desc(Prediction.prediction_date), desc(Prediction.created_at)).limit(limit)
-    
+
+    # Total matching this district + date filter so the client can render
+    # page-of-N controls without re-issuing the same query.
+    count_query = select(func.count()).select_from(
+        select(Prediction.id)
+        .where(Prediction.district_id == district_id)
+        .where(*([Prediction.prediction_date >= start_date] if start_date else []))
+        .where(*([Prediction.prediction_date <= end_date] if end_date else []))
+        .subquery()
+    )
+    total = (await db.execute(count_query)).scalar_one()
+
+    query = (
+        query.order_by(desc(Prediction.prediction_date), desc(Prediction.created_at))
+        .offset(skip)
+        .limit(limit)
+    )
+
     result = await db.execute(query)
     predictions = result.scalars().all()
     
@@ -121,7 +138,59 @@ async def get_prediction_history(
         "district_code": district.district_code,
         "district_name": district.district_name,
         "predictions": prediction_items,
-        "total": len(prediction_items)
+        "total": int(total),
+    }
+
+
+@router.get(
+    "/latest",
+    summary="Paginated latest prediction per district",
+)
+async def get_latest_predictions(
+    q: Optional[str] = Query(None, description="Case-insensitive substring match on district name"),
+    region: Optional[str] = Query(None, description="Filter to a single region by exact name"),
+    risk_level: Optional[str] = Query(
+        None,
+        regex="^(low|moderate|medium|high|very_high)$",
+        description="Filter to one risk level",
+    ),
+    date_filter: Optional[date] = Query(None, description="Anchor date (default: today)"),
+    skip: int = Query(0, ge=0, description="Offset for pagination"),
+    limit: int = Query(25, ge=1, le=200, description="Page size"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Paginated flat list of the latest prediction per district.
+
+    Unlike `/maps/risk` (which returns the full corpus as GeoJSON for the map),
+    this endpoint paginates server-side and accepts text + region + risk_level
+    filters so the dashboard table can scroll without dragging the whole
+    country's worth of predictions over the wire.
+
+    **Authorization:** any authenticated user.
+
+    **Ordering:** very_high → high → moderate/medium → low, then
+    `prediction_score` desc. Highest-urgency districts appear first.
+
+    **Returns**
+    - `items`: prediction rows for the requested slice
+    - `total`: total matching rows (independent of pagination)
+    - `skip` / `limit`: echoed back for the client's page math
+    """
+    service = AnalyticsService(db)
+    items, total = await service.get_latest_predictions_page(
+        date_filter=date_filter,
+        q=q,
+        region=region,
+        risk_level=risk_level,
+        skip=skip,
+        limit=limit,
+    )
+    return {
+        "items": items,
+        "total": total,
+        "skip": skip,
+        "limit": limit,
     }
 
 

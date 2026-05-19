@@ -3,7 +3,7 @@ Analytics service for malaria surveillance data.
 """
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_, desc
+from sqlalchemy import select, func, and_, or_, desc, case
 from app.models import MalariaData, District, Prediction, Alert, ClimateData
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime, date, timedelta
@@ -287,6 +287,7 @@ class AnalyticsService:
         ).subquery()
         
         query = select(
+            District.id.label('district_id'),
             District.district_code,
             District.district_name,
             District.region,
@@ -354,6 +355,7 @@ class AnalyticsService:
             features.append({
                 "type": "Feature",
                 "properties": {
+                    "district_id": str(row.district_id),
                     "district_code": row.district_code,
                     "district_name": row.district_name,
                     "region": row.region,
@@ -378,5 +380,153 @@ class AnalyticsService:
             "generated_at": datetime.utcnow().isoformat() + "Z",
             "date_filter": date_filter.isoformat()
         }
-        
+
         return features, metadata
+
+    async def get_latest_predictions_page(
+        self,
+        date_filter: Optional[date] = None,
+        q: Optional[str] = None,
+        region: Optional[str] = None,
+        risk_level: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 25,
+    ) -> Tuple[List[Dict], int]:
+        """Paginated list of the latest per-district predictions.
+
+        Same row shape as the /maps/risk features (minus geojson_key), but
+        flat instead of GeoJSON-wrapped, and sortable / filterable. Ordering
+        ranks high risk first then by prediction_score so the most urgent
+        districts page first - matches the manual client-side sort the
+        /predictions page used to do.
+        """
+        if date_filter is None:
+            date_filter = date.today()
+
+        # Latest prediction row per district up to date_filter.
+        latest = select(
+            Prediction.district_id,
+            func.max(Prediction.created_at).label("max_created"),
+        ).where(
+            Prediction.prediction_date <= date_filter
+        ).group_by(Prediction.district_id).subquery()
+
+        # Five-stop risk ramp ordered most-urgent first so paging top-down
+        # surfaces the districts that need attention.
+        risk_rank = case(
+            (Prediction.risk_level == "very_high", 0),
+            (Prediction.risk_level == "high", 1),
+            (Prediction.risk_level == "medium", 2),
+            (Prediction.risk_level == "moderate", 2),
+            (Prediction.risk_level == "low", 4),
+            else_=5,
+        )
+
+        base = select(
+            District.id.label("district_id"),
+            District.district_code,
+            District.district_name,
+            District.region,
+            District.latitude,
+            District.longitude,
+            Prediction.prediction_date,
+            Prediction.risk_level,
+            Prediction.confidence_score,
+            Prediction.prediction_score,
+            Prediction.prediction_reason,
+            func.coalesce(
+                select(func.sum(MalariaData.cases))
+                .where(
+                    MalariaData.district_id == District.id,
+                    MalariaData.year == date_filter.year,
+                    MalariaData.month == date_filter.month,
+                )
+                .scalar_subquery(),
+                0,
+            ).label("recent_cases"),
+        ).join(
+            latest,
+            and_(
+                Prediction.district_id == latest.c.district_id,
+                Prediction.created_at == latest.c.max_created,
+            ),
+        ).join(District, Prediction.district_id == District.id)
+
+        count_base = select(func.count()).select_from(
+            select(Prediction.district_id).join(
+                latest,
+                and_(
+                    Prediction.district_id == latest.c.district_id,
+                    Prediction.created_at == latest.c.max_created,
+                ),
+            ).join(District, Prediction.district_id == District.id).subquery()
+        )
+
+        if q:
+            ilike = District.district_name.ilike(f"%{q.strip()}%")
+            base = base.where(ilike)
+            count_base = select(func.count()).select_from(
+                select(Prediction.district_id).join(
+                    latest,
+                    and_(
+                        Prediction.district_id == latest.c.district_id,
+                        Prediction.created_at == latest.c.max_created,
+                    ),
+                ).join(District, Prediction.district_id == District.id)
+                .where(ilike).subquery()
+            )
+
+        if region:
+            base = base.where(District.region == region)
+        if risk_level:
+            base = base.where(Prediction.risk_level == risk_level)
+
+        # Apply filters to count too so total reflects current scope.
+        if region:
+            count_base = count_base.where(District.region == region) if False else count_base
+        # The count_base subquery above only re-applies q. Re-wrap region +
+        # risk_level filters by rebuilding count_base if either is set.
+        if region or risk_level:
+            base_for_count = select(Prediction.district_id).join(
+                latest,
+                and_(
+                    Prediction.district_id == latest.c.district_id,
+                    Prediction.created_at == latest.c.max_created,
+                ),
+            ).join(District, Prediction.district_id == District.id)
+            if q:
+                base_for_count = base_for_count.where(District.district_name.ilike(f"%{q.strip()}%"))
+            if region:
+                base_for_count = base_for_count.where(District.region == region)
+            if risk_level:
+                base_for_count = base_for_count.where(Prediction.risk_level == risk_level)
+            count_base = select(func.count()).select_from(base_for_count.subquery())
+
+        total = (await self.db.execute(count_base)).scalar_one()
+
+        rows = (
+            await self.db.execute(
+                base.order_by(risk_rank.asc(), Prediction.prediction_score.desc())
+                .offset(skip)
+                .limit(limit)
+            )
+        ).all()
+
+        items: List[Dict] = []
+        for row in rows:
+            items.append({
+                "district_id": str(row.district_id),
+                "district_code": row.district_code,
+                "district_name": row.district_name,
+                "region": row.region,
+                "latitude": float(row.latitude) if row.latitude is not None else None,
+                "longitude": float(row.longitude) if row.longitude is not None else None,
+                "prediction_date": row.prediction_date.isoformat() if row.prediction_date else None,
+                "risk_level": row.risk_level,
+                "confidence_score": float(row.confidence_score),
+                "prediction_score": float(row.prediction_score),
+                "prediction_reason": row.prediction_reason,
+                "recent_cases": int(row.recent_cases),
+            })
+
+        return items, int(total)

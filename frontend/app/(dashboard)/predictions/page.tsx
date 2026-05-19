@@ -1,15 +1,19 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { debounce, useQueryState, useQueryStates } from 'nuqs';
 import { Activity, MapPin, TrendingUp, ShieldAlert, Sparkles } from 'lucide-react';
 import { predictionsApi } from '@/lib/api/predictions';
 import type {
   DistrictRiskFeature,
+  LatestPredictionsResponse,
   PredictionHistoryItem,
+  PredictionRow,
 } from '@/types/predictions';
 import {
   AlertBanner,
   EditorialCard,
+  EditorialInput,
   EditorialSelect,
   EmptyState,
   LoadingScreen,
@@ -20,6 +24,14 @@ import {
   riskLabel,
   riskStatus,
 } from '@/components/editorial';
+import { Pagination } from '@/components/Pagination';
+import {
+  pageToSkip,
+  parseAsPage,
+  parseAsPageSize,
+  parseAsString,
+  parseAsStringLiteral,
+} from '@/lib/url-state';
 
 type Bucket = 'low' | 'moderate' | 'high' | 'very_high' | 'other';
 
@@ -31,58 +43,165 @@ function bucketFor(level: string): Bucket {
   return 'other';
 }
 
-export default function PredictionsPage() {
-  const [features, setFeatures] = useState<DistrictRiskFeature[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const REGIONS = [
+  'Addis Ababa',
+  'Afar',
+  'Amhara',
+  'Benishangul-Gumuz',
+  'Dire Dawa',
+  'Gambela',
+  'Harari',
+  'Oromia',
+  'Sidama',
+  'SNNPR',
+  'Somali',
+  'Tigray',
+];
 
-  const [selected, setSelected] = useState<string>(''); // district_code
+const RISK_OPTIONS = ['', 'low', 'moderate', 'high', 'very_high'] as const;
+
+const EMPTY_LATEST: LatestPredictionsResponse = {
+  items: [],
+  total: 0,
+  skip: 0,
+  limit: 25,
+};
+
+export default function PredictionsPage() {
+  // ── Section 001: district picker source (full list, used for the
+  // dropdown only). Sections 002 and the history below are paginated
+  // independently and no longer rely on this snapshot.
+  const [features, setFeatures] = useState<DistrictRiskFeature[]>([]);
+  const [pickerLoading, setPickerLoading] = useState(true);
+  const [pickerError, setPickerError] = useState<string | null>(null);
+
+  // ── Selected district + paginated history.
+  const [selected, setSelected] = useQueryState(
+    'district',
+    parseAsString.withDefault(''),
+  );
+  const [historyPage, setHistoryPage] = useQueryState(
+    'h_page',
+    parseAsPage,
+  );
   const [history, setHistory] = useState<PredictionHistoryItem[]>([]);
+  const [historyTotal, setHistoryTotal] = useState(0);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const HISTORY_PAGE_SIZE = 30;
 
+  // ── Section 002: paginated "Latest by district" table state.
+  const [latestParams, setLatestParams] = useQueryStates(
+    {
+      q: parseAsString.withDefault(''),
+      region: parseAsString.withDefault(''),
+      risk: parseAsStringLiteral(RISK_OPTIONS).withDefault(''),
+      page: parseAsPage,
+      pageSize: parseAsPageSize(25, 100),
+    },
+    { history: 'replace' },
+  );
+  const { q, region, risk, page, pageSize } = latestParams;
+  // Local mirror for the search box so each keystroke renders instantly
+  // while the URL + fetch debounce behind the scenes.
+  const [qLocal, setQLocal] = useState(q);
+  const [latest, setLatest] = useState<LatestPredictionsResponse>(EMPTY_LATEST);
+  const [latestLoading, setLatestLoading] = useState(true);
+  const [latestError, setLatestError] = useState<string | null>(null);
+
+  // ── Effects ────────────────────────────────────────────────────────────
+
+  // Load the picker list once (still calls /maps/risk because it needs
+  // every district; a typeahead would be a better long-term fix but is
+  // outside this pagination pass).
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const data = await predictionsApi.getRiskCollection();
-        if (!cancelled) setFeatures(data.features);
-      } catch (err: unknown) {
+    const controller = new AbortController();
+    predictionsApi
+      .getRiskCollection({ signal: controller.signal })
+      .then((data) => setFeatures(data.features))
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
         const maybe = err as { response?: { data?: { detail?: string } } };
-        if (!cancelled) setError(maybe?.response?.data?.detail || 'Failed to load predictions');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+        setPickerError(maybe?.response?.data?.detail || 'Failed to load district list');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setPickerLoading(false);
+      });
+    return () => controller.abort();
   }, []);
 
+  // Paginated history for the currently-selected district.
   useEffect(() => {
     if (!selected) {
       setHistory([]);
+      setHistoryTotal(0);
       return;
     }
-    let cancelled = false;
+    // The picker stores district_code; the history endpoint takes
+    // district_id (UUID). Resolve via the picker snapshot. Wait for
+    // features to hydrate before firing the request to avoid a 404.
+    const feature = features.find((f) => f.properties.district_code === selected);
+    if (!feature) return;
+    const districtId = feature.properties.district_id;
+    const controller = new AbortController();
     setHistoryLoading(true);
     setHistoryError(null);
-    (async () => {
-      try {
-        const data = await predictionsApi.getHistory(selected, { limit: 30 });
-        if (!cancelled) setHistory(data.predictions);
-      } catch (err: unknown) {
+    predictionsApi
+      .getHistory(
+        districtId,
+        {
+          skip: pageToSkip(historyPage, HISTORY_PAGE_SIZE),
+          limit: HISTORY_PAGE_SIZE,
+        },
+        { signal: controller.signal },
+      )
+      .then((data) => {
+        setHistory(data.predictions);
+        setHistoryTotal(data.total ?? data.predictions.length);
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
         const maybe = err as { response?: { data?: { detail?: string } } };
-        if (!cancelled)
-          setHistoryError(maybe?.response?.data?.detail || 'Failed to load history');
-      } finally {
-        if (!cancelled) setHistoryLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [selected]);
+        setHistoryError(maybe?.response?.data?.detail || 'Failed to load history');
+        setHistory([]);
+        setHistoryTotal(0);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setHistoryLoading(false);
+      });
+    return () => controller.abort();
+  }, [selected, historyPage, features]);
+
+  // Paginated server-side "Latest by district" table.
+  useEffect(() => {
+    const controller = new AbortController();
+    setLatestLoading(true);
+    setLatestError(null);
+    predictionsApi
+      .getLatest(
+        {
+          ...(q.trim() ? { q: q.trim() } : {}),
+          ...(region ? { region } : {}),
+          ...(risk ? { risk_level: risk } : {}),
+          skip: pageToSkip(page, pageSize),
+          limit: pageSize,
+        },
+        { signal: controller.signal },
+      )
+      .then((data) => setLatest(data))
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        const maybe = err as { response?: { data?: { detail?: string } } };
+        setLatestError(maybe?.response?.data?.detail || 'Failed to load predictions');
+        setLatest(EMPTY_LATEST);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLatestLoading(false);
+      });
+    return () => controller.abort();
+  }, [q, region, risk, page, pageSize]);
+
+  // ── Derived ────────────────────────────────────────────────────────────
 
   const stats = useMemo(() => {
     const buckets: Record<Bucket, number> = { low: 0, moderate: 0, high: 0, very_high: 0, other: 0 };
@@ -95,31 +214,29 @@ export default function PredictionsPage() {
     };
   }, [features]);
 
-  const sortedDistricts = useMemo(() => {
-    const order: Record<string, number> = { very_high: 0, high: 1, medium: 2, moderate: 2, low: 4 };
-    return [...features].sort((a, b) => {
+  const districtOptions = useMemo(() => {
+    const sorted = [...features].sort((a, b) => {
+      const order: Record<string, number> = { very_high: 0, high: 1, medium: 2, moderate: 2, low: 4 };
       const oa = order[a.properties.risk_level] ?? 5;
       const ob = order[b.properties.risk_level] ?? 5;
       if (oa !== ob) return oa - ob;
       return b.properties.prediction_score - a.properties.prediction_score;
     });
-  }, [features]);
-
-  const districtOptions = useMemo(
-    () =>
-      [{ value: '', label: 'Select a district' }, ...sortedDistricts.map((f) => ({
+    return [
+      { value: '', label: 'Select a district' },
+      ...sorted.map((f) => ({
         value: f.properties.district_code,
         label: `${f.properties.district_name} · ${f.properties.region}`,
-      }))],
-    [sortedDistricts],
-  );
+      })),
+    ];
+  }, [features]);
 
   const selectedFeature = useMemo(
     () => features.find((f) => f.properties.district_code === selected) ?? null,
     [features, selected],
   );
 
-  if (loading) {
+  if (pickerLoading && features.length === 0) {
     return (
       <div className="mx-auto flex max-w-6xl flex-col gap-12">
         <PageHeader
@@ -140,8 +257,8 @@ export default function PredictionsPage() {
         description="District-level outbreak likelihood, ranked by the LightGBM model's latest run."
       />
 
-      {error ? (
-        <AlertBanner tone="error" title="Couldn't load predictions" description={error} />
+      {pickerError ? (
+        <AlertBanner tone="error" title="Couldn't load district list" description={pickerError} />
       ) : null}
 
       {/* Stat overview */}
@@ -181,7 +298,10 @@ export default function PredictionsPage() {
         <SectionHeader index="001" label="District detail" tone="signal">
           <EditorialSelect
             value={selected}
-            onChange={setSelected}
+            onChange={(next) => {
+              setSelected(next || null);
+              setHistoryPage(1);
+            }}
             options={districtOptions}
             aria-label="Select a district"
             contentWidth="auto"
@@ -193,7 +313,7 @@ export default function PredictionsPage() {
             icon={Activity}
             eyebrow="Awaiting selection"
             title="Pick a district to see its history"
-            description="Choose a district above to view its last 30 daily predictions and the trajectory of its score."
+            description="Choose a district above to view its prediction trajectory."
           />
         ) : historyLoading ? (
           <LoadingScreen caption="Loading history" />
@@ -266,63 +386,128 @@ export default function PredictionsPage() {
                 </tbody>
               </table>
             </div>
+            <Pagination
+              page={historyPage}
+              pageSize={HISTORY_PAGE_SIZE}
+              total={historyTotal}
+              unit="predictions"
+              onChange={(next) => setHistoryPage(next)}
+            />
           </EditorialCard>
         )}
       </section>
 
-      {/* Latest predictions table */}
+      {/* Latest predictions table (server-paginated) */}
       <section className="flex flex-col gap-5">
         <SectionHeader index="002" label="Latest by district">
-          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            sorted by risk
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <EditorialInput
+              type="search"
+              value={qLocal}
+              placeholder="Search district…"
+              aria-label="Search district name"
+              className="w-48"
+              onChange={(e) => {
+                const next = e.target.value;
+                setQLocal(next);
+                setLatestParams(
+                  { q: next, page: 1 },
+                  { limitUrlUpdates: debounce(300) },
+                );
+              }}
+            />
+            <EditorialSelect
+              value={region}
+              onChange={(next) => setLatestParams({ region: next, page: 1 })}
+              aria-label="Region filter"
+              options={[
+                { value: '', label: 'All regions' },
+                ...REGIONS.map((r) => ({ value: r, label: r })),
+              ]}
+            />
+            <EditorialSelect
+              value={risk}
+              onChange={(next) =>
+                setLatestParams({
+                  risk: next as (typeof RISK_OPTIONS)[number],
+                  page: 1,
+                })
+              }
+              aria-label="Risk filter"
+              options={[
+                { value: '', label: 'All risk' },
+                { value: 'low', label: 'Low' },
+                { value: 'moderate', label: 'Moderate' },
+                { value: 'high', label: 'High' },
+                { value: 'very_high', label: 'Very high' },
+              ]}
+            />
+          </div>
         </SectionHeader>
 
-        <EditorialCard className="overflow-hidden p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-border bg-secondary/40 text-muted-foreground">
-                <tr>
-                  <Th>District</Th>
-                  <Th>Region</Th>
-                  <Th>Risk</Th>
-                  <Th align="right">Score</Th>
-                  <Th align="right">Confidence</Th>
-                  <Th align="right">Recent cases</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedDistricts.slice(0, 50).map((f) => {
-                  const p = f.properties;
-                  return (
+        {latestError ? (
+          <AlertBanner tone="error" title="Couldn't load predictions" description={latestError} />
+        ) : latestLoading && latest.items.length === 0 ? (
+          <LoadingScreen caption="Loading predictions" />
+        ) : latest.items.length === 0 ? (
+          <EmptyState
+            title="No predictions match"
+            description="Try clearing the search or relaxing the filters."
+          />
+        ) : (
+          <EditorialCard className="overflow-hidden p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b border-border bg-secondary/40 text-muted-foreground">
+                  <tr>
+                    <Th>District</Th>
+                    <Th>Region</Th>
+                    <Th>Risk</Th>
+                    <Th align="right">Score</Th>
+                    <Th align="right">Confidence</Th>
+                    <Th align="right">Recent cases</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {latest.items.map((row: PredictionRow) => (
                     <tr
-                      key={p.district_code}
-                      onClick={() => setSelected(p.district_code)}
+                      key={row.district_code}
+                      onClick={() => {
+                        setSelected(row.district_code);
+                        setHistoryPage(1);
+                      }}
                       className="cursor-pointer border-b border-border/70 transition-colors last:border-0 hover:bg-secondary/40"
                     >
-                      <Td className="font-sans text-foreground">{p.district_name}</Td>
-                      <Td className="text-muted-foreground">{p.region}</Td>
+                      <Td className="font-sans text-foreground">{row.district_name}</Td>
+                      <Td className="text-muted-foreground">{row.region}</Td>
                       <Td>
-                        <StatusPill kind={riskStatus(p.risk_level)}>
-                          {riskLabel(p.risk_level)}
+                        <StatusPill kind={riskStatus(row.risk_level)}>
+                          {riskLabel(row.risk_level)}
                         </StatusPill>
                       </Td>
                       <Td align="right" className="tabular-nums">
-                        {p.prediction_score.toFixed(1)}
+                        {row.prediction_score.toFixed(1)}
                       </Td>
                       <Td align="right" className="tabular-nums text-muted-foreground">
-                        {(p.confidence_score * 100).toFixed(0)}%
+                        {(row.confidence_score * 100).toFixed(0)}%
                       </Td>
                       <Td align="right" className="tabular-nums">
-                        {p.recent_cases.toLocaleString()}
+                        {row.recent_cases.toLocaleString()}
                       </Td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </EditorialCard>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Pagination
+              page={page}
+              pageSize={pageSize}
+              total={latest.total}
+              unit="districts"
+              onChange={(next) => setLatestParams({ page: next })}
+            />
+          </EditorialCard>
+        )}
       </section>
     </div>
   );

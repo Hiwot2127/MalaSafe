@@ -2,6 +2,7 @@
 // Each feature carries the latest prediction and a recent-history snapshot
 // for one district.
 export interface DistrictRiskProperties {
+  district_id: string;
   district_code: string;
   district_name: string;
   region: string;
@@ -45,4 +46,28 @@ export interface PredictionHistoryResponse {
   district_id: string;
   predictions: PredictionHistoryItem[];
   total?: number;
+}
+
+// Paginated row returned from /api/v1/predictions/latest — the flat,
+// table-shaped version of a district's most recent prediction.
+export interface PredictionRow {
+  district_id: string;
+  district_code: string;
+  district_name: string;
+  region: string;
+  latitude: number | null;
+  longitude: number | null;
+  prediction_date: string | null;
+  risk_level: 'low' | 'medium' | 'moderate' | 'high' | 'very_high';
+  confidence_score: number;
+  prediction_score: number;
+  prediction_reason: string | null;
+  recent_cases: number;
+}
+
+export interface LatestPredictionsResponse {
+  items: PredictionRow[];
+  total: number;
+  skip: number;
+  limit: number;
 }

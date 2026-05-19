@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useQueryState } from 'nuqs';
 import { Activity, FileText, HeartPulse, ShieldAlert } from 'lucide-react';
 import { reportsApi } from '@/lib/api/reports';
 import type { ReportsOverview } from '@/types/reports';
+import { parseAsString } from '@/lib/url-state';
 import {
   AlertBanner,
   EditorialCard,
@@ -22,29 +24,33 @@ const YEARS: { value: string; label: string }[] = Array.from({ length: 4 }, (_, 
 });
 
 export default function ReportsPage() {
-  const [year, setYear] = useState<string>(String(CURRENT_YEAR));
+  const [year, setYear] = useQueryState(
+    'year',
+    parseAsString.withDefault(String(CURRENT_YEAR)),
+  );
   const [data, setData] = useState<ReportsOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     setLoading(true);
     setError(null);
-    (async () => {
-      try {
-        const overview = await reportsApi.getOverview(Number(year));
-        if (!cancelled) setData(overview);
-      } catch (err: unknown) {
+    reportsApi
+      .getOverview(Number(year))
+      .then((overview) => {
+        if (controller.signal.aborted) return;
+        setData(overview);
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
         const maybe = err as { response?: { data?: { detail?: string } } };
-        if (!cancelled) setError(maybe?.response?.data?.detail || 'Failed to load report');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+        setError(maybe?.response?.data?.detail || 'Failed to load report');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
   }, [year]);
 
   if (loading) {
