@@ -16,6 +16,7 @@ import type {
 import { UploadDropzone, SelectedFileChip } from "@/components/upload/upload-dropzone";
 import { UploadPreviewDialog } from "@/components/upload/upload-preview-dialog";
 import { UploadTimeline } from "@/components/upload/upload-timeline";
+import { AlertBanner } from "@/components/editorial";
 import { cn } from "@/lib/utils";
 
 type PageState =
@@ -24,23 +25,35 @@ type PageState =
   | { kind: "uploading"; file: File }
   | { kind: "done"; result: UploadResponse; file: File };
 
-const KIND_LABEL: Record<UploadKind, string> = {
+// UI-only enum. `weekly` doesn't have a real backend endpoint yet — the model
+// and CSV pipeline are monthly-only — but it stays visible in the picker so
+// users know it's a planned surface. Selecting it shows an info banner.
+type UploadTypeUI = "monthly" | "weekly" | "climate";
+
+const KIND_LABEL: Record<UploadTypeUI, string> = {
   monthly: "Monthly malaria",
+  weekly: "Weekly malaria",
   climate: "Climate",
 };
 
 export default function UploadPage() {
-  const [uploadType, setUploadType] = useState<UploadKind>("monthly");
+  const [uploadType, setUploadType] = useState<UploadTypeUI>("monthly");
   const [state, setState] = useState<PageState>({ kind: "idle" });
+
+  const weeklySelected = uploadType === "weekly";
+  // Narrowed kind for backend / preview / parser calls. Weekly never actually
+  // fires any of these (the picker swaps in an info banner), so this fallback
+  // exists only to keep the type system happy.
+  const backendKind: UploadKind = weeklySelected ? "monthly" : uploadType;
 
   // File picked → kick off local preview + (for monthly) server dry-run in parallel.
   const handleFile = useCallback(
     async (file: File) => {
       // Open the modal immediately with a placeholder so the UI never blocks.
-      setState({ kind: "previewing", file, local: null, server: null, loadingServer: uploadType === "monthly" });
+      setState({ kind: "previewing", file, local: null, server: null, loadingServer: backendKind === "monthly" });
 
       // Client-side parse - should be sub-second even on large files.
-      const local = await parseLocalPreview(file, uploadType);
+      const local = await parseLocalPreview(file, backendKind);
       setState((prev) =>
         prev.kind === "previewing" && prev.file === file
           ? { ...prev, local }
@@ -48,8 +61,8 @@ export default function UploadPage() {
       );
 
       // Server dry-run is only meaningful for monthly today (only endpoint
-      // shipped in Phase 3 backend); skip for weekly/climate until those exist.
-      if (uploadType !== "monthly") {
+      // shipped in Phase 3 backend); skip for climate until that exists.
+      if (backendKind !== "monthly") {
         setState((prev) =>
           prev.kind === "previewing" && prev.file === file
             ? { ...prev, loadingServer: false }
@@ -75,7 +88,7 @@ export default function UploadPage() {
         );
       }
     },
-    [uploadType],
+    [backendKind],
   );
 
   const handleConfirmUpload = useCallback(async () => {
@@ -85,7 +98,7 @@ export default function UploadPage() {
 
     try {
       const response =
-        uploadType === "climate"
+        backendKind === "climate"
           ? await uploadsApi.uploadClimate(file)
           : await uploadsApi.uploadMalaria(file);
 
@@ -105,7 +118,7 @@ export default function UploadPage() {
       toast.error("Upload failed", { description: extractErrorMessage(err) ?? "Unknown error" });
       setState({ kind: "idle" });
     }
-  }, [state, uploadType]);
+  }, [state, backendKind]);
 
   const handleCancelPreview = useCallback(() => {
     setState({ kind: "idle" });
@@ -116,13 +129,17 @@ export default function UploadPage() {
   }, []);
 
   const handleDownloadTemplate = useCallback(async () => {
+    if (weeklySelected) {
+      toast.info("Weekly template not available yet — the pipeline is monthly-only.");
+      return;
+    }
     try {
       const blob =
-        uploadType === "climate"
+        backendKind === "climate"
           ? await uploadsApi.downloadClimateTemplate()
           : await uploadsApi.downloadMalariaTemplate();
       const filename =
-        uploadType === "climate" ? "climate_template.csv" : "monthly_malaria_template.csv";
+        backendKind === "climate" ? "climate_template.csv" : "monthly_malaria_template.csv";
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -134,7 +151,7 @@ export default function UploadPage() {
     } catch (err) {
       toast.error("Could not download template", { description: extractErrorMessage(err) ?? undefined });
     }
-  }, [uploadType]);
+  }, [backendKind, weeklySelected]);
 
   const previewOpen = state.kind === "previewing" || state.kind === "uploading";
 
@@ -156,9 +173,9 @@ export default function UploadPage() {
       {/* Section 001 - Type */}
       <section className="flex flex-col gap-5">
         <SectionHeader index="001" label="Data type" />
-        <fieldset className="grid grid-cols-1 gap-px overflow-hidden border border-border bg-border sm:grid-cols-2">
+        <fieldset className="grid grid-cols-1 gap-px overflow-hidden border border-border bg-border sm:grid-cols-3">
           <legend className="sr-only">Upload type</legend>
-          {(Object.keys(KIND_LABEL) as UploadKind[]).map((kind) => (
+          {(Object.keys(KIND_LABEL) as UploadTypeUI[]).map((kind) => (
             <TypeOption
               key={kind}
               kind={kind}
@@ -175,22 +192,34 @@ export default function UploadPage() {
       {/* Section 002 - File */}
       <section className="flex flex-col gap-5">
         <SectionHeader index="002" label="File">
-          <button
-            type="button"
-            onClick={handleDownloadTemplate}
-            className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Download aria-hidden className="size-3.5" strokeWidth={1.5} />
-            Example CSV
-          </button>
+          {weeklySelected ? null : (
+            <button
+              type="button"
+              onClick={handleDownloadTemplate}
+              className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Download aria-hidden className="size-3.5" strokeWidth={1.5} />
+              Example CSV
+            </button>
+          )}
         </SectionHeader>
 
-        <UploadDropzone onFile={handleFile} disabled={state.kind === "uploading"} />
-        {state.kind === "previewing" && (
-          <SelectedFileChip file={state.file} onClear={handleCancelPreview} />
-        )}
-        {state.kind === "done" && (
-          <SelectedFileChip file={state.file} onClear={handleReset} />
+        {weeklySelected ? (
+          <AlertBanner
+            tone="info"
+            title="Weekly imports coming soon"
+            description="The reporting pipeline currently ingests monthly aggregates only — the CSV schema, validator, and forecast model all run at month-level. ISO-week ingest will land once the upload schema supports weekly rows. Switch to Monthly malaria above to upload now."
+          />
+        ) : (
+          <>
+            <UploadDropzone onFile={handleFile} disabled={state.kind === "uploading"} />
+            {state.kind === "previewing" && (
+              <SelectedFileChip file={state.file} onClear={handleCancelPreview} />
+            )}
+            {state.kind === "done" && (
+              <SelectedFileChip file={state.file} onClear={handleReset} />
+            )}
+          </>
         )}
       </section>
 
@@ -234,7 +263,7 @@ export default function UploadPage() {
           if (!open && state.kind !== "uploading") handleCancelPreview();
         }}
         fileName={state.kind === "previewing" || state.kind === "uploading" ? state.file.name : ""}
-        kind={uploadType}
+        kind={backendKind}
         localPreview={state.kind === "previewing" ? state.local : null}
         serverPreview={state.kind === "previewing" ? state.server : null}
         loadingServer={state.kind === "previewing" && state.loadingServer}
@@ -268,7 +297,7 @@ function SectionHeader({ index, label, children }: SectionHeaderProps) {
 }
 
 interface TypeOptionProps {
-  kind: UploadKind;
+  kind: UploadTypeUI;
   checked: boolean;
   onSelect: () => void;
 }
