@@ -217,6 +217,15 @@ class UploadService:
             {(int(r['year']), int(r['month'])) for _, r in df.iterrows()}
         )
         month_span = len(distinct_months)
+        # Distinct districts in the upload — used to gate whether this
+        # upload counts as an "official monthly close batch" worth running
+        # the country-wide forecast refresh against.
+        distinct_districts = {
+            str(r['district_code']).strip()
+            for _, r in df.iterrows()
+            if r.get('district_code') is not None
+        }
+        district_span = len(distinct_districts)
 
         # Save file metadata with branch hints stamped on it.
         file_id = await self._save_file_metadata(
@@ -225,10 +234,18 @@ class UploadService:
 
         # Dispatch the monthly close pipeline if enabled. Failures here must not
         # roll back the malaria_data inserts - the rows are valuable on their own.
+        #
+        # Also gate on `district_span >= MONTHLY_CLOSE_MIN_DISTRICTS`: a tiny
+        # upload (template CSV, single-district fix-up) shouldn't kick off a
+        # full ~1,082-district re-prediction. Without this gate, uploading the
+        # 4-row template wipes the visible recent-cases column for every other
+        # district (their predictions get rewritten on stale features and the
+        # UI shows 0 cases for the new prediction period — see Issue 3 in the
+        # plan).
         t_dispatch = _now_ms()
         monthly_close_id: Optional[str] = None
         monthly_close_mode: Optional[str] = None
-        if settings.MONTHLY_CLOSE_ENABLED and created_count > 0:
+        if settings.MONTHLY_CLOSE_ENABLED and created_count > 0 and district_span >= settings.MONTHLY_CLOSE_MIN_DISTRICTS:
             try:
                 monthly_close_id, monthly_close_mode = await self._dispatch_monthly_close(
                     uploaded_file_id=file_id,
@@ -236,7 +253,7 @@ class UploadService:
                 )
                 stages.append(_stage(
                     "dispatch_close", "ok", t_dispatch,
-                    detail=f"{monthly_close_mode} mode, {month_span} month(s)"
+                    detail=f"{monthly_close_mode} mode, {month_span} month(s), {district_span} districts"
                 ))
             except Exception as exc:  # pragma: no cover - best-effort dispatch
                 logger.warning(
@@ -245,9 +262,23 @@ class UploadService:
                 )
                 stages.append(_stage("dispatch_close", "failed", t_dispatch, detail=str(exc)))
         else:
+            if not settings.MONTHLY_CLOSE_ENABLED:
+                skip_reason = "MONTHLY_CLOSE_ENABLED is off"
+            elif created_count == 0:
+                skip_reason = "no rows created"
+            else:
+                skip_reason = (
+                    f"only {district_span} district(s) in upload (< "
+                    f"{settings.MONTHLY_CLOSE_MIN_DISTRICTS} required for full close); "
+                    "rows landed, model refresh skipped"
+                )
+                logger.info(
+                    f"Skipping monthly close dispatch: {skip_reason} "
+                    f"(file_id={file_id})"
+                )
             stages.append(_stage(
                 "dispatch_close", "skipped", t_dispatch,
-                detail="MONTHLY_CLOSE_ENABLED is off" if not settings.MONTHLY_CLOSE_ENABLED else "no rows created"
+                detail=skip_reason,
             ))
 
         success = len(validation_errors) == 0

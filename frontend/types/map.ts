@@ -15,6 +15,10 @@ export interface RiskFeature {
     prediction_score?: number;
     confidence_score?: number;
     prediction_reason?: string;
+    /** "YYYY-MM" the prediction (and its co-aligned cases/deaths) covers. */
+    prediction_period?: string | null;
+    /** Human-readable form of `prediction_period`, e.g. "May 2026". */
+    prediction_period_label?: string | null;
   };
   geometry:
     | { type: 'Point'; coordinates: [number, number] }

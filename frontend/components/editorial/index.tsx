@@ -5,7 +5,7 @@
 
 import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Shared shell metrics ──────────────────────────────────────────────────
@@ -135,14 +135,28 @@ interface MetricProps {
   caption?: React.ReactNode;
   status?: StatusKind | null;
   statusLabel?: string;
+  /** Plain-text explanation rendered as a native hover tooltip on a help icon
+   *  next to the eyebrow. Use this to disambiguate vague KPI labels — what the
+   *  number counts, what window it covers, what thresholds apply. */
+  help?: string;
   className?: string;
 }
 
-export function Metric({ eyebrow, value, caption, status, statusLabel, className }: MetricProps) {
+export function Metric({ eyebrow, value, caption, status, statusLabel, help, className }: MetricProps) {
   return (
     <div className={cn("flex flex-col gap-2 p-5", className)}>
-      <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+      <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
         {eyebrow}
+        {help ? (
+          <span
+            aria-label={help}
+            title={help}
+            tabIndex={0}
+            className="inline-flex cursor-help text-muted-foreground/70 transition-colors hover:text-foreground focus:text-foreground focus:outline-none"
+          >
+            <HelpCircle aria-hidden className="size-3" strokeWidth={1.75} />
+          </span>
+        ) : null}
       </p>
       <p className="font-display text-3xl font-semibold leading-none tabular-nums tracking-[-0.022em]">
         {value}

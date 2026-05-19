@@ -19,12 +19,23 @@ import {
 type TrendType = 'weekly' | 'monthly';
 
 export default function AnalyticsPage() {
-  const [trendType, setTrendType] = useState<TrendType>('weekly');
+  // Default to monthly because the upstream pipeline is monthly-only — the
+  // monthly_malaria CSV ingest never populates MalariaData.week, so the
+  // backend's weekly branch always returns 0 rows. The weekly option stays
+  // in the dropdown so users can see it's planned, but selecting it shows
+  // an info banner instead of an empty chart.
+  const [trendType, setTrendType] = useState<TrendType>('monthly');
   const [trends, setTrends] = useState<TrendDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (trendType === 'weekly') {
+      setTrends([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
     const fetchTrends = async () => {
       setLoading(true);
       setError(null);
@@ -83,41 +94,44 @@ export default function AnalyticsPage() {
         title="Analytics"
         description={
           trendType === 'weekly'
-            ? 'Week-over-week case and mortality movement across the reporting window.'
-            : 'Month-over-month case and mortality movement across the reporting window.'
+            ? 'Week-over-week case and mortality movement. (Weekly view is planned — the current data pipeline is monthly-only.)'
+            : 'Month-over-month case and mortality movement. Cases and deaths are aggregated from the monthly malaria CSV uploads (columns: cases, deaths).'
         }
       />
 
-      {/* Headline tiles */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          eyebrow="Total cases"
-          value={totals.cases.toLocaleString()}
-          caption={`${trends.length} ${trendType === 'weekly' ? 'weeks' : 'months'}`}
-          icon={Activity}
-          tone="signal"
-        />
-        <StatCard
-          eyebrow="Total deaths"
-          value={totals.deaths.toLocaleString()}
-          caption={`CFR ${averageCfr}%`}
-          icon={HeartPulse}
-          tone={parseFloat(averageCfr) > 1 ? 'error' : 'valid'}
-        />
-        <StatCard
-          eyebrow="Avg CFR"
-          value={`${averageCfr}%`}
-          caption="Across window"
-          icon={TrendingUp}
-          tone={parseFloat(averageCfr) > 1 ? 'warn' : 'valid'}
-        />
-        <StatCard
-          eyebrow="Periods"
-          value={trends.length.toLocaleString()}
-          caption={trendType === 'weekly' ? 'Weekly bins' : 'Monthly bins'}
-          icon={Sparkles}
-        />
-      </section>
+      {/* Headline tiles — hidden under the weekly placeholder because the
+          totals would render as 0/0 when no weekly rows are returned. */}
+      {trendType === 'weekly' ? null : (
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            eyebrow="Total cases"
+            value={totals.cases.toLocaleString()}
+            caption={`Sum across ${trends.length} month${trends.length === 1 ? '' : 's'} (uploaded CSV data)`}
+            icon={Activity}
+            tone="signal"
+          />
+          <StatCard
+            eyebrow="Total deaths"
+            value={totals.deaths.toLocaleString()}
+            caption={`From CSV "deaths" column · CFR ${averageCfr}%`}
+            icon={HeartPulse}
+            tone={parseFloat(averageCfr) > 1 ? 'error' : 'valid'}
+          />
+          <StatCard
+            eyebrow="Avg CFR"
+            value={`${averageCfr}%`}
+            caption="Deaths ÷ cases across window"
+            icon={TrendingUp}
+            tone={parseFloat(averageCfr) > 1 ? 'warn' : 'valid'}
+          />
+          <StatCard
+            eyebrow="Periods"
+            value={trends.length.toLocaleString()}
+            caption="Monthly bins"
+            icon={Sparkles}
+          />
+        </section>
+      )}
 
       {/* Section 001 - Series */}
       <section className="flex flex-col gap-5">
@@ -137,7 +151,13 @@ export default function AnalyticsPage() {
           />
         </SectionHeader>
 
-        {loading ? (
+        {trendType === 'weekly' ? (
+          <AlertBanner
+            tone="info"
+            title="Weekly view coming soon"
+            description="The malaria reporting pipeline currently ingests monthly aggregates only. ISO-week granularity will land once the upload schema supports weekly rows — switch to Monthly above for the current view."
+          />
+        ) : loading ? (
           <LoadingScreen caption="Loading series" />
         ) : error ? (
           <AlertBanner tone="error" title="Couldn't load trends" description={error} />
@@ -156,7 +176,7 @@ export default function AnalyticsPage() {
                     Cases · oldest → most recent
                   </p>
                   <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground tabular-nums">
-                    {trends.length} {trendType === 'weekly' ? 'wk' : 'mo'}
+                    {trends.length} mo
                   </p>
                 </div>
                 <svg

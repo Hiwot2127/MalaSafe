@@ -11,7 +11,15 @@ class DashboardStats(BaseModel):
     high_risk_districts: int
     case_fatality_rate: float
     period: str
-    
+    # The next three fields exist so the UI can explain *what each KPI counts*
+    # without hard-coding magic numbers. The reviewer's complaint on the KPI
+    # strip ("what does ELEVATED mean? what window? current or predicted?")
+    # is fixed at the API boundary by returning the definitions alongside
+    # the numbers.
+    period_label: Optional[str] = None
+    prediction_window_days: Optional[int] = None
+    methodology: Optional[Dict[str, str]] = None
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -20,7 +28,16 @@ class DashboardStats(BaseModel):
                 "active_alerts": 12,
                 "high_risk_districts": 8,
                 "case_fatality_rate": 3.39,
-                "period": "2024-01"
+                "period": "2024-01",
+                "period_label": "January 2024",
+                "prediction_window_days": 30,
+                "methodology": {
+                    "total_cases": "Sum of MalariaData.cases for the period, filtered by region if provided.",
+                    "total_deaths": "Sum of MalariaData.deaths for the period (CSV-reported).",
+                    "active_alerts": "Count of currently-active alerts (any age).",
+                    "high_risk_districts": "Distinct districts whose latest prediction in the last N days lands in the HIGH or VERY_HIGH bucket.",
+                    "risk_buckets": "Per-district percentile thresholds (p50/p75/p95) on the trained LightGBM model's predicted case-count distribution: low ≤ p50 < moderate ≤ p75 < high ≤ p95 < very_high."
+                }
             }
         }
 

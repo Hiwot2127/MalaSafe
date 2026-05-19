@@ -98,30 +98,45 @@ export default function DashboardPage() {
   const highRisk = stats?.high_risk_districts ?? 0;
   const cfr = stats?.case_fatality_rate ?? 0;
   const period = stats?.period || 'Current period';
+  const periodLabel = stats?.period_label || period;
+  const predWindow = stats?.prediction_window_days ?? 30;
+  const methodology = stats?.methodology ?? {};
 
+  // Thresholds scale with population — 5 alerts is "critical" for a 50-
+  // district pilot but routine at country scale. Use ratios so the badge
+  // tracks the data instead of fixed magic numbers. (Dataset currently
+  // covers ~1,082 districts.)
+  const alertsPerDistrict = highRisk > 0 ? activeAlerts / highRisk : 0;
   const postureStatus: 'valid' | 'warn' | 'error' =
     activeAlerts === 0 && highRisk === 0
       ? 'valid'
-      : highRisk > 5 || activeAlerts > 3
+      : alertsPerDistrict >= 20 || activeAlerts > 1000
         ? 'error'
         : 'warn';
   const postureLabel =
     postureStatus === 'valid'
-      ? 'Stable posture'
+      ? 'Posture stable'
       : postureStatus === 'error'
-        ? 'Critical posture - review now'
-        : 'Monitoring posture';
+        ? 'Triage required'
+        : 'Posture monitoring';
 
   const alertEyebrow =
     postureStatus === 'valid'
-      ? 'All clear · No action required'
+      ? 'All clear'
       : postureStatus === 'error'
-        ? 'Critical · Immediate review'
-        : 'Monitoring · Open alerts';
+        ? 'Critical'
+        : 'Monitoring';
   const alertDescription =
     activeAlerts > 0
-      ? `${activeAlerts.toLocaleString()} alert${activeAlerts === 1 ? '' : 's'} open across ${highRisk.toLocaleString()} high-risk district${highRisk === 1 ? '' : 's'}. Review the alerts queue to triage and dispatch.`
-      : 'No alerts open against the current monthly close. Caseload and CFR remain within expected thresholds.';
+      ? `Review the alerts queue to triage and dispatch (${periodLabel}).`
+      : `No alerts open against ${periodLabel}. Caseload and CFR within expected thresholds.`;
+  const alertStats =
+    activeAlerts > 0 || highRisk > 0
+      ? [
+          { value: activeAlerts.toLocaleString(), label: 'alerts open' },
+          { value: highRisk.toLocaleString(), label: 'high-risk districts' },
+        ]
+      : undefined;
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-14">
@@ -136,6 +151,7 @@ export default function DashboardPage() {
         tone={postureStatus}
         eyebrow={alertEyebrow}
         title={postureLabel}
+        stats={alertStats}
         description={alertDescription}
         cta={activeAlerts > 0 ? { label: 'Review alerts', href: '/alerts' } : undefined}
       />
@@ -202,12 +218,20 @@ export default function DashboardPage() {
             <Metric
               eyebrow="Total cases"
               value={cases.toLocaleString()}
-              caption={period}
+              caption={`Reported · ${periodLabel}`}
+              help={
+                methodology.total_cases ||
+                `Sum of MalariaData.cases reported for ${periodLabel} (uploaded CSV data, not predicted).`
+              }
             />
             <Metric
               eyebrow="Total deaths"
               value={deaths.toLocaleString()}
-              caption={`CFR ${cfr.toFixed(2)}%`}
+              caption={`CFR ${cfr.toFixed(2)}% · ${periodLabel}`}
+              help={
+                methodology.total_deaths ||
+                `Sum of MalariaData.deaths reported for ${periodLabel} (from the monthly CSV "deaths" column).`
+              }
             />
             <Metric
               eyebrow="Active alerts"
@@ -215,13 +239,21 @@ export default function DashboardPage() {
               caption={activeAlerts === 0 ? 'All clear' : 'Open'}
               status={activeAlerts === 0 ? 'valid' : activeAlerts > 3 ? 'error' : 'warn'}
               statusLabel={activeAlerts === 0 ? 'clear' : activeAlerts > 3 ? 'critical' : 'attention'}
+              help={
+                methodology.active_alerts ||
+                'Count of currently-active alerts across the dataset (no age filter).'
+              }
             />
             <Metric
               eyebrow="High risk districts"
               value={highRisk.toLocaleString()}
-              caption="Elevated level"
+              caption={`Forecast HIGH/VERY HIGH · last ${predWindow}d`}
               status={highRisk === 0 ? 'valid' : highRisk > 5 ? 'error' : 'warn'}
               statusLabel={highRisk === 0 ? 'stable' : highRisk > 5 ? 'critical' : 'watch'}
+              help={
+                methodology.high_risk_districts ||
+                `Distinct districts whose latest model prediction in the last ${predWindow} days lands in the HIGH or VERY_HIGH bucket. Forecast, not observed.`
+              }
             />
           </div>
         </EditorialCard>
