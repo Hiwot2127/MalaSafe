@@ -317,6 +317,11 @@ class AnalyticsService:
             Prediction.district_id
         ).subquery()
         
+        # Cases/deaths are pulled for the SAME month the prediction targets,
+        # not for today's calendar month. Before this change the join mixed
+        # "forecast for next month" (risk_level) with "observed in this
+        # incomplete month" (recent_cases), producing the visual disconnect
+        # the reviewer flagged (district badged HIGH but cases=0/deaths=0).
         query = select(
             District.id.label('district_id'),
             District.district_code,
@@ -329,12 +334,13 @@ class AnalyticsService:
             Prediction.confidence_score,
             Prediction.prediction_score,
             Prediction.prediction_reason,
+            Prediction.prediction_date.label('prediction_date'),
             func.coalesce(
                 select(func.sum(MalariaData.cases))
                 .where(
                     MalariaData.district_id == District.id,
-                    MalariaData.year == date_filter.year,
-                    MalariaData.month == date_filter.month
+                    MalariaData.year == func.extract('year', Prediction.prediction_date),
+                    MalariaData.month == func.extract('month', Prediction.prediction_date),
                 )
                 .scalar_subquery(),
                 0
@@ -343,8 +349,8 @@ class AnalyticsService:
                 select(func.sum(MalariaData.deaths))
                 .where(
                     MalariaData.district_id == District.id,
-                    MalariaData.year == date_filter.year,
-                    MalariaData.month == date_filter.month
+                    MalariaData.year == func.extract('year', Prediction.prediction_date),
+                    MalariaData.month == func.extract('month', Prediction.prediction_date),
                 )
                 .scalar_subquery(),
                 0
@@ -383,6 +389,14 @@ class AnalyticsService:
                     "coordinates": [float(row.longitude), float(row.latitude)],
                 }
 
+            pred_date = row.prediction_date
+            prediction_period = (
+                pred_date.strftime("%Y-%m") if pred_date is not None else None
+            )
+            prediction_period_label = (
+                pred_date.strftime("%B %Y") if pred_date is not None else None
+            )
+
             features.append({
                 "type": "Feature",
                 "properties": {
@@ -399,6 +413,11 @@ class AnalyticsService:
                     "prediction_reason": row.prediction_reason,
                     "recent_cases": int(row.recent_cases),
                     "recent_deaths": int(row.recent_deaths),
+                    # `prediction_period` is the month the badge is FOR — the
+                    # cases/deaths above are scoped to this same period so a
+                    # client can render "HIGH (May 2026) · 0 cases observed".
+                    "prediction_period": prediction_period,
+                    "prediction_period_label": prediction_period_label,
                 },
                 "geometry": geometry,
             })
@@ -453,6 +472,9 @@ class AnalyticsService:
             else_=5,
         )
 
+        # `recent_cases` is scoped to the prediction's target month — same
+        # alignment as get_risk_map_data — so the "RECENT CASES" column next
+        # to the risk badge refers to the same period the badge does.
         base = select(
             District.id.label("district_id"),
             District.district_code,
@@ -469,8 +491,8 @@ class AnalyticsService:
                 select(func.sum(MalariaData.cases))
                 .where(
                     MalariaData.district_id == District.id,
-                    MalariaData.year == date_filter.year,
-                    MalariaData.month == date_filter.month,
+                    MalariaData.year == func.extract('year', Prediction.prediction_date),
+                    MalariaData.month == func.extract('month', Prediction.prediction_date),
                 )
                 .scalar_subquery(),
                 0,
@@ -553,6 +575,12 @@ class AnalyticsService:
                 "latitude": float(row.latitude) if row.latitude is not None else None,
                 "longitude": float(row.longitude) if row.longitude is not None else None,
                 "prediction_date": row.prediction_date.isoformat() if row.prediction_date else None,
+                "prediction_period": (
+                    row.prediction_date.strftime("%Y-%m") if row.prediction_date else None
+                ),
+                "prediction_period_label": (
+                    row.prediction_date.strftime("%B %Y") if row.prediction_date else None
+                ),
                 "risk_level": row.risk_level,
                 "confidence_score": float(row.confidence_score),
                 "prediction_score": float(row.prediction_score),
