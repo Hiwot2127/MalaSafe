@@ -219,32 +219,44 @@ export default function MapsPage() {
                   <tr className="border-b border-border">
                     <Th>District</Th>
                     <Th>Region</Th>
-                    <Th>Risk</Th>
-                    <Th align="right">Cases</Th>
-                    <Th align="right">Deaths</Th>
+                    <Th>Risk (forecast)</Th>
+                    <Th>Forecast for</Th>
+                    <Th align="right">Cases (same month)</Th>
+                    <Th align="right">Deaths (same month)</Th>
                   </tr>
                 </thead>
                 <tbody>
-                  {mapData.features.map((feature, index) => (
-                    <tr
-                      key={index}
-                      className="border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40"
-                    >
-                      <Td>{feature.properties.district_name}</Td>
-                      <Td muted>{feature.properties.region}</Td>
-                      <Td>
-                        <StatusPill kind={riskStatus(feature.properties.risk_level)}>
-                          {riskLabel(feature.properties.risk_level)}
-                        </StatusPill>
-                      </Td>
-                      <Td align="right" numeric>
-                        {(feature.properties.recent_cases ?? 0).toLocaleString()}
-                      </Td>
-                      <Td align="right" numeric>
-                        {(feature.properties.recent_deaths ?? 0).toLocaleString()}
-                      </Td>
-                    </tr>
-                  ))}
+                  {mapData.features.map((feature, index) => {
+                    const p = feature.properties;
+                    const lowConfidence =
+                      typeof p.confidence_score === 'number' && p.confidence_score < 0.4;
+                    return (
+                      <tr
+                        key={index}
+                        className="border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40"
+                      >
+                        <Td>{p.district_name}</Td>
+                        <Td muted>{p.region}</Td>
+                        <Td>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <StatusPill kind={riskStatus(p.risk_level)}>
+                              {riskLabel(p.risk_level)}
+                            </StatusPill>
+                            {lowConfidence ? (
+                              <StatusPill kind="neutral">Low confidence</StatusPill>
+                            ) : null}
+                          </div>
+                        </Td>
+                        <Td muted>{p.prediction_period_label ?? '—'}</Td>
+                        <Td align="right" numeric>
+                          {(p.recent_cases ?? 0).toLocaleString()}
+                        </Td>
+                        <Td align="right" numeric>
+                          {(p.recent_deaths ?? 0).toLocaleString()}
+                        </Td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </EditorialCard>

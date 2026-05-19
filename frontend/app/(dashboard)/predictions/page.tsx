@@ -469,33 +469,48 @@ export default function PredictionsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {latest.items.map((row: PredictionRow) => (
-                    <tr
-                      key={row.district_code}
-                      onClick={() => {
-                        setSelected(row.district_code);
-                        setHistoryPage(1);
-                      }}
-                      className="cursor-pointer border-b border-border/70 transition-colors last:border-0 hover:bg-secondary/40"
-                    >
-                      <Td className="font-sans text-foreground">{row.district_name}</Td>
-                      <Td className="text-muted-foreground">{row.region}</Td>
-                      <Td>
-                        <StatusPill kind={riskStatus(row.risk_level)}>
-                          {riskLabel(row.risk_level)}
-                        </StatusPill>
-                      </Td>
-                      <Td align="right" className="tabular-nums">
-                        {row.prediction_score.toFixed(1)}
-                      </Td>
-                      <Td align="right" className="tabular-nums text-muted-foreground">
-                        {(row.confidence_score * 100).toFixed(0)}%
-                      </Td>
-                      <Td align="right" className="tabular-nums">
-                        {row.recent_cases.toLocaleString()}
-                      </Td>
-                    </tr>
-                  ))}
+                  {latest.items.map((row: PredictionRow) => {
+                    const lowConfidence = row.confidence_score < 0.4;
+                    return (
+                      <tr
+                        key={row.district_code}
+                        onClick={() => {
+                          setSelected(row.district_code);
+                          setHistoryPage(1);
+                        }}
+                        className="cursor-pointer border-b border-border/70 transition-colors last:border-0 hover:bg-secondary/40"
+                      >
+                        <Td className="font-sans text-foreground">{row.district_name}</Td>
+                        <Td className="text-muted-foreground">{row.region}</Td>
+                        <Td>
+                          <div className="flex flex-col items-start gap-1">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <StatusPill kind={riskStatus(row.risk_level)}>
+                                {riskLabel(row.risk_level)}
+                              </StatusPill>
+                              {lowConfidence ? (
+                                <StatusPill kind="neutral">Low confidence</StatusPill>
+                              ) : null}
+                            </div>
+                            {row.prediction_period_label ? (
+                              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                                Forecast · {row.prediction_period_label}
+                              </span>
+                            ) : null}
+                          </div>
+                        </Td>
+                        <Td align="right" className="tabular-nums">
+                          {row.prediction_score.toFixed(1)}
+                        </Td>
+                        <Td align="right" className="tabular-nums text-muted-foreground">
+                          {(row.confidence_score * 100).toFixed(0)}%
+                        </Td>
+                        <Td align="right" className="tabular-nums">
+                          {row.recent_cases.toLocaleString()}
+                        </Td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
