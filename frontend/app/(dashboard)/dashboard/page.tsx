@@ -202,12 +202,20 @@ export default function DashboardPage() {
             <Metric
               eyebrow="Total cases"
               value={cases.toLocaleString()}
-              caption={period}
+              caption={`Reported · ${periodLabel}`}
+              help={
+                methodology.total_cases ||
+                `Sum of MalariaData.cases reported for ${periodLabel} (uploaded CSV data, not predicted).`
+              }
             />
             <Metric
               eyebrow="Total deaths"
               value={deaths.toLocaleString()}
-              caption={`CFR ${cfr.toFixed(2)}%`}
+              caption={`CFR ${cfr.toFixed(2)}% · ${periodLabel}`}
+              help={
+                methodology.total_deaths ||
+                `Sum of MalariaData.deaths reported for ${periodLabel} (from the monthly CSV "deaths" column).`
+              }
             />
             <Metric
               eyebrow="Active alerts"
@@ -215,13 +223,21 @@ export default function DashboardPage() {
               caption={activeAlerts === 0 ? 'All clear' : 'Open'}
               status={activeAlerts === 0 ? 'valid' : activeAlerts > 3 ? 'error' : 'warn'}
               statusLabel={activeAlerts === 0 ? 'clear' : activeAlerts > 3 ? 'critical' : 'attention'}
+              help={
+                methodology.active_alerts ||
+                'Count of currently-active alerts across the dataset (no age filter).'
+              }
             />
             <Metric
               eyebrow="High risk districts"
               value={highRisk.toLocaleString()}
-              caption="Elevated level"
+              caption={`Forecast HIGH/VERY HIGH · last ${predWindow}d`}
               status={highRisk === 0 ? 'valid' : highRisk > 5 ? 'error' : 'warn'}
               statusLabel={highRisk === 0 ? 'stable' : highRisk > 5 ? 'critical' : 'watch'}
+              help={
+                methodology.high_risk_districts ||
+                `Distinct districts whose latest model prediction in the last ${predWindow} days lands in the HIGH or VERY_HIGH bucket. Forecast, not observed.`
+              }
             />
           </div>
         </EditorialCard>

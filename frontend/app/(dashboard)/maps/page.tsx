@@ -177,32 +177,36 @@ export default function MapsPage() {
             {summary ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
-                  eyebrow="Districts"
+                  eyebrow="Districts on surface"
                   value={districtCount.toLocaleString()}
-                  caption="On surface"
+                  caption={selectedRegion ? selectedRegion : 'All regions'}
                   icon={Layers}
                   tone="signal"
+                  help={`Number of districts with a current prediction visible on the map${selectedRegion ? ` (filtered to ${selectedRegion})` : ' (all regions).'}`}
                 />
                 <StatCard
-                  eyebrow="Recent cases"
+                  eyebrow="Reported cases"
                   value={summary.cases.toLocaleString()}
-                  caption="Sum across surface"
+                  caption="Latest reporting month, summed"
                   icon={Activity}
                   tone="signal"
+                  help="Sum of cases reported (uploaded CSV) for the current reporting month across the districts visible above. Observed, not predicted."
                 />
                 <StatCard
-                  eyebrow="Elevated"
+                  eyebrow="Elevated (MED / HIGH)"
                   value={summary.elevated.toLocaleString()}
-                  caption="Medium / high"
+                  caption="Forecast bucket"
                   icon={TrendingUp}
                   tone={summary.elevated > 0 ? 'warn' : 'valid'}
+                  help="Districts whose latest model prediction lands in the MEDIUM or HIGH bucket. Buckets are per-district percentile thresholds (p50/p75/p95) on the LightGBM model's predicted case-count distribution — forecast for next month, not observed."
                 />
                 <StatCard
-                  eyebrow="Very high"
+                  eyebrow="Critical (VERY HIGH)"
                   value={summary.veryHigh.toLocaleString()}
-                  caption="Critical districts"
+                  caption="Forecast above p95"
                   icon={ShieldAlert}
                   tone={summary.veryHigh > 0 ? 'error' : 'valid'}
+                  help="Districts whose latest model prediction exceeds the p95 historical threshold (forecast above the 95th percentile of their own case-count history)."
                 />
               </div>
             ) : null}
