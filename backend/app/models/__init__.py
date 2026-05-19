@@ -6,6 +6,10 @@ from .district_environment import DistrictEnvironment
 from .prediction import Prediction, RiskLevel
 from .alert import Alert
 from .uploaded_file import UploadedFile
+from .model_version import ModelVersion, ModelVersionStatus
+from .monthly_close import MonthlyClose, MonthlyCloseMode, MonthlyCloseStatus
+from .backtest_result import BacktestResult
+from .drift_finding import DriftFinding, DriftMetric, DriftSeverity
 
 __all__ = [
     "User",
@@ -18,4 +22,13 @@ __all__ = [
     "RiskLevel",
     "Alert",
     "UploadedFile",
+    "ModelVersion",
+    "ModelVersionStatus",
+    "MonthlyClose",
+    "MonthlyCloseMode",
+    "MonthlyCloseStatus",
+    "BacktestResult",
+    "DriftFinding",
+    "DriftMetric",
+    "DriftSeverity",
 ]

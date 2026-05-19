@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_URL } from '../constants';
+import { setSessionCookie } from './session-cookie';
 
 export const apiClient = axios.create({
   baseURL: API_URL,
@@ -28,6 +29,7 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
+        setSessionCookie(null);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';

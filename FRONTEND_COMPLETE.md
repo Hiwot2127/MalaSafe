@@ -344,7 +344,7 @@ For testing the login functionality:
 
 ```
 Email: admin@malasafe.gov.et
-Password: admin123
+Password: Admin@123
 ```
 
 *(These should be created in the backend using `create_admin.py`)*

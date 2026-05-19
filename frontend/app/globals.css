@@ -1,51 +1,226 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+  @media (width >= --theme(--breakpoint-sm)) {
+    max-width: none;
+  }
+  @media (width >= 1400px) {
+    max-width: 1400px;
+  }
+}
+
+@theme {
+  --font-display: var(--font-geist-sans), system-ui, sans-serif;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --color-status-valid: hsl(var(--status-valid));
+  --color-status-warn: hsl(var(--status-warn));
+  --color-status-error: hsl(var(--status-error));
+
+  --color-accent-signal: hsl(var(--accent-signal));
+  --color-accent-signal-foreground: hsl(var(--accent-signal-foreground));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+
+  --color-risk-1: hsl(var(--risk-1));
+  --color-risk-2: hsl(var(--risk-2));
+  --color-risk-3: hsl(var(--risk-3));
+  --color-risk-4: hsl(var(--risk-4));
+  --color-risk-5: hsl(var(--risk-5));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Surface: cool off-white, clinical paper. */
+    --background: 210 30% 99%;
+    --foreground: 220 35% 14%;
+
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 35% 14%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 217 91% 60%;
-    --radius: 0.5rem;
+    --popover-foreground: 220 35% 14%;
+
+    /* Primary: brand blue - shield + map pin from the logo. */
+    --primary: 205 75% 56%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 25% 95%;
+    --secondary-foreground: 220 35% 14%;
+
+    --muted: 210 25% 95%;
+    --muted-foreground: 220 12% 42%;
+
+    --accent: 210 30% 96%;
+    --accent-foreground: 220 35% 14%;
+
+    /* Destructive: mockup red, higher saturation than the old terracotta. */
+    --destructive: 0 75% 58%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 20% 90%;
+    --input: 210 20% 90%;
+    --ring: 205 75% 56%;
+
+    /* Softer keylines - cards breathe, inputs/buttons stay snappy. */
+    --radius: 0.625rem;
+
+    /* Domain accents - tuned to mockup signal palette. */
+    --status-valid: 145 55% 42%;       /* mockup green - LOW risk */
+    --status-warn: 35 90% 55%;         /* mockup amber - MODERATE */
+    --status-error: 0 75% 58%;         /* mockup red - HIGH */
+
+    /* Signal accent - aligned with primary brand blue. */
+    --accent-signal: 205 75% 56%;
+    --accent-signal-foreground: 0 0% 100%;
+
+    /* Chart series palette - blue-led, brand-coherent. */
+    --chart-1: 205 75% 56%;            /* brand blue - cases */
+    --chart-2: 0 75% 58%;              /* red - deaths */
+    --chart-3: 252 60% 60%;            /* violet - predictions */
+    --chart-4: 35 90% 55%;             /* amber - drift */
+    --chart-5: 175 60% 42%;            /* teal - climate */
+
+    /* Map sequential risk ramp - 5 stops, low → very high (mockup palette). */
+    --risk-1: 145 55% 50%;             /* green */
+    --risk-2: 80 60% 50%;              /* lime-green */
+    --risk-3: 35 90% 55%;              /* amber */
+    --risk-4: 18 85% 55%;              /* orange */
+    --risk-5: 0 75% 58%;               /* red */
+
+    /* Font stacks - wired via geist/font in the root layout. */
+    --font-display: var(--font-geist-sans), system-ui, sans-serif;
+    --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+    --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Consolas, monospace;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 217 91% 60%;
+    /* Dark surface: cool deep slate, not pure black. */
+    --background: 220 25% 8%;
+    --foreground: 210 25% 95%;
+
+    --card: 220 22% 11%;
+    --card-foreground: 210 25% 95%;
+
+    --popover: 220 22% 11%;
+    --popover-foreground: 210 25% 95%;
+
+    /* Brand blue, brightened for dark surfaces. */
+    --primary: 205 80% 62%;
+    --primary-foreground: 220 25% 8%;
+
+    --secondary: 220 18% 16%;
+    --secondary-foreground: 210 25% 95%;
+
+    --muted: 220 18% 14%;
+    --muted-foreground: 210 12% 64%;
+
+    --accent: 220 18% 16%;
+    --accent-foreground: 210 25% 95%;
+
+    --destructive: 0 70% 62%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 16% 20%;
+    --input: 220 16% 20%;
+    --ring: 205 80% 62%;
+
+    --status-valid: 145 50% 52%;
+    --status-warn: 35 85% 62%;
+    --status-error: 0 70% 64%;
+
+    --accent-signal: 205 80% 62%;
+    --accent-signal-foreground: 220 25% 8%;
+
+    --chart-1: 205 80% 62%;
+    --chart-2: 0 70% 64%;
+    --chart-3: 252 65% 70%;
+    --chart-4: 35 85% 62%;
+    --chart-5: 175 55% 52%;
+
+    --risk-1: 145 50% 56%;
+    --risk-2: 80 55% 56%;
+    --risk-3: 35 85% 62%;
+    --risk-4: 18 80% 60%;
+    --risk-5: 0 70% 64%;
   }
 }
 
@@ -55,7 +230,53 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-feature-settings: 'ss01', 'ss03';
   }
+
+  /* Display text - Geist Sans at semibold weight with tightened tracking. */
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.014em;
+  }
+  h1 { letter-spacing: -0.022em; }
+  h2 { letter-spacing: -0.018em; }
+  h3 { letter-spacing: -0.014em; }
+
+  /* Tabular numerals for data - counts, durations, IDs. */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Section labels - small monospaced eyebrow above each section, like
+   numbered footnote references in an editorial layout. */
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Status pills - used by the validation modal tabs. */
+.status-valid { color: hsl(var(--status-valid)); }
+.status-warn { color: hsl(var(--status-warn)); }
+.status-error { color: hsl(var(--status-error)); }
+.bg-status-valid-tint { background-color: hsl(var(--status-valid) / 0.18); }
+.bg-status-warn-tint { background-color: hsl(var(--status-warn) / 0.18); }
+.bg-status-error-tint { background-color: hsl(var(--status-error) / 0.18); }
+.bg-accent-signal-tint { background-color: hsl(var(--accent-signal) / 0.10); }
+
+/* Timeline stage reveal - used by upload-timeline.tsx. */
+@keyframes stage-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stage-reveal {
+  animation: stage-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Leaflet styles */
@@ -63,4 +284,23 @@
   height: 100%;
   width: 100%;
   z-index: 0;
+}
+
+/* Custom risk-marker hover card - strip leaflet's default tooltip chrome */
+.leaflet-tooltip.risk-tooltip,
+.leaflet-tooltip-top.risk-tooltip,
+.leaflet-tooltip-bottom.risk-tooltip,
+.leaflet-tooltip-left.risk-tooltip,
+.leaflet-tooltip-right.risk-tooltip {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  white-space: normal !important;
+}
+.risk-tooltip:before,
+.risk-tooltip:after {
+  display: none !important;
+  border: 0 !important;
 }

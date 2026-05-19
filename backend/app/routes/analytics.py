@@ -21,7 +21,11 @@ from datetime import datetime
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 
-@router.get("/dashboard", response_model=DashboardResponse)
+@router.get(
+    "/dashboard",
+    response_model=DashboardResponse,
+    summary="Get dashboard summary + per-region breakdown",
+)
 async def get_dashboard(
     year: Optional[int] = Query(None, description="Filter by year (default: current year)"),
     month: Optional[int] = Query(None, ge=1, le=12, description="Filter by month (1-12)"),
@@ -94,7 +98,11 @@ async def get_dashboard(
     }
 
 
-@router.get("/trends", response_model=TrendsResponse)
+@router.get(
+    "/trends",
+    response_model=TrendsResponse,
+    summary="Get weekly or monthly trend series",
+)
 async def get_trends(
     period_type: str = Query("monthly", regex="^(weekly|monthly)$", description="Period type: weekly or monthly"),
     year: Optional[int] = Query(None, description="Filter by year (default: current year)"),

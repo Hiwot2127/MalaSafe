@@ -1,16 +1,14 @@
 import { apiClient } from './client';
+import { setSessionCookie } from './session-cookie';
 import { LoginRequest, LoginResponse, User } from '@/types/auth';
+
+export { setSessionCookie };
 
 export const authApi = {
   login: async (data: LoginRequest): Promise<LoginResponse> => {
-    const formData = new URLSearchParams();
-    formData.append('username', data.email);
-    formData.append('password', data.password);
-
-    const response = await apiClient.post('/auth/login', formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+    const response = await apiClient.post('/auth/login', {
+      email: data.email,
+      password: data.password,
     });
     return response.data;
   },
@@ -22,6 +20,7 @@ export const authApi = {
 
   logout: () => {
     if (typeof window !== 'undefined') {
+      setSessionCookie(null);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';

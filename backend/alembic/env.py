@@ -25,8 +25,15 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 target_metadata = Base.metadata
 
-# Set the database URL from settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL_SYNC)
+# Set the database URL from settings.
+# configparser treats `%` as interpolation prefix, so any percent-encoded
+# chars in the URL (e.g. URL-encoded password chars `%2F`, `%24`) must be
+# doubled to `%%` before we hand the URL to set_main_option. configparser
+# unescapes them back when the value is read, so SQLAlchemy still sees the
+# original URL. Without this, deploys with passwords containing /, $, @, #
+# etc. fail with "invalid interpolation syntax".
+_db_url_sync = settings.DATABASE_URL_SYNC.replace("%", "%%")
+config.set_main_option("sqlalchemy.url", _db_url_sync)
 
 
 def run_migrations_offline() -> None:

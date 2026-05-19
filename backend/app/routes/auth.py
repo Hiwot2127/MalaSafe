@@ -25,7 +25,16 @@ from loguru import logger
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-@router.post("/login", response_model=Token, status_code=status.HTTP_200_OK)
+@router.post(
+    "/login",
+    response_model=Token,
+    status_code=status.HTTP_200_OK,
+    summary="Log in and receive a JWT bearer token",
+    responses={
+        401: {"description": "Incorrect email or password"},
+        403: {"description": "Account is inactive"},
+    },
+)
 async def login(
     credentials: LoginRequest,
     db: AsyncSession = Depends(get_db)
@@ -91,7 +100,12 @@ async def login(
     "/create-official",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_admin)]
+    dependencies=[Depends(require_admin)],
+    summary="Create an official account (admin only)",
+    responses={
+        400: {"description": "Email already exists or password too weak"},
+        403: {"description": "Caller is not an admin"},
+    },
 )
 async def create_official(
     official_data: CreateOfficialRequest,
@@ -166,7 +180,7 @@ async def create_official(
     return new_user
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me", response_model=UserResponse, summary="Get the authenticated user's profile")
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """
     Get current authenticated user information.

@@ -10,7 +10,8 @@ from app.routes import (
     analytics_router,
     maps_router,
     predictions_router,
-    alerts_router
+    alerts_router,
+    monthly_close_router,
 )
 from loguru import logger
 import sys
@@ -30,14 +31,68 @@ logger.add(
     level=settings.LOG_LEVEL,
 )
 
+# OpenAPI tag metadata — shown as section headers in Swagger UI / ReDoc
+openapi_tags = [
+    {
+        "name": "Health",
+        "description": "Service liveness and database connectivity probes. Used by load balancers, Render, and monitoring.",
+    },
+    {
+        "name": "Authentication",
+        "description": "JWT login, user creation (admin), current-user lookup. Tokens are bearer JWTs issued by `/auth/login`.",
+    },
+    {
+        "name": "Mobile",
+        "description": "Public self-registration for end-users via the mobile app. Always creates `public_user` accounts.",
+    },
+    {
+        "name": "Uploads",
+        "description": "CSV ingestion for malaria case data and climate data. Includes preview (dry-run) and downloadable templates.",
+    },
+    {
+        "name": "Analytics",
+        "description": "Aggregate dashboards and time-series trends for districts and the country as a whole.",
+    },
+    {
+        "name": "GIS Maps",
+        "description": "GeoJSON-flavored risk maps for visualisation on a map UI.",
+    },
+    {
+        "name": "Predictions",
+        "description": "On-demand malaria risk predictions for one district or all districts, plus per-district prediction history.",
+    },
+    {
+        "name": "Alerts",
+        "description": "High-risk prediction alerts surfaced for the current user (filtered by district / role).",
+    },
+    {
+        "name": "Monthly Close",
+        "description": "Operational ML pipeline — month-end close runs that produce next-month forecasts, backtest reports, and drift findings.",
+    },
+    {
+        "name": "Protected Examples",
+        "description": "Reference endpoints illustrating each RBAC pattern (public, authenticated, admin-only, role-scoped).",
+    },
+]
+
 # Create FastAPI application
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="Malaria Surveillance and Prediction System API",
+    description=(
+        "Malaria Surveillance and Prediction System API.\n\n"
+        "Backend for MalaSafe — ingests malaria case and climate data, runs monthly ML predictions, "
+        "produces alerts, and serves analytics + GIS maps to web and mobile clients.\n\n"
+        "**Auth:** JWT bearer tokens. Obtain one from `POST /api/v1/auth/login`, then pass "
+        "`Authorization: Bearer <token>` on subsequent requests.\n\n"
+        "**Base path:** all endpoints live under `/api/v1`. Interactive docs are served from `/api/docs` "
+        "(Swagger UI) and `/api/redoc` (ReDoc)."
+    ),
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
+    openapi_tags=openapi_tags,
+    contact={"name": "MalaSafe Team"},
 )
 
 # Setup CORS
@@ -80,6 +135,7 @@ app.include_router(analytics_router, prefix="/api/v1")
 app.include_router(maps_router, prefix="/api/v1")
 app.include_router(predictions_router, prefix="/api/v1")
 app.include_router(alerts_router, prefix="/api/v1")
+app.include_router(monthly_close_router, prefix="/api/v1")
 
 
 # Startup event

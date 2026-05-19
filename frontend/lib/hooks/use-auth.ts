@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { authApi } from '../api/auth';
+import { authApi, setSessionCookie } from '../api/auth';
 import { User } from '@/types/auth';
 
 export function useAuth() {
@@ -36,6 +36,7 @@ export function useAuth() {
     const response = await authApi.login({ email, password });
     localStorage.setItem('token', response.access_token);
     localStorage.setItem('user', JSON.stringify(response.user));
+    setSessionCookie(response.access_token);
     setUser(response.user);
     setIsAuthenticated(true);
     return response;

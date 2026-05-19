@@ -1,176 +1,268 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AlertTriangle, Bell } from 'lucide-react';
-import { alertsApi } from '@/lib/api/alerts';
-import { Alert } from '@/types/map';
-import { getRiskBadgeColor, formatDateTime } from '@/lib/utils';
+import { debounce, useQueryStates } from 'nuqs';
+import { alertsApi, type AlertsListResponse } from '@/lib/api/alerts';
+import { formatDateTime } from '@/lib/utils';
+import Link from 'next/link';
+import { ArrowUpRight } from 'lucide-react';
+import {
+  AlertBanner,
+  EditorialCard,
+  EditorialInput,
+  EditorialSelect,
+  EmptyState,
+  LoadingScreen,
+  Metric,
+  PageHeader,
+  SectionHeader,
+  StatusPill,
+  riskLabel,
+  riskStatus,
+} from '@/components/editorial';
+import { Pagination } from '@/components/Pagination';
+import {
+  pageToSkip,
+  parseAsPage,
+  parseAsPageSize,
+  parseAsString,
+  parseAsStringLiteral,
+} from '@/lib/url-state';
+
+const ACTIVE_OPTIONS = ['active', 'all'] as const;
+const RISK_OPTIONS = ['', 'low', 'moderate', 'high', 'very_high'] as const;
+
+const EMPTY_RESPONSE: AlertsListResponse = {
+  alerts: [],
+  total: 0,
+  active_count: 0,
+  high_risk_count: 0,
+};
 
 export default function AlertsPage() {
-  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [params, setParams] = useQueryStates(
+    {
+      active: parseAsStringLiteral(ACTIVE_OPTIONS).withDefault('active'),
+      risk: parseAsStringLiteral(RISK_OPTIONS).withDefault(''),
+      q: parseAsString.withDefault(''),
+      page: parseAsPage,
+      pageSize: parseAsPageSize(25, 100),
+    },
+    { history: 'replace' },
+  );
+  // Local mirror of `q` so the input updates on every keystroke even while
+  // the URL - and the network request - debounce behind the scenes.
+  const [qLocal, setQLocal] = useState(params.q);
+  const [data, setData] = useState<AlertsListResponse>(EMPTY_RESPONSE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filterActive, setFilterActive] = useState<boolean | undefined>(true);
-  const [filterRisk, setFilterRisk] = useState<string>('');
+
+  const { active, risk, q, page, pageSize } = params;
 
   useEffect(() => {
-    const fetchAlerts = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const params: any = {};
-        if (filterActive !== undefined) params.is_active = filterActive;
-        if (filterRisk) params.risk_level = filterRisk;
-
-        const response = await alertsApi.getAlerts(params);
-        setAlerts(response);
-      } catch (err: any) {
-        setError(err.response?.data?.detail || 'Failed to fetch alerts');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAlerts();
-  }, [filterActive, filterRisk]);
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    alertsApi
+      .getAlerts(
+        {
+          active_only: active === 'active',
+          ...(risk ? { risk_level: risk } : {}),
+          ...(q.trim() ? { q: q.trim() } : {}),
+          limit: pageSize,
+          offset: pageToSkip(page, pageSize),
+        },
+        { signal: controller.signal },
+      )
+      .then((response) => setData(response))
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        const maybe = err as { response?: { data?: { detail?: string } } };
+        setError(maybe?.response?.data?.detail || 'Failed to fetch alerts');
+        setData(EMPTY_RESPONSE);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [active, risk, q, page, pageSize]);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Alerts</h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Malaria outbreak alerts and notifications
-        </p>
-      </div>
+    <div className="mx-auto flex max-w-6xl flex-col gap-14">
+      <PageHeader
+        eyebrow="MalaSafe · Outbreak watch"
+        title="Alerts"
+        description="Standing list of district-level outbreak alerts opened by the surveillance pipeline. Acknowledge from the district console."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <EditorialInput
+              type="search"
+              value={qLocal}
+              placeholder="Search district…"
+              aria-label="Search district name"
+              className="w-48"
+              onChange={(e) => {
+                const next = e.target.value;
+                setQLocal(next);
+                // URL + fetch update is debounced (300 ms) so each keystroke
+                // doesn't fire a request or replace history. Reset to page 1
+                // on every search change.
+                setParams(
+                  { q: next, page: 1 },
+                  { limitUrlUpdates: debounce(300) },
+                );
+              }}
+            />
+            <EditorialSelect
+              value={active}
+              onChange={(next) =>
+                setParams({
+                  active: next as (typeof ACTIVE_OPTIONS)[number],
+                  page: 1,
+                })
+              }
+              aria-label="Status filter"
+              options={[
+                { value: 'active', label: 'Active' },
+                { value: 'all', label: 'All' },
+              ]}
+            />
+            <EditorialSelect
+              value={risk}
+              onChange={(next) =>
+                setParams({
+                  risk: next as (typeof RISK_OPTIONS)[number],
+                  page: 1,
+                })
+              }
+              aria-label="Risk filter"
+              options={[
+                { value: '', label: 'All risk' },
+                { value: 'low', label: 'Low' },
+                { value: 'moderate', label: 'Moderate' },
+                { value: 'high', label: 'High' },
+                { value: 'very_high', label: 'Very high' },
+              ]}
+            />
+          </div>
+        }
+      />
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-4">
-        <select
-          value={filterActive === undefined ? 'all' : filterActive ? 'active' : 'inactive'}
-          onChange={(e) => {
-            const value = e.target.value;
-            setFilterActive(value === 'all' ? undefined : value === 'active');
-          }}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+      {/* Section 001 - Summary */}
+      <section className="flex flex-col gap-5">
+        <SectionHeader
+          index="001"
+          label="Summary"
+          tone={data.high_risk_count > 0 ? 'error' : data.active_count > 0 ? 'warn' : 'valid'}
         >
-          <option value="all">All Alerts</option>
-          <option value="active">Active Only</option>
-          <option value="inactive">Inactive Only</option>
-        </select>
+          <StatusPill
+            kind={data.high_risk_count > 0 ? 'error' : data.active_count > 0 ? 'warn' : 'valid'}
+          >
+            {data.high_risk_count > 0
+              ? 'Critical'
+              : data.active_count > 0
+                ? `${data.active_count} open`
+                : 'All clear'}
+          </StatusPill>
+        </SectionHeader>
+        <EditorialCard>
+          <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 sm:divide-x lg:grid-cols-3">
+            <Metric
+              eyebrow="Matching"
+              value={data.total.toLocaleString()}
+              caption="Current filter"
+            />
+            <Metric
+              eyebrow="Active"
+              value={data.active_count.toLocaleString()}
+              status={data.active_count === 0 ? 'valid' : 'warn'}
+              statusLabel={data.active_count === 0 ? 'clear' : 'open'}
+            />
+            <Metric
+              eyebrow="High risk"
+              value={data.high_risk_count.toLocaleString()}
+              caption="High + very high"
+              status={data.high_risk_count === 0 ? 'valid' : 'error'}
+              statusLabel={data.high_risk_count === 0 ? 'stable' : 'critical'}
+            />
+          </div>
+        </EditorialCard>
+      </section>
 
-        <select
-          value={filterRisk}
-          onChange={(e) => setFilterRisk(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-        >
-          <option value="">All Risk Levels</option>
-          <option value="low">Low Risk</option>
-          <option value="medium">Medium Risk</option>
-          <option value="high">High Risk</option>
-          <option value="very_high">Very High Risk</option>
-        </select>
-      </div>
+      {/* Section 002 - Roster */}
+      <section className="flex flex-col gap-5">
+        <SectionHeader index="002" label="Roster" tone="signal">
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
+            {data.total.toLocaleString()} rows
+          </span>
+        </SectionHeader>
 
-      {loading && (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg text-gray-600 dark:text-gray-400">Loading alerts...</div>
-        </div>
-      )}
-
-      {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg">
-          {error}
-        </div>
-      )}
-
-      {!loading && !error && alerts.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
-          <Bell className="w-16 h-16 mb-4" />
-          <p>No alerts found</p>
-        </div>
-      )}
-
-      {!loading && !error && alerts.length > 0 && (
-        <div className="space-y-4">
-          {alerts.map((alert) => (
-            <div
-              key={alert.id}
-              className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-4 flex-1">
-                  <div className={`p-3 rounded-full ${
-                    alert.risk_level === 'very_high' ? 'bg-red-100 dark:bg-red-900/20' :
-                    alert.risk_level === 'high' ? 'bg-orange-100 dark:bg-orange-900/20' :
-                    alert.risk_level === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/20' :
-                    'bg-green-100 dark:bg-green-900/20'
-                  }`}>
-                    <AlertTriangle className={`w-6 h-6 ${
-                      alert.risk_level === 'very_high' ? 'text-red-600 dark:text-red-400' :
-                      alert.risk_level === 'high' ? 'text-orange-600 dark:text-orange-400' :
-                      alert.risk_level === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
-                      'text-green-600 dark:text-green-400'
-                    }`} />
-                  </div>
-
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        {alert.district_name || 'Unknown District'}
-                      </h3>
-                      <span className={`px-2 py-1 text-xs font-medium rounded ${getRiskBadgeColor(alert.risk_level)}`}>
-                        {alert.risk_level.replace('_', ' ').toUpperCase()}
-                      </span>
-                      {alert.is_active && (
-                        <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                          ACTIVE
+        {loading ? (
+          <LoadingScreen caption="Loading alerts" />
+        ) : error ? (
+          <AlertBanner tone="error" title="Couldn't load alerts" description={error} />
+        ) : data.alerts.length === 0 ? (
+          <EmptyState
+            eyebrow={`Last checked ${formatDateTime(new Date())}`}
+            title="No alerts match the current filter"
+            description="Try widening the risk filter, switching to All, or clearing the search box."
+          />
+        ) : (
+          <div className="flex flex-col gap-3">
+            {data.alerts.map((alert, i) => {
+              const tone = riskStatus(alert.risk_level);
+              const banner = tone === 'neutral' ? 'info' : tone;
+              const index = String((page - 1) * pageSize + i + 1).padStart(3, '0');
+              const meta = [alert.region, formatDateTime(alert.created_at)]
+                .filter(Boolean)
+                .join(' · ');
+              return (
+                <AlertBanner
+                  key={alert.id}
+                  tone={banner}
+                  title={`${index} · ${alert.district_name || 'Unknown district'}`}
+                  description={
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-foreground/90">{alert.message}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusPill kind={riskStatus(alert.risk_level)}>
+                          {riskLabel(alert.risk_level)}
+                        </StatusPill>
+                        {alert.is_active ? (
+                          <StatusPill kind="neutral">Active</StatusPill>
+                        ) : null}
+                        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
+                          {meta}
                         </span>
-                      )}
+                      </div>
                     </div>
-
-                    <p className="text-gray-700 dark:text-gray-300 mb-2">
-                      {alert.message}
-                    </p>
-
-                    <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-                      {alert.region && (
-                        <span>Region: {alert.region}</span>
-                      )}
-                      <span>Created: {formatDateTime(alert.created_at)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Summary */}
-      {!loading && !error && alerts.length > 0 && (
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Alerts</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
-              {alerts.length}
-            </p>
+                  }
+                  action={
+                    alert.district_id ? (
+                      <Link
+                        href={`/predictions?district=${alert.district_id}`}
+                        className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:text-muted-foreground"
+                      >
+                        View district
+                        <ArrowUpRight className="size-3.5" strokeWidth={1.5} aria-hidden />
+                      </Link>
+                    ) : undefined
+                  }
+                />
+              );
+            })}
+            <EditorialCard className="overflow-hidden p-0">
+              <Pagination
+                page={page}
+                pageSize={pageSize}
+                total={data.total}
+                unit="alerts"
+                onChange={(next) => setParams({ page: next })}
+              />
+            </EditorialCard>
           </div>
-
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Alerts</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
-              {alerts.filter(a => a.is_active).length}
-            </p>
-          </div>
-
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">High Risk</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">
-              {alerts.filter(a => a.risk_level === 'high' || a.risk_level === 'very_high').length}
-            </p>
-          </div>
-        </div>
-      )}
+        )}
+      </section>
     </div>
   );
 }

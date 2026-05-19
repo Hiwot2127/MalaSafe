@@ -338,7 +338,7 @@ npm run dev
 ### 5. Login
 ```
 Email: admin@malasafe.gov.et
-Password: admin123
+Password: Admin@123
 ```
 
 ---

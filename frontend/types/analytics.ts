@@ -17,9 +17,9 @@ export interface TrendDataPoint {
 }
 
 export interface TrendsResponse {
-  trends: TrendDataPoint[];
-  trend_type: 'weekly' | 'monthly';
-  region?: string;
+  period_type: 'weekly' | 'monthly';
+  data: TrendDataPoint[];
+  total_periods: number;
 }
 
 export interface DashboardResponse {

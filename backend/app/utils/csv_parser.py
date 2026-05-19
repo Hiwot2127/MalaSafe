@@ -171,121 +171,58 @@ class CSVParser:
 
 
 class MalariaCSVParser(CSVParser):
-    """Parser for malaria data CSV files."""
-    
-    REQUIRED_COLUMNS_WEEKLY = ['district_code', 'week', 'year', 'cases', 'deaths']
+    """Parser for malaria data CSV files. Monthly-only - weekly was removed."""
+
     REQUIRED_COLUMNS_MONTHLY = ['district_code', 'month', 'year', 'cases', 'deaths']
-    
+    OPTIONAL_COLUMNS_MONTHLY = ['tests']  # If present, must be numeric >= 0. Powers the exposure offset; absent = fall back to cases*5 proxy.
+
     @classmethod
-    def parse_weekly_data(cls, file_content: bytes) -> Tuple[pd.DataFrame, List[Dict]]:
-        """
-        Parse weekly malaria data CSV.
-        
-        Args:
-            file_content: Raw file bytes
-            
-        Returns:
-            Tuple of (DataFrame, list of errors)
-        """
-        errors = []
-        
-        # Read CSV
-        try:
-            df = cls.read_csv_file(file_content)
-        except ValueError as e:
-            return None, [{"error": str(e)}]
-        
-        # Remove empty rows
-        df = cls.remove_empty_rows(df)
-        
-        if df.empty:
-            return None, [{"error": "CSV file is empty"}]
-        
-        # Normalize column names
-        df = cls.normalize_column_names(df)
-        
-        # Check required columns
-        missing_columns = cls.validate_required_columns(df, cls.REQUIRED_COLUMNS_WEEKLY)
-        if missing_columns:
-            return None, [{"error": f"Missing required columns: {', '.join(missing_columns)}"}]
-        
-        # Validate required values
-        errors.extend(cls.validate_required_values(df, cls.REQUIRED_COLUMNS_WEEKLY))
-        
-        # Validate numeric fields
-        errors.extend(cls.validate_numeric_column(df, 'week', min_value=1, max_value=53))
-        errors.extend(cls.validate_numeric_column(df, 'year', min_value=2000, max_value=2100))
-        errors.extend(cls.validate_numeric_column(df, 'cases', min_value=0))
-        errors.extend(cls.validate_numeric_column(df, 'deaths', min_value=0))
-        
-        # Validate deaths <= cases
-        for idx, row in df.iterrows():
-            row_num = idx + 2
-            try:
-                cases = float(row['cases'])
-                deaths = float(row['deaths'])
-                if deaths > cases:
-                    errors.append({
-                        "row": row_num,
-                        "column": "deaths",
-                        "value": str(deaths),
-                        "error": f"Deaths ({deaths}) cannot exceed cases ({cases})"
-                    })
-            except (ValueError, TypeError):
-                pass  # Already caught by numeric validation
-        
-        return df, errors
-    
-    @classmethod
-    def parse_monthly_data(cls, file_content: bytes) -> Tuple[pd.DataFrame, List[Dict]]:
+    def parse_monthly_data(cls, file_content: bytes) -> Tuple[Optional[pd.DataFrame], List[Dict], List[Dict]]:
         """
         Parse monthly malaria data CSV.
-        
-        Args:
-            file_content: Raw file bytes
-            
+
         Returns:
-            Tuple of (DataFrame, list of errors)
+            Tuple of (DataFrame, file_errors, row_errors).
+
+            - file_errors: file-level problems that reject the whole upload
+              (unparseable CSV, empty file, missing required columns).
+            - row_errors: per-row problems. Those rows should be skipped but
+              the rest of the file still imports.
         """
-        errors = []
-        
-        # Read CSV
+        row_errors: List[Dict] = []
+
         try:
             df = cls.read_csv_file(file_content)
         except ValueError as e:
-            return None, [{"error": str(e)}]
-        
-        # Remove empty rows
+            return None, [{"error": str(e)}], []
+
         df = cls.remove_empty_rows(df)
-        
         if df.empty:
-            return None, [{"error": "CSV file is empty"}]
-        
-        # Normalize column names
+            return None, [{"error": "CSV file is empty"}], []
+
         df = cls.normalize_column_names(df)
-        
-        # Check required columns
+
         missing_columns = cls.validate_required_columns(df, cls.REQUIRED_COLUMNS_MONTHLY)
         if missing_columns:
-            return None, [{"error": f"Missing required columns: {', '.join(missing_columns)}"}]
-        
-        # Validate required values
-        errors.extend(cls.validate_required_values(df, cls.REQUIRED_COLUMNS_MONTHLY))
-        
-        # Validate numeric fields
-        errors.extend(cls.validate_numeric_column(df, 'month', min_value=1, max_value=12))
-        errors.extend(cls.validate_numeric_column(df, 'year', min_value=2000, max_value=2100))
-        errors.extend(cls.validate_numeric_column(df, 'cases', min_value=0))
-        errors.extend(cls.validate_numeric_column(df, 'deaths', min_value=0))
-        
-        # Validate deaths <= cases
+            return None, [{"error": f"Missing required columns: {', '.join(missing_columns)}"}], []
+
+        row_errors.extend(cls.validate_required_values(df, cls.REQUIRED_COLUMNS_MONTHLY))
+        row_errors.extend(cls.validate_numeric_column(df, 'month', min_value=1, max_value=12))
+        row_errors.extend(cls.validate_numeric_column(df, 'year', min_value=2000, max_value=2100))
+        row_errors.extend(cls.validate_numeric_column(df, 'cases', min_value=0))
+        row_errors.extend(cls.validate_numeric_column(df, 'deaths', min_value=0))
+
+        # Optional `tests` column - validate only if present.
+        if 'tests' in df.columns:
+            row_errors.extend(cls.validate_numeric_column(df, 'tests', min_value=0))
+
         for idx, row in df.iterrows():
             row_num = idx + 2
             try:
                 cases = float(row['cases'])
                 deaths = float(row['deaths'])
                 if deaths > cases:
-                    errors.append({
+                    row_errors.append({
                         "row": row_num,
                         "column": "deaths",
                         "value": str(deaths),
@@ -293,66 +230,55 @@ class MalariaCSVParser(CSVParser):
                     })
             except (ValueError, TypeError):
                 pass
-        
-        return df, errors
+
+        return df, [], row_errors
 
 
 class ClimateCSVParser(CSVParser):
     """Parser for climate data CSV files."""
-    
+
     REQUIRED_COLUMNS = ['district_code', 'date', 'rainfall', 'temperature']
-    
+
     @classmethod
-    def parse_climate_data(cls, file_content: bytes) -> Tuple[pd.DataFrame, List[Dict]]:
+    def parse_climate_data(cls, file_content: bytes) -> Tuple[Optional[pd.DataFrame], List[Dict], List[Dict]]:
         """
         Parse climate data CSV.
-        
-        Args:
-            file_content: Raw file bytes
-            
+
         Returns:
-            Tuple of (DataFrame, list of errors)
+            Tuple of (DataFrame, file_errors, row_errors). See
+            `MalariaCSVParser.parse_monthly_data` for the two-tier contract.
         """
-        errors = []
-        
-        # Read CSV
+        row_errors: List[Dict] = []
+
         try:
             df = cls.read_csv_file(file_content)
         except ValueError as e:
-            return None, [{"error": str(e)}]
-        
-        # Remove empty rows
+            return None, [{"error": str(e)}], []
+
         df = cls.remove_empty_rows(df)
-        
         if df.empty:
-            return None, [{"error": "CSV file is empty"}]
-        
-        # Normalize column names
+            return None, [{"error": "CSV file is empty"}], []
+
         df = cls.normalize_column_names(df)
-        
-        # Check required columns
+
         missing_columns = cls.validate_required_columns(df, cls.REQUIRED_COLUMNS)
         if missing_columns:
-            return None, [{"error": f"Missing required columns: {', '.join(missing_columns)}"}]
-        
-        # Validate required values
-        errors.extend(cls.validate_required_values(df, cls.REQUIRED_COLUMNS))
-        
-        # Validate numeric fields
-        errors.extend(cls.validate_numeric_column(df, 'rainfall', min_value=0))
-        errors.extend(cls.validate_numeric_column(df, 'temperature', min_value=-50, max_value=60))
-        
-        # Validate date format
+            return None, [{"error": f"Missing required columns: {', '.join(missing_columns)}"}], []
+
+        row_errors.extend(cls.validate_required_values(df, cls.REQUIRED_COLUMNS))
+        row_errors.extend(cls.validate_numeric_column(df, 'rainfall', min_value=0))
+        row_errors.extend(cls.validate_numeric_column(df, 'temperature', min_value=-50, max_value=60))
+
         for idx, value in df['date'].items():
             row_num = idx + 2
             try:
                 pd.to_datetime(value)
             except Exception:
-                errors.append({
+                row_errors.append({
                     "row": row_num,
                     "column": "date",
                     "value": str(value),
                     "error": "Invalid date format. Use YYYY-MM-DD"
                 })
-        
-        return df, errors
+
+        return df, [], row_errors

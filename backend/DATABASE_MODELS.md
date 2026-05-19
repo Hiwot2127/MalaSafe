@@ -1,662 +1,299 @@
-# MalaSafe Database Models Documentation
+# Database Models
 
-## Overview
+12 SQLAlchemy ORM models, all in [app/models/](./app/models/). Async SQLAlchemy 2.x,
+PostgreSQL 14+, UUID primary keys, server-side `now()` defaults.
 
-Complete SQLAlchemy models for the malaria surveillance system with proper relationships, constraints, and indexes.
+> Source of truth: the model files themselves. This doc is a navigable index — if the
+> code and this file disagree, the code is correct.
 
-## Database Schema
+## Models at a glance
 
-### Entity Relationship Diagram
+| Model | Table | Purpose |
+|---|---|---|
+| [User](#user) | `users` | Auth subjects + RBAC role |
+| [District](#district) | `districts` | Ethiopian woredas (admin level 3) |
+| [DistrictEnvironment](#districtenvironment) | `district_environment` | Per-district static features (altitude) |
+| [MalariaData](#malariadata) | `malaria_data` | Monthly cases/deaths per district |
+| [ClimateData](#climatedata) | `climate_data` | Monthly rainfall/temperature/humidity |
+| [Prediction](#prediction) | `predictions` | Model output for a (district, month) |
+| [Alert](#alert) | `alerts` | High-risk notifications surfaced to users |
+| [UploadedFile](#uploadedfile) | `uploaded_files` | Provenance for CSV uploads |
+| [ModelVersion](#modelversion) | `model_versions` | Lifecycle of trained LightGBM artifacts |
+| [MonthlyClose](#monthlyclose) | `monthly_closes` | One end-of-month pipeline run |
+| [BacktestResult](#backtestresult) | `backtest_results` | Per-district predicted vs actual for a close |
+| [DriftFinding](#driftfinding) | `drift_findings` | Feature-level distribution shifts (3-sigma) |
+
+## Entity Relationships
 
 ```
-┌─────────────┐
-│   Users     │
-│             │
-│ id (PK)     │
-│ email       │
-│ role        │
-│ district_id │
-└──────┬──────┘
-       │
-       │ uploaded_by (FK)
-       │
-       ├──────────────────────────────┐
-       │                              │
-       ▼                              ▼
-┌─────────────┐              ┌─────────────┐
-│MalariaData  │              │UploadedFiles│
-│             │              │             │
-│ id (PK)     │              │ id (PK)     │
-│ district_id │              │ file_name   │
-│ cases       │              │ upload_type │
-│ deaths      │              │ uploaded_by │
-└──────┬──────┘              └─────────────┘
-       │
-       │ district_id (FK)
-       │
-       ▼
-┌─────────────┐
-│  Districts  │◄──────────────────┐
-│             │                   │
-│ id (PK)     │                   │
-│ code (UQ)   │                   │
-│ name        │                   │
-│ region      │                   │
-└──────┬──────┘                   │
-       │                          │
-       │ district_id (FK)         │
-       │                          │
-       ├──────────────────────────┤
-       │                          │
-       ▼                          │
-┌─────────────┐                   │
-│ClimateData  │                   │
-│             │                   │
-│ id (PK)     │                   │
-│ district_id │                   │
-│ rainfall    │                   │
-│ temperature │                   │
-│ date        │                   │
-└─────────────┘                   │
-       │                          │
-       ▼                          │
-┌─────────────┐                   │
-│District     │                   │
-│Environment  │                   │
-│             │                   │
-│ id (PK)     │                   │
-│ district_id │                   │
-│ altitude    │                   │
-└─────────────┘                   │
-       │                          │
-       ▼                          │
-┌─────────────┐                   │
-│ Predictions │                   │
-│             │                   │
-│ id (PK)     │                   │
-│ district_id │───────────────────┘
-│ risk_level  │
-│ confidence  │
-│ pred_date   │
-└─────────────┘
-       │
-       ▼
-┌─────────────┐
-│   Alerts    │
-│             │
-│ id (PK)     │
-│ district_id │
-│ risk_level  │
-│ message     │
-│ is_active   │
-└─────────────┘
-```
-
-## Table Definitions
-
-### 1. Users Table
-
-**Purpose:** Store user accounts with role-based access control
-
-```python
-class User(Base):
-    __tablename__ = "users"
-    
-    id = UUID (PK)
-    full_name = String
-    email = String (UNIQUE)
-    password_hash = String
-    role = Enum (admin, moh_officer, ephi_officer, regional_officer, public_user)
-    district_id = String (nullable)
-    is_active = Boolean
-    created_at = DateTime
-    updated_at = DateTime
-```
-
-**Indexes:**
-- `ix_users_id` - Primary key index
-- `ix_users_email` - Email lookup
-- `ix_users_role` - Role-based queries
-
-**Constraints:**
-- Unique email
-- Role must be valid enum value
-
-### 2. Districts Table
-
-**Purpose:** Store geographical district information
-
-```python
-class District(Base):
-    __tablename__ = "districts"
-    
-    id = UUID (PK)
-    district_code = String(50) (UNIQUE)
-    district_name = String(100)
-    region = String(100)
-    zone = String(100) (nullable)
-    geojson_key = String(100) (nullable)
-    created_at = DateTime
-```
-
-**Indexes:**
-- `ix_districts_id` - Primary key index
-- `ix_districts_code` - District code lookup
-- `ix_districts_name` - Name search
-- `ix_districts_region` - Region filtering
-
-**Constraints:**
-- Unique district_code
-
-**Relationships:**
-- One-to-many with MalariaData
-- One-to-many with ClimateData
-- One-to-one with DistrictEnvironment
-- One-to-many with Predictions
-- One-to-many with Alerts
-
-### 3. Malaria Data Table
-
-**Purpose:** Store malaria case and death statistics
-
-```python
-class MalariaData(Base):
-    __tablename__ = "malaria_data"
-    
-    id = UUID (PK)
-    district_id = UUID (FK -> districts.id)
-    source_type = String(50)
-    week = Integer (nullable)
-    month = Integer
-    year = Integer
-    cases = Integer (default=0)
-    deaths = Integer (default=0)
-    uploaded_by = UUID (FK -> users.id)
-    created_at = DateTime
-```
-
-**Indexes:**
-- `ix_malaria_data_id` - Primary key
-- `ix_malaria_data_district_id` - District filtering
-- `ix_malaria_data_source_type` - Source filtering
-- `ix_malaria_data_month` - Month filtering
-- `ix_malaria_data_year` - Year filtering
-- `idx_malaria_district_year_month` - Composite for time-series queries
-- `idx_malaria_year_month` - National time-series
-
-**Constraints:**
-- `cases >= 0`
-- `deaths >= 0`
-- `deaths <= cases`
-- `week >= 1 AND week <= 53`
-- `month >= 1 AND month <= 12`
-- `year >= 2000 AND year <= 2100`
-- Foreign key to districts (CASCADE delete)
-- Foreign key to users (SET NULL on delete)
-
-**Relationships:**
-- Many-to-one with District
-- Many-to-one with User (uploader)
-
-### 4. Climate Data Table
-
-**Purpose:** Store environmental climate data
-
-```python
-class ClimateData(Base):
-    __tablename__ = "climate_data"
-    
-    id = UUID (PK)
-    district_id = UUID (FK -> districts.id)
-    rainfall = Float (nullable)
-    temperature = Float (nullable)
-    season = String(50) (nullable)
-    date = Date
-    created_at = DateTime
-```
-
-**Indexes:**
-- `ix_climate_data_id` - Primary key
-- `ix_climate_data_district_id` - District filtering
-- `ix_climate_data_season` - Season filtering
-- `ix_climate_data_date` - Date filtering
-- `idx_climate_district_date` - Composite for time-series
-
-**Constraints:**
-- `rainfall >= 0`
-- `temperature >= -50 AND temperature <= 60`
-- Foreign key to districts (CASCADE delete)
-
-**Relationships:**
-- Many-to-one with District
-
-### 5. District Environment Table
-
-**Purpose:** Store static environmental characteristics
-
-```python
-class DistrictEnvironment(Base):
-    __tablename__ = "district_environment"
-    
-    id = UUID (PK)
-    district_id = UUID (FK -> districts.id, UNIQUE)
-    altitude = Float (nullable)
-    created_at = DateTime
-```
-
-**Indexes:**
-- `ix_district_environment_id` - Primary key
-- `ix_district_environment_district_id` - District lookup
-
-**Constraints:**
-- `altitude >= -500 AND altitude <= 9000`
-- Unique district_id (one-to-one relationship)
-- Foreign key to districts (CASCADE delete)
-
-**Relationships:**
-- One-to-one with District
-
-### 6. Predictions Table
-
-**Purpose:** Store ML model predictions
-
-```python
-class Prediction(Base):
-    __tablename__ = "predictions"
-    
-    id = UUID (PK)
-    district_id = UUID (FK -> districts.id)
-    risk_level = String(20)  # low, moderate, high, very_high
-    confidence_score = Float  # 0.0 to 1.0
-    prediction_score = Float
-    prediction_reason = Text (nullable)
-    prediction_date = Date
-    created_at = DateTime
-```
-
-**Indexes:**
-- `ix_predictions_id` - Primary key
-- `ix_predictions_district_id` - District filtering
-- `ix_predictions_risk_level` - Risk filtering
-- `ix_predictions_prediction_date` - Date filtering
-- `ix_predictions_created_at` - Creation time
-- `idx_prediction_district_date` - Composite for queries
-- `idx_prediction_date_risk` - Risk analysis over time
-
-**Constraints:**
-- `confidence_score >= 0 AND confidence_score <= 1`
-- `risk_level IN ('low', 'moderate', 'high', 'very_high')`
-- Foreign key to districts (CASCADE delete)
-
-**Relationships:**
-- Many-to-one with District
-
-### 7. Alerts Table
-
-**Purpose:** Store active malaria risk alerts
-
-```python
-class Alert(Base):
-    __tablename__ = "alerts"
-    
-    id = UUID (PK)
-    district_id = UUID (FK -> districts.id)
-    risk_level = String(20)  # low, moderate, high, very_high
-    message = Text
-    is_active = Boolean (default=True)
-    created_at = DateTime
-```
-
-**Indexes:**
-- `ix_alerts_id` - Primary key
-- `ix_alerts_district_id` - District filtering
-- `ix_alerts_risk_level` - Risk filtering
-- `ix_alerts_is_active` - Active alerts
-- `ix_alerts_created_at` - Creation time
-- `idx_alert_district_active` - Active alerts by district
-- `idx_alert_active_created` - Recent active alerts
-
-**Constraints:**
-- `risk_level IN ('low', 'moderate', 'high', 'very_high')`
-- Foreign key to districts (CASCADE delete)
-
-**Relationships:**
-- Many-to-one with District
-
-### 8. Uploaded Files Table
-
-**Purpose:** Track file uploads for audit
-
-```python
-class UploadedFile(Base):
-    __tablename__ = "uploaded_files"
-    
-    id = UUID (PK)
-    file_name = String(255)
-    upload_type = String(50)  # malaria_data, climate_data, bulk_import
-    uploaded_by = UUID (FK -> users.id)
-    created_at = DateTime
-```
-
-**Indexes:**
-- `ix_uploaded_files_id` - Primary key
-- `ix_uploaded_files_upload_type` - Type filtering
-- `ix_uploaded_files_uploaded_by` - User filtering
-- `ix_uploaded_files_created_at` - Time filtering
-- `idx_uploaded_file_type_date` - Type and time
-- `idx_uploaded_file_uploader_date` - User and time
-
-**Constraints:**
-- Foreign key to users (SET NULL on delete)
-
-**Relationships:**
-- Many-to-one with User (uploader)
-
-## Common Query Patterns
-
-### 1. Get Malaria Data for District by Time Period
-
-```python
-from sqlalchemy import select
-from app.models import MalariaData
-
-# Get data for specific district and year
-query = select(MalariaData).where(
-    MalariaData.district_id == district_id,
-    MalariaData.year == 2024
-).order_by(MalariaData.month)
-
-# Uses index: idx_malaria_district_year_month
-```
-
-### 2. Get Latest Predictions for All Districts
-
-```python
-from sqlalchemy import select, func
-from app.models import Prediction
-
-# Get most recent prediction per district
-subquery = select(
-    Prediction.district_id,
-    func.max(Prediction.created_at).label('max_date')
-).group_by(Prediction.district_id).subquery()
-
-query = select(Prediction).join(
-    subquery,
-    (Prediction.district_id == subquery.c.district_id) &
-    (Prediction.created_at == subquery.c.max_date)
-)
-
-# Uses indexes: ix_predictions_district_id, ix_predictions_created_at
-```
-
-### 3. Get Active Alerts for Region
-
-```python
-from sqlalchemy import select
-from app.models import Alert, District
-
-query = select(Alert).join(District).where(
-    District.region == 'Oromia',
-    Alert.is_active == True
-).order_by(Alert.created_at.desc())
-
-# Uses indexes: idx_alert_district_active, ix_districts_region
-```
-
-### 4. Get Climate Data with Malaria Cases
-
-```python
-from sqlalchemy import select
-from app.models import ClimateData, MalariaData, District
-
-query = select(
-    District.district_name,
-    ClimateData.date,
-    ClimateData.rainfall,
-    ClimateData.temperature,
-    MalariaData.cases
-).join(
-    ClimateData, District.id == ClimateData.district_id
-).join(
-    MalariaData,
-    (District.id == MalariaData.district_id) &
-    (func.extract('year', ClimateData.date) == MalariaData.year) &
-    (func.extract('month', ClimateData.date) == MalariaData.month)
-)
-
-# Uses indexes: idx_climate_district_date, idx_malaria_district_year_month
-```
-
-## Model Methods
-
-### District Model
-
-```python
-district = District(
-    district_code="AA-001",
-    district_name="Addis Ababa Bole",
-    region="Addis Ababa"
-)
-
-# Convert to dictionary
-district_dict = district.to_dict()
-```
-
-### MalariaData Model
-
-```python
-data = MalariaData(
-    district_id=district_id,
-    source_type="manual",
-    month=1,
-    year=2024,
-    cases=150,
-    deaths=5,
-    uploaded_by=user_id
-)
-
-# Convert to dictionary
-data_dict = data.to_dict()
-```
-
-## Migration Commands
-
-### Create Migration
-
-```bash
-# After modifying models
-alembic revision --autogenerate -m "Description of changes"
-```
-
-### Apply Migration
-
-```bash
-# Apply all pending migrations
-alembic upgrade head
-
-# Apply specific migration
-alembic upgrade <revision_id>
-```
-
-### Rollback Migration
-
-```bash
-# Rollback one migration
-alembic downgrade -1
-
-# Rollback to specific revision
-alembic downgrade <revision_id>
-```
-
-### View Migration History
-
-```bash
-# Show all migrations
-alembic history
-
-# Show current revision
-alembic current
-```
-
-## Database Initialization
-
-### 1. Create Database
-
-```bash
-createdb malasafe_db
-```
-
-### 2. Run Migrations
-
-```bash
-cd backend
-venv\Scripts\activate
-alembic upgrade head
-```
-
-### 3. Verify Tables
-
-```sql
--- Connect to database
-psql -d malasafe_db
-
--- List all tables
-\dt
-
--- Describe a table
-\d users
-\d districts
-\d malaria_data
-```
-
-## Performance Considerations
-
-### Indexes
-
-All tables have appropriate indexes for:
-- Primary key lookups
-- Foreign key relationships
-- Common filter columns
-- Composite indexes for complex queries
-
-### Constraints
-
-- Check constraints validate data at database level
-- Foreign keys maintain referential integrity
-- Unique constraints prevent duplicates
-- Cascade deletes maintain data consistency
-
-### Relationships
-
-- Lazy loading by default (use `joinedload` for eager loading)
-- Cascade deletes configured appropriately
-- Back-populates for bidirectional relationships
-
-## Best Practices
-
-### 1. Use Relationships
-
-```python
-# Good - uses relationship
-district = await db.get(District, district_id)
-malaria_data = district.malaria_data
-
-# Avoid - manual joins when relationship exists
-```
-
-### 2. Use Indexes
-
-```python
-# Queries that use indexes are fast
-query = select(MalariaData).where(
-    MalariaData.district_id == district_id,  # indexed
-    MalariaData.year == 2024,                # indexed
-    MalariaData.month == 1                   # indexed
-)
-```
-
-### 3. Use to_dict() Methods
-
-```python
-# Convert model to JSON-serializable dict
-district_dict = district.to_dict()
-return JSONResponse(content=district_dict)
-```
-
-### 4. Handle Cascades
-
-```python
-# Deleting a district cascades to related data
-await db.delete(district)
-await db.commit()
-# All malaria_data, climate_data, etc. are also deleted
-```
-
-## Testing Models
-
-```python
-import pytest
-from app.models import District, MalariaData
-
-@pytest.mark.asyncio
-async def test_create_district(db_session):
-    district = District(
-        district_code="TEST-001",
-        district_name="Test District",
-        region="Test Region"
-    )
-    db_session.add(district)
-    await db_session.commit()
-    
-    assert district.id is not None
-    assert district.district_code == "TEST-001"
-
-@pytest.mark.asyncio
-async def test_malaria_data_constraints(db_session):
-    # Test that deaths cannot exceed cases
-    with pytest.raises(IntegrityError):
-        data = MalariaData(
-            district_id=district_id,
-            month=1,
-            year=2024,
-            cases=10,
-            deaths=20  # Invalid: deaths > cases
-        )
-        db_session.add(data)
-        await db_session.commit()
+User ──┬─< MalariaData.uploaded_by
+       ├─< UploadedFile.uploaded_by
+       ├─< ModelVersion.promoted_by_user_id
+       └─< MonthlyClose.triggered_by_user_id
+
+District ──┬─< MalariaData
+           ├─< ClimateData
+           ├─< Prediction
+           ├─< Alert
+           ├─1 DistrictEnvironment       (1:1)
+           ├─< BacktestResult
+           └─< DriftFinding
+
+ModelVersion ──┬─< BacktestResult.model_version_id
+               └─< ModelVersion.parent_version_id      (self-FK, lineage)
+
+MonthlyClose ──┬─< BacktestResult
+               ├─< DriftFinding
+               └─> UploadedFile.uploaded_file_id      (nullable)
 ```
 
 ---
 
-## Summary
+## User
 
-✅ **8 Tables Created**
-- Users (authentication)
-- Districts (geography)
-- MalariaData (case statistics)
-- ClimateData (environmental factors)
-- DistrictEnvironment (static characteristics)
-- Predictions (ML predictions)
-- Alerts (notifications)
-- UploadedFiles (audit trail)
+`users` — authentication subject and RBAC carrier.
 
-✅ **Features**
-- UUID primary keys
-- Proper relationships
-- Comprehensive indexes
-- Data validation constraints
-- Cascade deletes
-- Timestamp tracking
-- to_dict() methods
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | |
+| `full_name` | String | |
+| `email` | String, unique, indexed | login identifier |
+| `password_hash` | String | bcrypt |
+| `role` | Enum `UserRole` | default `PUBLIC_USER` |
+| `district_id` | String, nullable | bound for `REGIONAL_OFFICER` |
+| `is_active` | Boolean, default `true` | inactive accounts cannot log in |
+| `created_at`, `updated_at` | timestamptz | |
 
-✅ **Ready for Use**
-- Run migrations
-- Start building endpoints
-- Query with confidence
+**`UserRole` values**: `admin`, `moh_officer`, `ephi_officer`, `regional_officer`, `public_user`.
 
-**Next Steps:**
-1. Run `alembic upgrade head`
-2. Create Pydantic schemas for API
-3. Build CRUD endpoints
-4. Add business logic
+---
+
+## District
+
+`districts` — Ethiopian woreda master list (admin level 3).
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | |
+| `district_code` | String(50), unique | external code used in CSV uploads |
+| `district_name` | String(100) | |
+| `region`, `zone` | String | |
+| `geojson_key` | String(100), nullable | matches features in the frontend GeoJSON file |
+| `adm3_pcode` | String(20), unique, nullable | HDX p-code; presence == "mapped to ML model" |
+| `latitude`, `longitude` | Float, nullable | centroid |
+| `elevation_m` | Float, nullable | |
+| `created_at` | timestamptz | |
+
+---
+
+## DistrictEnvironment
+
+`district_environment` — static environmental features, one row per district.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | |
+| `district_id` | UUID FK → districts.id, **unique** | 1:1 with District |
+| `altitude` | Float, nullable | meters above sea level |
+| `created_at` | timestamptz | |
+
+---
+
+## MalariaData
+
+`malaria_data` — monthly cases/deaths per district, the ingest target for `/uploads/malaria/monthly`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | |
+| `district_id` | UUID FK → districts.id | |
+| `source_type` | String(50) | `manual` \| `file_upload` \| `api` |
+| `week` | Integer, nullable | optional weekly granularity |
+| `month`, `year` | Integer | indexed jointly |
+| `cases`, `deaths` | Integer | `deaths` is validated `≤ cases` on ingest |
+| `tests` | Integer, nullable | real exposure when reported; falls back to `cases × 5` proxy |
+| `uploaded_by` | UUID FK → users.id, nullable | provenance |
+| `created_at` | timestamptz | |
+
+**Indexes**: `(district_id, year, month)`, `(year, month)`.
+
+---
+
+## ClimateData
+
+`climate_data` — monthly weather observations per district.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | |
+| `district_id` | UUID FK → districts.id | |
+| `rainfall` | Float, nullable | mm, ~CHIRPS monthly |
+| `temperature` | Float, nullable | avg °C, ~ERA5-Land monthly mean |
+| `min_temp`, `max_temp` | Float, nullable | proxies until hourly ERA5 wired in |
+| `humidity` | Float, nullable | relative humidity %, derived from t2m + d2m |
+| `season` | String(50), nullable | `kiremt` \| `bega` \| `belg` |
+| `date` | Date | first-of-month |
+| `is_provisional` | Boolean, default `true` | flips to `false` when CHIRPS-final supersedes |
+| `data_source` | String(20) | `chirps` \| `era5` \| `manual_upload` \| `imputed_*` |
+| `created_at` | timestamptz | |
+
+**Unique**: `(district_id, date)`.
+**Indexes**: `(district_id, date)`, `(date)`.
+
+---
+
+## Prediction
+
+`predictions` — model output for one district + month, with calibrated quantiles.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | |
+| `district_id` | UUID FK → districts.id | |
+| `risk_level` | String(20) | `low` \| `moderate` \| `high` \| `very_high` |
+| `confidence_score` | Float | 0..1 |
+| `prediction_score` | Float | raw model output |
+| `q10`, `q90` | Float, nullable | quantile-booster lower/upper bounds |
+| `prediction_reason` | Text, nullable | human-readable explanation; starts with `cold-start` when fallback used |
+| `prediction_date` | Date | the month being predicted |
+| `created_at` | timestamptz | |
+
+**Indexes**: `(district_id, prediction_date)`, `(prediction_date, risk_level)`.
+
+**`RiskLevel` values**: `low`, `moderate`, `high`, `very_high`.
+
+---
+
+## Alert
+
+`alerts` — high-risk notifications surfaced to users.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | |
+| `district_id` | UUID FK → districts.id | |
+| `risk_level` | String(20) | same enum as Prediction |
+| `message` | Text | |
+| `is_active` | Boolean, default `true` | |
+| `created_at` | timestamptz | |
+
+**Indexes**: `(district_id, is_active)`, `(is_active, created_at)`.
+
+---
+
+## UploadedFile
+
+`uploaded_files` — provenance row for each accepted CSV upload.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | |
+| `file_name` | String(255) | |
+| `upload_type` | String(50) | `malaria_data` \| `climate_data` \| `bulk_import` |
+| `row_count` | Integer, nullable | parsed row count |
+| `month_span` | Integer, nullable | distinct `(year, month)` tuples; `≤2` → close mode, `>2` → backfill |
+| `uploaded_by` | UUID FK → users.id, nullable | |
+| `created_at` | timestamptz | |
+
+**Indexes**: `(upload_type, created_at)`, `(uploaded_by, created_at)`.
+
+---
+
+## ModelVersion
+
+`model_versions` — lifecycle metadata for each trained LightGBM artifact bundle.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | |
+| `version` | String(50), unique | semver-ish identifier |
+| `status` | String(20) | see `ModelVersionStatus` |
+| `artifacts_path` | String(512) | filesystem/S3 path to the bundle |
+| `model_card_json` | JSONB, nullable | metrics, hyperparams, feature list |
+| `risk_thresholds_json` | JSONB, nullable | calibrated cutoffs per risk band |
+| `trained_at` | timestamptz | |
+| `promoted_at` | timestamptz, nullable | set when status moves to `active` |
+| `promoted_by_user_id` | UUID FK → users.id, nullable | |
+| `train_data_window_start`, `_end` | Date, nullable | training cutoff window |
+| `parent_version_id` | UUID FK → model_versions.id, nullable | lineage |
+| `notes` | Text, nullable | |
+
+**Index**: `(status)`.
+
+**`ModelVersionStatus` values**: `candidate`, `active`, `archived`, `rolled_back`.
+
+---
+
+## MonthlyClose
+
+`monthly_closes` — one end-of-month pipeline execution. Owns the run state machine.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | |
+| `month` | Date | first-of-month being closed |
+| `uploaded_file_id` | UUID FK → uploaded_files.id, nullable | triggering upload, if any |
+| `triggered_by_user_id` | UUID FK → users.id, nullable | |
+| `mode` | String(20) | see `MonthlyCloseMode` |
+| `status` | String(30), default `pending` | see `MonthlyCloseStatus` |
+| `idempotency_key` | String(128), **unique** | prevents duplicate dispatch |
+| `stats_json` | JSONB, nullable | run summary (rows ingested, predictions written, etc.) |
+| `error` | Text, nullable | exception message on `failed` |
+| `created_at`, `completed_at` | timestamptz | |
+
+**Index**: `(status)`.
+
+**`MonthlyCloseMode` values**: `close`, `backfill`.
+
+**`MonthlyCloseStatus` state machine**:
+`pending` → `climate_fetching` → `backtesting` → `drift_checking` → `predicting` → `completed`
+(any step can transition to `failed`).
+
+---
+
+## BacktestResult
+
+`backtest_results` — per-district predicted vs actual for one close, used for model quality review.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | |
+| `monthly_close_id` | UUID FK → monthly_closes.id | |
+| `model_version_id` | UUID FK → model_versions.id, nullable | which model produced the prediction |
+| `district_id` | UUID FK → districts.id | |
+| `month` | Date | the month being backtested (typically `monthly_close.month - 1`) |
+| `actual_cases` | Integer | observed |
+| `predicted_cases` | Float | model output |
+| `predicted_risk` | String(20), nullable | risk band at prediction time |
+| `q10`, `q90` | Float, nullable | quantile bounds |
+| `abs_error` | Float | `|predicted - actual|`; sort key for the API |
+| `pct_error` | Float, nullable | percent error |
+| `within_q10_q90` | Boolean, nullable | calibration check |
+| `created_at` | timestamptz | |
+
+**Unique**: `(monthly_close_id, district_id)`.
+**Index**: `(model_version_id, month)`.
+
+---
+
+## DriftFinding
+
+`drift_findings` — feature-level distribution shifts detected during a close (3-sigma rule).
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | |
+| `monthly_close_id` | UUID FK → monthly_closes.id | |
+| `district_id` | UUID FK → districts.id | |
+| `metric` | String(30) | see `DriftMetric` |
+| `observed_value` | Float | the close-period value |
+| `baseline_mean`, `baseline_std` | Float | training-window stats |
+| `z_score` | Float | sign preserved; sort key for the API |
+| `severity` | String(10) | see `DriftSeverity` |
+| `created_at` | timestamptz | |
+
+**Index**: `(monthly_close_id, severity)`.
+
+**`DriftMetric` values**: `cases`, `rainfall`, `temp`, `humidity`.
+
+**`DriftSeverity` values**: `warn` (`|z| ≥ 2`), `critical` (`|z| ≥ 3`).

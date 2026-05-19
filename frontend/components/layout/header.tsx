@@ -1,34 +1,79 @@
 'use client';
 
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
+import { LogOut, Moon, Sun } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { LogOut, User } from 'lucide-react';
+import { useNotificationCount } from '@/lib/hooks/use-notification-count';
+import { Avatar, NotificationBell, StatusPill } from '@/components/editorial';
+
+function firstNameOf(full: string | null | undefined): string {
+  if (!full) return 'there';
+  return full.trim().split(/\s+/)[0] ?? 'there';
+}
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const count = useNotificationCount();
+
+  useEffect(() => setMounted(true), []);
+
+  const role = user?.role?.replace(/_/g, ' ').toUpperCase() ?? 'USER';
+  const isDark = mounted && resolvedTheme === 'dark';
 
   return (
-    <header className="flex items-center justify-between h-16 px-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div>
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-          Welcome back, {user?.full_name || 'User'}
-        </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {user?.role?.replace('_', ' ').toUpperCase() || 'User'}
+    <header className="flex h-[4.5rem] shrink-0 items-center justify-between gap-6 border-b border-border bg-background px-8">
+      <div className="flex flex-col gap-0.5">
+        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+          Welcome back
         </p>
+        <div className="flex items-center gap-3">
+          <p className="font-display text-base font-semibold leading-tight tracking-[-0.018em]">
+            {firstNameOf(user?.full_name)}
+          </p>
+          <StatusPill kind="neutral">{role}</StatusPill>
+        </div>
       </div>
 
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300">
-          <User className="w-4 h-4" />
-          <span>{user?.email}</span>
-        </div>
+      <div className="flex items-center gap-3">
+        <NotificationBell count={count} />
 
         <button
-          onClick={logout}
-          className="flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+          type="button"
+          onClick={() => setTheme(isDark ? 'light' : 'dark')}
+          aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+          className="inline-flex size-9 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:bg-secondary"
         >
-          <LogOut className="w-4 h-4 mr-2" />
-          Logout
+          {mounted ? (
+            isDark ? (
+              <Sun className="size-4" strokeWidth={1.75} aria-hidden />
+            ) : (
+              <Moon className="size-4" strokeWidth={1.75} aria-hidden />
+            )
+          ) : (
+            <span className="size-4" aria-hidden />
+          )}
+        </button>
+
+        <Link
+          href="/settings"
+          aria-label="Open settings"
+          className="rounded-full transition-opacity hover:opacity-80"
+        >
+          <Avatar name={user?.full_name} size="md" />
+        </Link>
+
+        <button
+          type="button"
+          onClick={logout}
+          aria-label="Log out"
+          title="Log out"
+          className="inline-flex size-9 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:bg-secondary"
+        >
+          <LogOut className="size-4" strokeWidth={1.5} aria-hidden />
         </button>
       </div>
     </header>

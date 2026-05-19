@@ -31,9 +31,6 @@ class Settings(BaseSettings):
     CORS_ALLOW_METHODS: List[str] = ["*"]
     CORS_ALLOW_HEADERS: List[str] = ["*"]
     
-    # Redis
-    REDIS_URL: str = "redis://localhost:6379/0"
-    
     # File Upload
     MAX_UPLOAD_SIZE: int = 10485760  # 10MB
     UPLOAD_DIR: str = "./uploads"
@@ -41,6 +38,28 @@ class Settings(BaseSettings):
     # AI Model
     MODEL_PATH: str = "./models"
     MODEL_VERSION: str = "1.0.0"
+
+    # Monthly Close pipeline. ON by default. Orchestration runs in-process
+    # via asyncio.create_task() from the upload service. Set to false to
+    # skip dispatch entirely (closes will sit in `pending`).
+    MONTHLY_CLOSE_ENABLED: bool = True
+    # Distinct (year, month) tuples above this count switch the upload from
+    # "close" mode (backtest + drift + re-predict) to "backfill" mode (skip
+    # backtest/drift, dispatch retrain).
+    MONTHLY_CLOSE_MAX_MONTHS: int = 2
+
+    # Phase 4 - climate fetch pipeline. Paths default to bundled assets; the
+    # Copernicus CDS credentials are read from ~/.cdsapirc by the cdsapi
+    # client, so URL/KEY env vars stay optional (only set them in deploys
+    # where the rc file isn't present).
+    SHAPEFILE_PATH: str = "./data/shapefiles/eth_woreda/eth_admbnda_adm3_csa_bofedb_2021.shp"
+    RASTER_CACHE_DIR: str = "./data/cache/raw_rasters"
+    CDSAPI_URL: Optional[str] = None
+    CDSAPI_KEY: Optional[str] = None
+    # CHIRPS publishes "preliminary" almost immediately; the "final" raster
+    # lands ~90 days after the target month. Rows fetched within this window
+    # are flagged is_provisional=true and will be upgraded on a later fetch.
+    CHIRPS_PROVISIONAL_DAYS: int = 90
     
     # Email (optional)
     SMTP_HOST: Optional[str] = None

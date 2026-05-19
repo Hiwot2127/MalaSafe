@@ -67,7 +67,7 @@ npm run dev
 ### 5. Login
 ```
 Email: admin@malasafe.gov.et
-Password: admin123
+Password: Admin@123
 ```
 
 📖 **Detailed Setup:** See [QUICKSTART_FULL_STACK.md](QUICKSTART_FULL_STACK.md)
