@@ -177,32 +177,36 @@ export default function MapsPage() {
             {summary ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
-                  eyebrow="Districts"
+                  eyebrow="Districts on surface"
                   value={districtCount.toLocaleString()}
-                  caption="On surface"
+                  caption={selectedRegion ? selectedRegion : 'All regions'}
                   icon={Layers}
                   tone="signal"
+                  help={`Number of districts with a current prediction visible on the map${selectedRegion ? ` (filtered to ${selectedRegion})` : ' (all regions).'}`}
                 />
                 <StatCard
-                  eyebrow="Recent cases"
+                  eyebrow="Reported cases"
                   value={summary.cases.toLocaleString()}
-                  caption="Sum across surface"
+                  caption="Latest reporting month, summed"
                   icon={Activity}
                   tone="signal"
+                  help="Sum of cases reported (uploaded CSV) for the current reporting month across the districts visible above. Observed, not predicted."
                 />
                 <StatCard
-                  eyebrow="Elevated"
+                  eyebrow="Elevated (MED / HIGH)"
                   value={summary.elevated.toLocaleString()}
-                  caption="Medium / high"
+                  caption="Forecast bucket"
                   icon={TrendingUp}
                   tone={summary.elevated > 0 ? 'warn' : 'valid'}
+                  help="Districts whose latest model prediction lands in the MEDIUM or HIGH bucket. Buckets are per-district percentile thresholds (p50/p75/p95) on the LightGBM model's predicted case-count distribution — forecast for next month, not observed."
                 />
                 <StatCard
-                  eyebrow="Very high"
+                  eyebrow="Critical (VERY HIGH)"
                   value={summary.veryHigh.toLocaleString()}
-                  caption="Critical districts"
+                  caption="Forecast above p95"
                   icon={ShieldAlert}
                   tone={summary.veryHigh > 0 ? 'error' : 'valid'}
+                  help="Districts whose latest model prediction exceeds the p95 historical threshold (forecast above the 95th percentile of their own case-count history)."
                 />
               </div>
             ) : null}
@@ -219,32 +223,44 @@ export default function MapsPage() {
                   <tr className="border-b border-border">
                     <Th>District</Th>
                     <Th>Region</Th>
-                    <Th>Risk</Th>
-                    <Th align="right">Cases</Th>
-                    <Th align="right">Deaths</Th>
+                    <Th>Risk (forecast)</Th>
+                    <Th>Forecast for</Th>
+                    <Th align="right">Cases (same month)</Th>
+                    <Th align="right">Deaths (same month)</Th>
                   </tr>
                 </thead>
                 <tbody>
-                  {mapData.features.map((feature, index) => (
-                    <tr
-                      key={index}
-                      className="border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40"
-                    >
-                      <Td>{feature.properties.district_name}</Td>
-                      <Td muted>{feature.properties.region}</Td>
-                      <Td>
-                        <StatusPill kind={riskStatus(feature.properties.risk_level)}>
-                          {riskLabel(feature.properties.risk_level)}
-                        </StatusPill>
-                      </Td>
-                      <Td align="right" numeric>
-                        {(feature.properties.recent_cases ?? 0).toLocaleString()}
-                      </Td>
-                      <Td align="right" numeric>
-                        {(feature.properties.recent_deaths ?? 0).toLocaleString()}
-                      </Td>
-                    </tr>
-                  ))}
+                  {mapData.features.map((feature, index) => {
+                    const p = feature.properties;
+                    const lowConfidence =
+                      typeof p.confidence_score === 'number' && p.confidence_score < 0.4;
+                    return (
+                      <tr
+                        key={index}
+                        className="border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40"
+                      >
+                        <Td>{p.district_name}</Td>
+                        <Td muted>{p.region}</Td>
+                        <Td>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <StatusPill kind={riskStatus(p.risk_level)}>
+                              {riskLabel(p.risk_level)}
+                            </StatusPill>
+                            {lowConfidence ? (
+                              <StatusPill kind="neutral">Low confidence</StatusPill>
+                            ) : null}
+                          </div>
+                        </Td>
+                        <Td muted>{p.prediction_period_label ?? '—'}</Td>
+                        <Td align="right" numeric>
+                          {(p.recent_cases ?? 0).toLocaleString()}
+                        </Td>
+                        <Td align="right" numeric>
+                          {(p.recent_deaths ?? 0).toLocaleString()}
+                        </Td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </EditorialCard>

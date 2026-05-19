@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ArrowDownRight, ArrowUpRight, Minus, type LucideIcon } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, HelpCircle, Minus, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EditorialCard, StatusPill, type StatusKind } from "./index";
 
@@ -38,6 +38,10 @@ interface StatCardProps {
    *              from the tone palette. Default in new pages.
    */
   iconStyle?: "topright" | "circle";
+  /** Plain-text explanation rendered as a native hover tooltip on a help icon
+   *  next to the eyebrow. Use this to disambiguate KPI labels — what the
+   *  number counts, what window it covers, what thresholds apply. */
+  help?: string;
   className?: string;
 }
 
@@ -49,6 +53,7 @@ export function StatCard({
   icon: Icon,
   tone = null,
   iconStyle = "circle",
+  help,
   className,
 }: StatCardProps) {
   const DeltaIcon =
@@ -72,14 +77,16 @@ export function StatCard({
           >
             <Icon className="size-5" strokeWidth={1.75} />
           </span>
-          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+          <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
             {eyebrow}
+            {help ? <HelpIndicator text={help} /> : null}
           </p>
         </div>
       ) : (
         <div className="flex items-start justify-between gap-3">
-          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+          <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
             {eyebrow}
+            {help ? <HelpIndicator text={help} /> : null}
           </p>
           {Icon ? (
             <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
@@ -109,5 +116,18 @@ export function StatCard({
         ) : null}
       </div>
     </EditorialCard>
+  );
+}
+
+function HelpIndicator({ text }: { text: string }) {
+  return (
+    <span
+      aria-label={text}
+      title={text}
+      tabIndex={0}
+      className="inline-flex cursor-help text-muted-foreground/70 transition-colors hover:text-foreground focus:text-foreground focus:outline-none"
+    >
+      <HelpCircle aria-hidden className="size-3" strokeWidth={1.75} />
+    </span>
   );
 }

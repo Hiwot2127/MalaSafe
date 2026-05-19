@@ -137,18 +137,16 @@ export default function PredictionsPage() {
       setHistoryTotal(0);
       return;
     }
-    // The picker stores district_code; the history endpoint takes
-    // district_id (UUID). Resolve via the picker snapshot. Wait for
-    // features to hydrate before firing the request to avoid a 404.
-    const feature = features.find((f) => f.properties.district_code === selected);
-    if (!feature) return;
-    const districtId = feature.properties.district_id;
+    // `selected` is a district_code. The backend route accepts either a UUID
+    // or a district_code, so we pass it straight through — no dependence on
+    // the /maps/risk snapshot being hydrated, and no silent failure if the
+    // snapshot and live District table drift apart.
     const controller = new AbortController();
     setHistoryLoading(true);
     setHistoryError(null);
     predictionsApi
       .getHistory(
-        districtId,
+        selected,
         {
           skip: pageToSkip(historyPage, HISTORY_PAGE_SIZE),
           limit: HISTORY_PAGE_SIZE,
@@ -161,8 +159,18 @@ export default function PredictionsPage() {
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
-        const maybe = err as { response?: { data?: { detail?: string } } };
-        setHistoryError(maybe?.response?.data?.detail || 'Failed to load history');
+        const maybe = err as {
+          response?: { status?: number; data?: { detail?: string } };
+          message?: string;
+        };
+        const detail = maybe?.response?.data?.detail;
+        const status = maybe?.response?.status;
+        const fallback = status
+          ? `Request failed (${status}) — district "${selected}"`
+          : maybe?.message
+            ? `${maybe.message} — district "${selected}"`
+            : `Failed to load history for "${selected}"`;
+        setHistoryError(detail || fallback);
         setHistory([]);
         setHistoryTotal(0);
       })
@@ -170,7 +178,7 @@ export default function PredictionsPage() {
         if (!controller.signal.aborted) setHistoryLoading(false);
       });
     return () => controller.abort();
-  }, [selected, historyPage, features]);
+  }, [selected, historyPage]);
 
   // Paginated server-side "Latest by district" table.
   useEffect(() => {
@@ -469,33 +477,48 @@ export default function PredictionsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {latest.items.map((row: PredictionRow) => (
-                    <tr
-                      key={row.district_code}
-                      onClick={() => {
-                        setSelected(row.district_code);
-                        setHistoryPage(1);
-                      }}
-                      className="cursor-pointer border-b border-border/70 transition-colors last:border-0 hover:bg-secondary/40"
-                    >
-                      <Td className="font-sans text-foreground">{row.district_name}</Td>
-                      <Td className="text-muted-foreground">{row.region}</Td>
-                      <Td>
-                        <StatusPill kind={riskStatus(row.risk_level)}>
-                          {riskLabel(row.risk_level)}
-                        </StatusPill>
-                      </Td>
-                      <Td align="right" className="tabular-nums">
-                        {row.prediction_score.toFixed(1)}
-                      </Td>
-                      <Td align="right" className="tabular-nums text-muted-foreground">
-                        {(row.confidence_score * 100).toFixed(0)}%
-                      </Td>
-                      <Td align="right" className="tabular-nums">
-                        {row.recent_cases.toLocaleString()}
-                      </Td>
-                    </tr>
-                  ))}
+                  {latest.items.map((row: PredictionRow) => {
+                    const lowConfidence = row.confidence_score < 0.4;
+                    return (
+                      <tr
+                        key={row.district_code}
+                        onClick={() => {
+                          setSelected(row.district_code);
+                          setHistoryPage(1);
+                        }}
+                        className="cursor-pointer border-b border-border/70 transition-colors last:border-0 hover:bg-secondary/40"
+                      >
+                        <Td className="font-sans text-foreground">{row.district_name}</Td>
+                        <Td className="text-muted-foreground">{row.region}</Td>
+                        <Td>
+                          <div className="flex flex-col items-start gap-1">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <StatusPill kind={riskStatus(row.risk_level)}>
+                                {riskLabel(row.risk_level)}
+                              </StatusPill>
+                              {lowConfidence ? (
+                                <StatusPill kind="neutral">Low confidence</StatusPill>
+                              ) : null}
+                            </div>
+                            {row.prediction_period_label ? (
+                              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                                Forecast · {row.prediction_period_label}
+                              </span>
+                            ) : null}
+                          </div>
+                        </Td>
+                        <Td align="right" className="tabular-nums">
+                          {row.prediction_score.toFixed(1)}
+                        </Td>
+                        <Td align="right" className="tabular-nums text-muted-foreground">
+                          {(row.confidence_score * 100).toFixed(0)}%
+                        </Td>
+                        <Td align="right" className="tabular-nums">
+                          {row.recent_cases.toLocaleString()}
+                        </Td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     # "close" mode (backtest + drift + re-predict) to "backfill" mode (skip
     # backtest/drift, dispatch retrain).
     MONTHLY_CLOSE_MAX_MONTHS: int = 2
+    # Floor for treating an upload as an "official monthly close batch".
+    # Below this many distinct districts the upload is assumed to be a
+    # partial / template / ad-hoc ingest, and the close pipeline (which
+    # re-predicts every district in the country, ~1,082 rows) is skipped.
+    # The CSV rows still land in malaria_data — only the model refresh
+    # is gated. Set to 0 to always dispatch (legacy behaviour).
+    MONTHLY_CLOSE_MIN_DISTRICTS: int = 50
 
     # Phase 4 - climate fetch pipeline. Paths default to bundled assets; the
     # Copernicus CDS credentials are read from ~/.cdsapirc by the cdsapi
