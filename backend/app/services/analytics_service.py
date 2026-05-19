@@ -84,14 +84,45 @@ class AnalyticsService:
         high_risk_districts = high_risk_result.scalar() or 0
         
         period = f"{year}-{month:02d}" if month else str(year)
-        
+        if month:
+            period_label = date(year, month, 1).strftime("%B %Y")
+        else:
+            period_label = f"Year {year}"
+
+        # Window for the "high-risk districts" rolling count — kept in sync
+        # with the timedelta() above. Surfaced in the response so the UI can
+        # show users *what window* the count is over without hard-coding it.
+        prediction_window_days = 30
+
+        methodology = {
+            "total_cases": (
+                f"Sum of MalariaData.cases for {period_label}"
+                + (f" in region {region}." if region else " across all regions.")
+            ),
+            "total_deaths": (
+                f"Sum of MalariaData.deaths for {period_label} (reported via the monthly CSV)."
+            ),
+            "active_alerts": "Count of currently-active alerts (no age filter applied).",
+            "high_risk_districts": (
+                f"Distinct districts whose latest prediction in the last "
+                f"{prediction_window_days} days falls in the HIGH or VERY_HIGH bucket."
+            ),
+            "risk_buckets": (
+                "Per-district percentile thresholds on the LightGBM model's predicted "
+                "case-count distribution: low ≤ p50 < moderate ≤ p75 < high ≤ p95 < very_high."
+            ),
+        }
+
         return {
             "total_cases": int(total_cases),
             "total_deaths": int(total_deaths),
             "active_alerts": int(active_alerts),
             "high_risk_districts": int(high_risk_districts),
             "case_fatality_rate": round(cfr, 2),
-            "period": period
+            "period": period,
+            "period_label": period_label,
+            "prediction_window_days": prediction_window_days,
+            "methodology": methodology,
         }
     
     async def get_region_stats(
