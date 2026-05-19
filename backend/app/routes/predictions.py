@@ -2,6 +2,8 @@
 Prediction endpoints for malaria risk predictions.
 """
 
+import uuid
+
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, desc, func
@@ -32,7 +34,10 @@ router = APIRouter(prefix="/predictions", tags=["Predictions"])
     responses={404: {"description": "District not found"}},
 )
 async def get_prediction_history(
-    district_id: str = Path(..., description="District ID (UUID)"),
+    district_id: str = Path(
+        ...,
+        description="District identifier — either a UUID (`District.id`) or a district code (e.g. `ET050103`)",
+    ),
     skip: int = Query(0, ge=0, description="Offset for pagination"),
     limit: int = Query(30, ge=1, le=365, description="Number of predictions to return"),
     start_date: Optional[date] = Query(None, description="Start date filter (YYYY-MM-DD)"),
@@ -42,54 +47,50 @@ async def get_prediction_history(
 ):
     """
     Get prediction history for a specific district.
-    
+
     **Authorization:** Any authenticated user
-    
-    **Path Parameters:**
-    - district_id: District UUID
-    
-    **Query Parameters:**
-    - limit: Number of predictions to return (1-365, default: 30)
-    - start_date: Start date filter (YYYY-MM-DD, optional)
-    - end_date: End date filter (YYYY-MM-DD, optional)
-    
-    **Returns:**
-    - District information
-    - List of predictions (newest first)
-    - Total count
-    
-    **Example Response:**
-    ```json
-    {
-      "district_code": "AA-001",
-      "district_name": "Addis Ababa Bole",
-      "predictions": [
-        {
-          "id": "123e4567-e89b-12d3-a456-426614174000",
-          "prediction_date": "2024-01-15",
-          "risk_level": "high",
-          "confidence_score": 0.85,
-          "prediction_score": 0.78,
-          "prediction_reason": "High rainfall and temperature conditions",
-          "created_at": "2024-01-15T10:30:00Z"
-        }
-      ],
-      "total": 30
-    }
-    ```
+
+    **Path parameter:** `district_id` — either a UUID (`District.id`) or a
+    human-readable district code (`District.district_code`, e.g. `ET050103`).
+    Accepting both makes the endpoint robust to ID drift between the
+    `/maps/risk` snapshot and the live `District` table.
+
+    **Returns:** district info, list of predictions (newest first), and the
+    total matching the date filter (independent of pagination).
     """
-    # Get district info
-    district_result = await db.execute(
-        select(District).where(District.id == district_id)
-    )
-    district = district_result.scalar_one_or_none()
-    
+    # Accept either a UUID (District.id) or a human-readable district_code.
+    # Try UUID first when the string parses as one; fall back to district_code
+    # otherwise (or if the UUID lookup misses). This makes the route resilient
+    # to /maps/risk and the live District table drifting out of sync.
+    try:
+        uuid.UUID(district_id)
+        looks_like_uuid = True
+    except (ValueError, AttributeError):
+        looks_like_uuid = False
+
+    district = None
+    if looks_like_uuid:
+        district = (
+            await db.execute(select(District).where(District.id == district_id))
+        ).scalar_one_or_none()
+
+    if district is None:
+        district = (
+            await db.execute(
+                select(District).where(District.district_code == district_id)
+            )
+        ).scalar_one_or_none()
+
     if not district:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"District not found: {district_id}"
+            detail=f"District not found: {district_id}",
         )
-    
+
+    # All downstream queries key on the canonical UUID, regardless of what the
+    # caller passed.
+    district_id = str(district.id)
+
     # Build query
     query = select(Prediction).where(
         Prediction.district_id == district_id
