@@ -40,12 +40,23 @@ const TONE_STYLES: Record<
   },
 };
 
+interface AlertCardStat {
+  value: React.ReactNode;
+  label: string;
+}
+
 interface AlertCardProps {
   tone?: Tone;
   /** Mono micro-label rendered above the title. */
   eyebrow?: string;
+  /** Headline. Kept short — the stats below carry the weight. */
   title: string;
+  /** One-line context under the stats. */
   description?: React.ReactNode;
+  /** Lead-with-the-numbers slot. When provided, takes visual priority over
+   *  the title. Use for alerts where the magnitude is the message
+   *  (e.g. "23,264 alerts open across 516 districts"). */
+  stats?: AlertCardStat[];
   /** Optional inline CTA. Either an href or a button-like onClick. */
   cta?:
     | { label: string; href: string }
@@ -58,14 +69,18 @@ export function AlertCard({
   eyebrow,
   title,
   description,
+  stats,
   cta,
   className,
 }: AlertCardProps) {
   const { card, badge, icon, Component: Icon } = TONE_STYLES[tone];
+  const ctaButtonClass =
+    "inline-flex shrink-0 items-center gap-1.5 self-start rounded-md border border-border bg-card px-3.5 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-secondary";
+
   return (
     <section
       className={cn(
-        "relative flex flex-col gap-5 rounded-[var(--radius)] border-2 bg-card p-6 shadow-sm sm:flex-row sm:items-center sm:p-8",
+        "relative flex flex-col gap-4 rounded-[var(--radius)] border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:gap-5 sm:p-5",
         card,
         className,
       )}
@@ -73,44 +88,58 @@ export function AlertCard({
       <span
         aria-hidden
         className={cn(
-          "inline-flex size-14 shrink-0 items-center justify-center rounded-xl",
+          "inline-flex size-10 shrink-0 items-center justify-center rounded-lg",
           badge,
         )}
       >
-        <Icon className={cn("size-7", icon)} strokeWidth={1.75} />
+        <Icon className={cn("size-5", icon)} strokeWidth={1.75} />
       </span>
-      <div className="flex flex-1 flex-col gap-2">
-        {eyebrow ? (
-          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-            {eyebrow}
-          </p>
+
+      <div className="flex flex-1 flex-col gap-2 min-w-0">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          {eyebrow ? (
+            <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+              {eyebrow}
+            </span>
+          ) : null}
+          <h2 className="font-display text-base font-semibold leading-tight tracking-tight text-foreground sm:text-lg">
+            {title}
+          </h2>
+        </div>
+
+        {stats && stats.length > 0 ? (
+          <dl className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+            {stats.map((stat, i) => (
+              <div key={i} className="flex items-baseline gap-2">
+                <dt className="sr-only">{stat.label}</dt>
+                <dd className="font-display text-2xl font-semibold leading-none tabular-nums tracking-[-0.022em] text-foreground sm:text-3xl">
+                  {stat.value}
+                </dd>
+                <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  {stat.label}
+                </span>
+              </div>
+            ))}
+          </dl>
         ) : null}
-        <h2 className="font-display text-2xl font-semibold leading-tight tracking-[-0.018em] text-foreground sm:text-3xl">
-          {title}
-        </h2>
+
         {description ? (
-          <p className="max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
+          <p className="font-sans text-sm leading-relaxed text-muted-foreground">
             {description}
           </p>
         ) : null}
       </div>
+
       {cta ? (
         "href" in cta ? (
-          <Link
-            href={cta.href}
-            className="inline-flex shrink-0 items-center gap-2 self-start rounded-md border border-border bg-card px-4 py-2.5 font-sans text-sm font-medium text-foreground shadow-sm transition-all hover:bg-secondary hover:shadow"
-          >
+          <Link href={cta.href} className={ctaButtonClass}>
             {cta.label}
-            <ArrowRight className="size-4" strokeWidth={1.5} aria-hidden />
+            <ArrowRight className="size-3.5" strokeWidth={1.5} aria-hidden />
           </Link>
         ) : (
-          <button
-            type="button"
-            onClick={cta.onClick}
-            className="inline-flex shrink-0 items-center gap-2 self-start rounded-md border border-border bg-card px-4 py-2.5 font-sans text-sm font-medium text-foreground shadow-sm transition-all hover:bg-secondary hover:shadow"
-          >
+          <button type="button" onClick={cta.onClick} className={ctaButtonClass}>
             {cta.label}
-            <ArrowRight className="size-4" strokeWidth={1.5} aria-hidden />
+            <ArrowRight className="size-3.5" strokeWidth={1.5} aria-hidden />
           </button>
         )
       ) : null}
