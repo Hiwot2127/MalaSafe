@@ -3,25 +3,29 @@ from typing import List, Optional, Dict
 from datetime import date
 
 
+class RiskThresholds(BaseModel):
+    """Global percentile cutoffs on the model's predicted case-count
+    distribution. Districts are bucketed as low/moderate/high/very_high
+    relative to these breakpoints (with per-district overrides applied
+    server-side). Exposed on the dashboard so the UI can answer the
+    reviewer's "what does ELEVATED mean?" question without hard-coding."""
+    p50: float
+    p75: float
+    p95: float
+    notes: Optional[str] = None
+
+
 class DashboardStats(BaseModel):
     """Dashboard statistics schema."""
-    total_cases: int
-    total_deaths: int
-    active_alerts: int
-    high_risk_districts: int
-    case_fatality_rate: float
-    period: str
-    # The next three fields exist so the UI can explain *what each KPI counts*
-    # without hard-coding magic numbers. The reviewer's complaint on the KPI
-    # strip ("what does ELEVATED mean? what window? current or predicted?")
-    # is fixed at the API boundary by returning the definitions alongside
-    # the numbers.
-    period_label: Optional[str] = None
-    prediction_window_days: Optional[int] = None
-    methodology: Optional[Dict[str, str]] = None
 
-    class Config:
-        json_schema_extra = {
+    # `model_version` collides with Pydantic v2's `model_*` protected
+    # namespace. Disabling the namespace check on this schema keeps the
+    # field name aligned with the JSON wire format used by the dashboard
+    # client (which already expects `model_version`). The example payload
+    # documents the response shape for /docs.
+    model_config = {
+        "protected_namespaces": (),
+        "json_schema_extra": {
             "example": {
                 "total_cases": 15420,
                 "total_deaths": 523,
@@ -36,10 +40,41 @@ class DashboardStats(BaseModel):
                     "total_deaths": "Sum of MalariaData.deaths for the period (CSV-reported).",
                     "active_alerts": "Count of currently-active alerts (any age).",
                     "high_risk_districts": "Distinct districts whose latest prediction in the last N days lands in the HIGH or VERY_HIGH bucket.",
-                    "risk_buckets": "Per-district percentile thresholds (p50/p75/p95) on the trained LightGBM model's predicted case-count distribution: low ≤ p50 < moderate ≤ p75 < high ≤ p95 < very_high."
-                }
+                    "risk_buckets": "Per-district percentile thresholds (p50/p75/p95) on the trained LightGBM model's predicted case-count distribution: low ≤ p50 < moderate ≤ p75 < high ≤ p95 < very_high.",
+                },
+                "risk_thresholds": {
+                    "p50": 38.0,
+                    "p75": 208.0,
+                    "p95": 1530.25,
+                    "notes": "Per-district thresholds override these where the model has enough history.",
+                },
+                "model_version": "v1.0.0",
+                "thresholds_version": "v1.0.0",
             }
-        }
+        },
+    }
+
+    total_cases: int
+    total_deaths: int
+    active_alerts: int
+    high_risk_districts: int
+    case_fatality_rate: float
+    period: str
+    # The next fields exist so the UI can explain *what each KPI counts*
+    # without hard-coding magic numbers. The reviewer's complaint on the KPI
+    # strip ("what does ELEVATED mean? what window? current or predicted?")
+    # is fixed at the API boundary by returning the definitions alongside
+    # the numbers.
+    period_label: Optional[str] = None
+    prediction_window_days: Optional[int] = None
+    methodology: Optional[Dict[str, str]] = None
+    # Global risk-bucket cutoffs + the model/thresholds package versions that
+    # produced the predictions in this dashboard. Lets the UI render
+    # "Thresholds v1.0.0" and "p50=38, p75=208, p95=1530" footnotes so the
+    # numbers above are auditable.
+    risk_thresholds: Optional[RiskThresholds] = None
+    model_version: Optional[str] = None
+    thresholds_version: Optional[str] = None
 
 
 class RegionStats(BaseModel):

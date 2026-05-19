@@ -101,6 +101,9 @@ export default function DashboardPage() {
   const periodLabel = stats?.period_label || period;
   const predWindow = stats?.prediction_window_days ?? 30;
   const methodology = stats?.methodology ?? {};
+  const riskThresholds = stats?.risk_thresholds ?? null;
+  const modelVersion = stats?.model_version ?? null;
+  const thresholdsVersion = stats?.thresholds_version ?? null;
 
   // Thresholds scale with population — 5 alerts is "critical" for a 50-
   // district pilot but routine at country scale. Use ratios so the badge
@@ -257,6 +260,22 @@ export default function DashboardPage() {
             />
           </div>
         </EditorialCard>
+        {/* Version + threshold provenance. Lets reviewers audit which model
+            and threshold package produced the numbers above. */}
+        {(modelVersion || thresholdsVersion || riskThresholds) && (
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+            {modelVersion ? <>Model {modelVersion}</> : null}
+            {modelVersion && (thresholdsVersion || riskThresholds) ? ' · ' : null}
+            {thresholdsVersion ? <>Thresholds {thresholdsVersion}</> : null}
+            {thresholdsVersion && riskThresholds ? ' · ' : null}
+            {riskThresholds ? (
+              <>
+                Global cutoffs p50={riskThresholds.p50.toFixed(0)} · p75=
+                {riskThresholds.p75.toFixed(0)} · p95={riskThresholds.p95.toFixed(0)}
+              </>
+            ) : null}
+          </p>
+        )}
       </section>
 
       {/* Section 002 - Posture */}

@@ -113,6 +113,33 @@ class AnalyticsService:
             ),
         }
 
+        # Pull the model's global thresholds + versions so the dashboard can
+        # show "Thresholds v1.0.0: p50=38, p75=208, p95=1530" alongside the
+        # KPI cards. Predictor load is lazy and cached; if it fails (e.g. the
+        # model artifacts aren't on disk in a test setup) we degrade
+        # gracefully — the rest of the dashboard remains functional.
+        risk_thresholds: Optional[Dict] = None
+        model_version: Optional[str] = None
+        thresholds_version: Optional[str] = None
+        try:
+            from app.ai import get_predictor  # lazy import to avoid load on import
+            predictor = get_predictor()
+            global_t = (predictor.thresholds or {}).get("global") or {}
+            if all(k in global_t for k in ("p50", "p75", "p95")):
+                risk_thresholds = {
+                    "p50": float(global_t["p50"]),
+                    "p75": float(global_t["p75"]),
+                    "p95": float(global_t["p95"]),
+                    "notes": (
+                        "Per-district thresholds override these where the model "
+                        "has enough history; the global cutoffs above are the fallback."
+                    ),
+                }
+            model_version = predictor.model_version
+            thresholds_version = predictor.thresholds_version
+        except Exception as exc:  # pragma: no cover - dashboard must stay up
+            logger.warning(f"Dashboard could not attach model metadata: {exc}")
+
         return {
             "total_cases": int(total_cases),
             "total_deaths": int(total_deaths),
@@ -123,6 +150,9 @@ class AnalyticsService:
             "period_label": period_label,
             "prediction_window_days": prediction_window_days,
             "methodology": methodology,
+            "risk_thresholds": risk_thresholds,
+            "model_version": model_version,
+            "thresholds_version": thresholds_version,
         }
     
     async def get_region_stats(

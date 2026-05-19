@@ -44,14 +44,46 @@ class MalariaPredictor:
         self.q10  = lgb.Booster(model_file=str(model_dir / "lightgbm_q10.txt"))
         self.q90  = lgb.Booster(model_file=str(model_dir / "lightgbm_q90.txt"))
         self.cold = lgb.Booster(model_file=str(model_dir / "lightgbm_coldstart.txt"))
-        self.thresholds = json.loads((model_dir / "risk_thresholds.json").read_text())
-        self.card = json.loads((model_dir / "model_card.json").read_text())
+        self.thresholds = self._load_json(model_dir / "risk_thresholds.json")
+        self.card = self._load_json(model_dir / "model_card.json")
         self.ctx = FeatureContext.load(model_dir)
         self.feats = self.card["features"]
         self.cold_feats = self.card.get("cold_start_features", [])
-        v = self.card['version'].lstrip('v')
-        print(f"[predictor] loaded v{v}: "
+        # Surface model + thresholds versions so the dashboard API can label
+        # which artifact produced a given prediction. Missing `_meta.version`
+        # in the thresholds JSON falls back to the model card version — both
+        # are written by the training pipeline, so they should agree.
+        self.model_version: str = str(self.card.get("version") or "unknown")
+        self.thresholds_version: str = str(
+            (self.thresholds.get("_meta") or {}).get("version")
+            or self.model_version
+        )
+        v = self.model_version.lstrip('v')
+        print(f"[predictor] loaded v{v} (thresholds={self.thresholds_version}): "
               f"{len(self.feats)} feats, {self.main.num_trees()} trees")
+
+    @staticmethod
+    def _load_json(path: Path) -> dict:
+        """Read a JSON file with a useful error if it's missing or malformed.
+
+        Without this, a missing/corrupt artifact crashes the predictor with a
+        bare FileNotFoundError or JSONDecodeError - the trace points at the
+        load site, not at the model-dir misconfiguration that caused it.
+        """
+        try:
+            return json.loads(path.read_text())
+        except FileNotFoundError as e:
+            raise FileNotFoundError(
+                f"Predictor artifact missing: {path}. "
+                "Check settings.MODEL_PATH and that the model package "
+                "(lightgbm_*.txt, risk_thresholds.json, model_card.json) "
+                "is on disk."
+            ) from e
+        except json.JSONDecodeError as e:
+            raise ValueError(
+                f"Predictor artifact {path} is not valid JSON ({e.msg}). "
+                "Re-export the trained model package or restore the file from git."
+            ) from e
 
     # ----- core API ---------------------------------------------------------
     def predict_one(
