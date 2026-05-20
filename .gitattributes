@@ -1,0 +1,23 @@
+# LightGBM text models — must keep LF, never convert on Windows
+backend/models/*.txt   binary
+backend/models/*.json  binary
+backend/models/*.lgb   binary
+backend/models/*.pkl   binary
+backend/models/*.joblib binary
+
+# Common binaries
+*.parquet  binary
+*.npz      binary
+*.npy      binary
+*.tif      binary
+*.tiff     binary
+*.nc       binary
+*.shp      binary
+*.shx      binary
+*.dbf      binary
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.pdf      binary
+*.zip      binary
+*.gz       binary
