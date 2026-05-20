@@ -1,6 +1,6 @@
 # 🚀 MalaSafe Full Stack Quick Start Guide
 
-Complete guide to run the MalaSafe malaria surveillance system (Backend + Frontend).
+Complete guide to run the MalaSafe malaria surveillance system (Backend + Frontend + Mobile + AI/ML).
 
 ---
 
@@ -14,10 +14,9 @@ Complete guide to run the MalaSafe malaria surveillance system (Backend + Fronte
 
 ### Check Installations
 ```bash
-python --version    # Should be 3.9+
-node --version      # Should be 18+
-npm --version       # Should be 9+
-psql --version      # Should be 14+
+python --version  # Should be 3.9+
+node --version    # Should be 18+
+psql --version    # Should be 14+
 ```
 
 ---
@@ -108,7 +107,7 @@ python create_admin.py
 **Default Admin Credentials:**
 ```
 Email: admin@malasafe.gov.et
-Password: Admin@123
+Password: admin@123
 ```
 
 ### Start Backend Server
@@ -162,7 +161,80 @@ npm run dev
 
 ---
 
-## ✅ Step 4: Verify Installation
+## 📱 Step 4: Mobile App Setup (Optional)
+
+### Open New Terminal
+
+### Navigate to Mobile
+```bash
+cd mobile
+```
+
+### Install Dependencies
+```bash
+npm install
+```
+
+### Configure API URL
+Edit `mobile/services/api.js` and update the BASE_URL:
+```javascript
+const BASE_URL = 'http://localhost:8000/api/v1';
+// For physical device, use your computer's IP:
+// const BASE_URL = 'http://192.168.1.x:8000/api/v1';
+```
+
+### Start Expo Development Server
+```bash
+npx expo start
+```
+
+### Run on Device/Simulator
+- **Android:** Press `a` or scan QR with Expo Go app
+- **iOS:** Press `i` or scan QR with Camera app
+- **Web:** Press `w` (limited functionality)
+
+**Mobile app should be running on your device via Expo Go**
+
+---
+
+## 🤖 Step 5: AI/ML System Setup (Optional)
+
+### Prerequisites
+- Redis server installed
+- Celery installed (included in requirements.txt)
+
+### Seed Initial Data
+```bash
+cd backend
+python scripts/seed_districts.py          # Load 1,082 districts
+python scripts/seed_climate_history.py    # Load 48,000+ climate records
+python scripts/seed_malaria_history.py    # Load historical malaria data
+python scripts/compute_baselines.py       # Compute district baselines
+python scripts/backfill_predictions.py    # Generate initial predictions
+```
+
+### Start Background Workers
+```bash
+# Terminal 1: Start Redis
+redis-server
+
+# Terminal 2: Start Celery Worker
+celery -A app.tasks.celery_app worker --loglevel=info
+
+# Terminal 3: Start Celery Beat (scheduler)
+celery -A app.tasks.celery_app beat --loglevel=info
+```
+
+**AI system will now:**
+- Generate monthly predictions automatically
+- Create outbreak alerts for high-risk districts
+- Update risk classifications
+
+📖 [AI System Details](AI_INTEGRATION_NOTES.md)
+
+---
+
+## ✅ Step 6: Verify Installation
 
 ### Check Backend
 1. Visit http://localhost:8000/docs
@@ -174,12 +246,18 @@ npm run dev
 2. Should redirect to login page
 3. Enter admin credentials:
    - Email: `admin@malasafe.gov.et`
-   - Password: `Admin@123`
+   - Password: `admin123`
 4. Should redirect to dashboard
+
+### Check Mobile (if installed)
+1. Open Expo Go app on your device
+2. Scan QR code from terminal
+3. App should load with dashboard
+4. View risk data and maps
 
 ---
 
-## 🧪 Step 5: Test the System
+## 🧪 Step 7: Test the System
 
 ### Test Authentication
 1. Login with admin credentials
@@ -213,138 +291,46 @@ npm run dev
 2. View alert list
 3. Filter by status and risk level
 
----
-
-## 📊 Sample Data (Optional)
-
-### Create Sample Districts
-```python
-# Run in Python shell
-python
-
-from app.database.base import SessionLocal
-from app.models.district import District
-import uuid
-
-db = SessionLocal()
-
-districts = [
-    District(
-        id=uuid.uuid4(),
-        district_code="AA001",
-        district_name="Addis Ketema",
-        region="Addis Ababa",
-        zone="Addis Ababa"
-    ),
-    District(
-        id=uuid.uuid4(),
-        district_code="OR001",
-        district_name="Adama",
-        region="Oromia",
-        zone="East Shewa"
-    ),
-]
-
-db.add_all(districts)
-db.commit()
-db.close()
-```
-
-### Upload Sample CSV
-
-Create `sample_weekly_malaria.csv`:
-```csv
-district_code,week,year,cases,deaths
-AA001,1,2026,45,2
-AA001,2,2026,52,3
-OR001,1,2026,78,5
-OR001,2,2026,65,4
-```
-
-Upload via the frontend Upload page.
+### Test Predictions (if AI system is running)
+1. Navigate to Analytics page
+2. View prediction charts
+3. Check confidence intervals
+4. Review risk classifications
 
 ---
 
-## 🔍 Troubleshooting
+## � Troubleshootingt
 
 ### Backend Issues
-
-**Database Connection Error**
-```bash
-# Check PostgreSQL is running
-# Windows
-sc query postgresql-x64-14
-
-# Verify DATABASE_URL in .env
-# Test connection
-psql -U postgres -d malasafe
-```
-
-**Import Errors**
-```bash
-# Reinstall dependencies
-pip install -r requirements.txt --force-reinstall
-```
-
-**Port Already in Use**
-```bash
-# Change port in run command
-uvicorn app.main:app --reload --port 8001
-```
+- **Database Connection Error**: Check PostgreSQL is running and verify DATABASE_URL in .env
+- **Import Errors**: `pip install -r requirements.txt --force-reinstall`
+- **Port Already in Use**: Change port with `uvicorn app.main:app --reload --port 8001`
 
 ### Frontend Issues
+- **Module Not Found**: `rm -rf node_modules package-lock.json && npm install`
+- **API Connection Error**: Verify backend is running at http://localhost:8000/health
+- **Build Errors**: `rm -rf .next && npm run dev`
 
-**Module Not Found**
-```bash
-# Clear node_modules and reinstall
-rm -rf node_modules package-lock.json
-npm install
-```
-
-**API Connection Error**
-```bash
-# Verify backend is running
-curl http://localhost:8000/health
-
-# Check NEXT_PUBLIC_API_URL in .env.local
-```
-
-**Build Errors**
-```bash
-# Clear Next.js cache
-rm -rf .next
-npm run dev
-```
+### Mobile Issues
+- **Expo Connection Error**: Ensure device and computer are on same network
+- **API Not Reachable**: Use computer's IP address instead of localhost in api.js
 
 ---
 
 ## 🛠️ Development Workflow
 
-### Backend Development
+**Backend:** `cd backend && venv\Scripts\activate && uvicorn app.main:app --reload`
+
+**Frontend:** `cd frontend && npm run dev`
+
+**Mobile:** `cd mobile && npx expo start`
+
+**Database Migrations:**
 ```bash
 cd backend
-venv\Scripts\activate  # Windows
-source venv/bin/activate  # Linux/Mac
-uvicorn app.main:app --reload
-```
-
-### Frontend Development
-```bash
-cd frontend
-npm run dev
-```
-
-### Database Migrations
-```bash
-cd backend
-# Create new migration
-alembic revision --autogenerate -m "description"
-
-# Apply migrations
-alembic upgrade head
-
-# Rollback
-alembic downgrade -1
+alembic revision --autogenerate -m "description"  # Create migration
+alembic upgrade head                                # Apply migrations
+alembic downgrade -1                                # Rollback
 ```
 
 ---
@@ -353,123 +339,76 @@ alembic downgrade -1
 
 ```
 MalaSafe/
-├── backend/                    # FastAPI Backend
-│   ├── app/
-│   │   ├── main.py            # Entry point
-│   │   ├── models/            # SQLAlchemy models
-│   │   ├── routes/            # API endpoints
-│   │   ├── services/          # Business logic
-│   │   └── utils/             # Utilities
-│   ├── alembic/               # Database migrations
-│   ├── requirements.txt       # Python dependencies
-│   └── .env                   # Environment config
-│
-├── frontend/                   # Next.js Frontend
-│   ├── app/                   # Pages and layouts
-│   ├── components/            # React components
-│   ├── lib/                   # API and utilities
-│   ├── types/                 # TypeScript types
-│   ├── package.json           # Node dependencies
-│   └── .env.local             # Environment config
-│
-└── README.md                  # Project documentation
+├── backend/          # FastAPI Backend (app/, models/, routes/, services/)
+├── frontend/         # Next.js Frontend (app/, components/, lib/, types/)
+├── mobile/           # React Native Mobile (app/, components/, services/)
+└── README.md
 ```
 
 ---
 
 ## 🌐 API Endpoints
 
-### Authentication
-- `POST /api/v1/auth/login` - Login
-- `GET /api/v1/auth/me` - Get current user
-- `POST /api/v1/auth/create-official` - Create official user (admin only)
+**Auth:** Login, Get user, Create official, Register  
+**Analytics:** Dashboard stats, Trends  
+**Uploads:** Upload malaria/climate data, Download templates  
+**Maps:** Risk heatmap GeoJSON  
+**Alerts:** Get/Create alerts  
+**Predictions:** Generate prediction, Prediction history  
+**Mobile:** Register, Risk dashboard
 
-### Analytics
-- `GET /api/v1/analytics/dashboard` - Dashboard statistics
-- `GET /api/v1/analytics/trends` - Trend analysis
-
-### Uploads
-- `POST /api/v1/uploads/malaria` - Upload malaria data
-- `POST /api/v1/uploads/climate` - Upload climate data
-- `GET /api/v1/uploads/templates/{type}` - Download templates
-
-### Maps
-- `GET /api/v1/maps/risk` - Get risk heatmap GeoJSON
-
-### Alerts
-- `GET /api/v1/alerts` - Get alerts
-- `GET /api/v1/predictions/history/{district_id}` - Prediction history
+📖 Full API docs at http://localhost:8000/docs
 
 ---
 
 ## 🔐 Default Users
 
-### Admin User
-```
-Email: admin@malasafe.gov.et
-Password: Admin@123
-Role: admin
-```
+**Admin:** admin@malasafe.gov.et / admin123
 
-**Create additional users via:**
-- Backend: `POST /api/v1/auth/create-official` (admin only)
-- Mobile: `POST /api/v1/mobile/register` (public users)
+Create additional users via:
+- Officials: `POST /api/v1/auth/create-official` (admin only)
+- Public: `POST /api/v1/mobile/register`
 
 ---
 
 ## 📝 Environment Variables
 
-### Backend (.env)
+**Backend (.env):**
 ```env
 DATABASE_URL=postgresql://user:pass@localhost:5432/malasafe
 SECRET_KEY=your-secret-key
-ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 CORS_ORIGINS=http://localhost:3000
-ENVIRONMENT=development
 ```
 
-### Frontend (.env.local)
+**Frontend (.env.local):**
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+```
+
+**Mobile (services/api.js):**
+```javascript
+const BASE_URL = 'http://localhost:8000/api/v1';
 ```
 
 ---
 
 ## 🚀 Production Deployment
 
-### Backend
-```bash
-# Install production dependencies
-pip install -r requirements.txt
+**Backend:** `pip install -r requirements.txt && gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker`
 
-# Set environment to production
-ENVIRONMENT=production
+**Frontend:** `npm run build && npm start`
 
-# Use production WSGI server
-gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker
-```
-
-### Frontend
-```bash
-# Build for production
-npm run build
-
-# Start production server
-npm start
-```
+Set `ENVIRONMENT=production` in backend .env
 
 ---
 
 ## 📚 Additional Resources
 
-- **Backend Documentation**: `backend/README.md`
-- **Frontend Documentation**: `FRONTEND_COMPLETE.md`
-- **API Documentation**: http://localhost:8000/docs
-- **Database Models**: `backend/DATABASE_MODELS.md`
-- **Authentication Guide**: `backend/AUTH_DOCUMENTATION.md`
-- **CSV Upload Guide**: `backend/CSV_UPLOAD_DOCUMENTATION.md`
-- **Analytics Guide**: `ANALYTICS_GIS_COMPLETE.md`
+- **API Docs**: http://localhost:8000/docs
+- **AI Integration**: `AI_INTEGRATION_NOTES.md`
+- **Backend README**: `backend/README.md`
+- **Mobile README**: `mobile/README.md`
 
 ---
 
@@ -489,6 +428,9 @@ npm start
 - [ ] Frontend server running (port 3000)
 - [ ] Login successful
 - [ ] Dashboard loads
+- [ ] (Optional) Mobile app running on device
+- [ ] (Optional) AI/ML system initialized
+- [ ] (Optional) Redis and Celery workers running
 
 ---
 
@@ -498,23 +440,22 @@ Your MalaSafe malaria surveillance system is now running!
 
 **Backend:** http://localhost:8000  
 **Frontend:** http://localhost:3000  
+**Mobile:** Expo Go app on your device  
 **API Docs:** http://localhost:8000/docs
 
 **Login with:**
 - Email: `admin@malasafe.gov.et`
-- Password: `Admin@123`
+- Password: `admin123`
 
 ---
 
 ## 💡 Next Steps
 
-1. **Upload Sample Data** - Test the CSV upload functionality
-2. **Explore Analytics** - View trends and statistics
-3. **Check Maps** - View risk heatmap
-4. **Review Alerts** - Monitor outbreak alerts
-5. **Create Users** - Add more official users
-6. **Customize** - Adapt to your specific needs
+1. Upload sample data via CSV upload
+2. Explore analytics and trends
+3. View risk heatmap
+4. Test mobile app on device
+5. Initialize AI system for predictions
+6. Create additional users
 
----
 
-**Happy Coding! 🚀**
