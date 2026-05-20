@@ -17,9 +17,9 @@ class MalariaData(Base):
     week = Column(Integer, nullable=True)
     month = Column(Integer, nullable=False, index=True)
     year = Column(Integer, nullable=False, index=True)
-    cases = Column(Integer, nullable=False, default=0)
-    deaths = Column(Integer, nullable=False, default=0)
+    positive = Column(Integer, nullable=False, default=0)
     tests = Column(Integer, nullable=True)  # Optional. Real exposure when officers report it; falls back to cases*5 proxy.
+    travel = Column(Integer, nullable=True)
     uploaded_by = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
     
@@ -29,9 +29,8 @@ class MalariaData(Base):
     
     # Constraints
     __table_args__ = (
-        CheckConstraint('cases >= 0', name='check_cases_non_negative'),
-        CheckConstraint('deaths >= 0', name='check_deaths_non_negative'),
-        CheckConstraint('deaths <= cases', name='check_deaths_not_exceed_cases'),
+        CheckConstraint('positive >= 0', name='check_positive_non_negative'),
+        CheckConstraint('travel IS NULL OR travel >= 0', name='check_travel_non_negative'),
         CheckConstraint('tests IS NULL OR tests >= 0', name='check_tests_non_negative'),
         CheckConstraint('week >= 1 AND week <= 53', name='check_valid_week'),
         CheckConstraint('month >= 1 AND month <= 12', name='check_valid_month'),
@@ -42,7 +41,7 @@ class MalariaData(Base):
     )
     
     def __repr__(self):
-        return f"<MalariaData(district_id={self.district_id}, year={self.year}, month={self.month}, cases={self.cases})>"
+        return f"<MalariaData(district_id={self.district_id}, year={self.year}, month={self.month}, positive={self.positive})>"
     
     def to_dict(self):
         """Convert malaria data to dictionary."""
@@ -53,9 +52,9 @@ class MalariaData(Base):
             "week": self.week,
             "month": self.month,
             "year": self.year,
-            "cases": self.cases,
-            "deaths": self.deaths,
+            "positive": self.positive,
             "tests": self.tests,
+            "travel": self.travel,
             "uploaded_by": str(self.uploaded_by) if self.uploaded_by else None,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }

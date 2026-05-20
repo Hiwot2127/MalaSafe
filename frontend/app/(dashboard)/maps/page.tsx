@@ -89,14 +89,13 @@ export default function MapsPage() {
     if (!mapData?.features?.length) return null;
     const totals = mapData.features.reduce(
       (acc, f) => {
-        acc.cases += f.properties.recent_cases ?? 0;
-        acc.deaths += f.properties.recent_deaths ?? 0;
+        acc.positive += f.properties.recent_positive ?? 0;
         const status = riskStatus(f.properties.risk_level);
         if (status === 'error') acc.veryHigh += 1;
         if (status === 'warn') acc.elevated += 1;
         return acc;
       },
-      { cases: 0, deaths: 0, veryHigh: 0, elevated: 0 },
+      { positive: 0, veryHigh: 0, elevated: 0 },
     );
     return totals;
   }, [mapData]);
@@ -186,7 +185,7 @@ export default function MapsPage() {
                 />
                 <StatCard
                   eyebrow="Reported cases"
-                  value={summary.cases.toLocaleString()}
+                  value={summary.positive.toLocaleString()}
                   caption="Latest reporting month, summed"
                   icon={Activity}
                   tone="signal"
@@ -226,7 +225,6 @@ export default function MapsPage() {
                     <Th>Risk (forecast)</Th>
                     <Th>Forecast for</Th>
                     <Th align="right">Cases (same month)</Th>
-                    <Th align="right">Deaths (same month)</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -253,10 +251,7 @@ export default function MapsPage() {
                         </Td>
                         <Td muted>{p.prediction_period_label ?? '—'}</Td>
                         <Td align="right" numeric>
-                          {(p.recent_cases ?? 0).toLocaleString()}
-                        </Td>
-                        <Td align="right" numeric>
-                          {(p.recent_deaths ?? 0).toLocaleString()}
+                          {(p.recent_positive ?? 0).toLocaleString()}
                         </Td>
                       </tr>
                     );

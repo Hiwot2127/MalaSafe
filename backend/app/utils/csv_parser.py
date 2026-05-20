@@ -7,6 +7,8 @@ from typing import Dict, List, Tuple, Optional
 from io import StringIO
 import re
 
+from app.utils.eth_calendar import eth_month_year_to_gregorian
+
 
 class CSVParser:
     """Base CSV parser with common validation methods."""
@@ -173,16 +175,25 @@ class CSVParser:
 class MalariaCSVParser(CSVParser):
     """Parser for malaria data CSV files. Monthly-only - weekly was removed."""
 
-    REQUIRED_COLUMNS_MONTHLY = ['district_code', 'month', 'year', 'cases', 'deaths']
-    OPTIONAL_COLUMNS_MONTHLY = ['tests']  # If present, must be numeric >= 0. Powers the exposure offset; absent = fall back to cases*5 proxy.
+    # New schema: facility-grain rows keyed by DHIS2 org unit + EC month label.
+    REQUIRED_COLUMNS_MONTHLY = ['organisationunitid', 'eth_month_year', 'positive', 'tests']
+    OPTIONAL_COLUMNS_MONTHLY = ['travel']  # Optional, defaults to 0 when absent/blank.
 
     @classmethod
     def parse_monthly_data(cls, file_content: bytes) -> Tuple[Optional[pd.DataFrame], List[Dict], List[Dict]]:
         """
-        Parse monthly malaria data CSV.
+        Parse monthly malaria data CSV (new schema).
+
+        Required columns: `organisationunitid`, `Eth_Month_Year`, `Positive`, `Tests`.
+        Optional column: `Travel` (defaults to 0). All other columns are ignored.
 
         Returns:
             Tuple of (DataFrame, file_errors, row_errors).
+
+            On success the DataFrame has columns: `organisationunitid`, `month`,
+            `year`, `positive`, `tests`, `travel`. The original facility-row
+            grain is preserved — aggregation to woreda-month happens later in
+            `upload_service`.
 
             - file_errors: file-level problems that reject the whole upload
               (unparseable CSV, empty file, missing required columns).
@@ -207,31 +218,71 @@ class MalariaCSVParser(CSVParser):
             return None, [{"error": f"Missing required columns: {', '.join(missing_columns)}"}], []
 
         row_errors.extend(cls.validate_required_values(df, cls.REQUIRED_COLUMNS_MONTHLY))
-        row_errors.extend(cls.validate_numeric_column(df, 'month', min_value=1, max_value=12))
-        row_errors.extend(cls.validate_numeric_column(df, 'year', min_value=2000, max_value=2100))
-        row_errors.extend(cls.validate_numeric_column(df, 'cases', min_value=0))
-        row_errors.extend(cls.validate_numeric_column(df, 'deaths', min_value=0))
+        row_errors.extend(cls.validate_numeric_column(df, 'positive', min_value=0))
+        row_errors.extend(cls.validate_numeric_column(df, 'tests', min_value=0))
 
-        # Optional `tests` column - validate only if present.
-        if 'tests' in df.columns:
-            row_errors.extend(cls.validate_numeric_column(df, 'tests', min_value=0))
+        has_travel = 'travel' in df.columns
+        if has_travel:
+            # Numeric check only on non-null travel cells; missing values are
+            # legitimate (defaulted to 0 below) and shouldn't surface as errors.
+            travel_mask = df['travel'].notna() & (df['travel'].astype(str).str.strip() != '')
+            if travel_mask.any():
+                row_errors.extend(
+                    cls.validate_numeric_column(df.loc[travel_mask], 'travel', min_value=0)
+                )
 
+        # Rows already flagged for empty required fields — skip them in the
+        # per-row EC conversion so we don't double-report.
+        bad_rows = {int(e["row"]) for e in row_errors if "row" in e}
+
+        # Build the parsed output dataframe row-by-row so each EC label gets a
+        # clean conversion and bad labels are reported with row/column context.
+        parsed_rows: List[Dict] = []
         for idx, row in df.iterrows():
             row_num = idx + 2
-            try:
-                cases = float(row['cases'])
-                deaths = float(row['deaths'])
-                if deaths > cases:
-                    row_errors.append({
-                        "row": row_num,
-                        "column": "deaths",
-                        "value": str(deaths),
-                        "error": f"Deaths ({deaths}) cannot exceed cases ({cases})"
-                    })
-            except (ValueError, TypeError):
-                pass
+            if row_num in bad_rows:
+                # Still emit a placeholder so downstream row-index lookups
+                # behave; upload_service skips these via the bad_rows set.
+                parsed_rows.append({
+                    "organisationunitid": str(row.get('organisationunitid', '')).strip(),
+                    "month": None, "year": None,
+                    "positive": None, "tests": None, "travel": None,
+                })
+                continue
 
-        return df, [], row_errors
+            label = row.get('eth_month_year')
+            try:
+                g_month, g_year = eth_month_year_to_gregorian(label)
+            except ValueError as e:
+                row_errors.append({
+                    "row": row_num,
+                    "column": "eth_month_year",
+                    "value": "" if label is None else str(label),
+                    "error": str(e),
+                })
+                parsed_rows.append({
+                    "organisationunitid": str(row.get('organisationunitid', '')).strip(),
+                    "month": None, "year": None,
+                    "positive": None, "tests": None, "travel": None,
+                })
+                continue
+
+            travel_raw = row.get('travel') if has_travel else 0
+            parsed_rows.append({
+                "organisationunitid": str(row['organisationunitid']).strip(),
+                "month": g_month,
+                "year": g_year,
+                "positive": row['positive'],
+                "tests": row['tests'],
+                "travel": travel_raw if has_travel else 0,
+            })
+
+        out = pd.DataFrame(parsed_rows, index=df.index)
+        out['positive'] = pd.to_numeric(out['positive'], errors='coerce')
+        out['tests'] = pd.to_numeric(out['tests'], errors='coerce')
+        out['travel'] = pd.to_numeric(out['travel'], errors='coerce').fillna(0)
+
+        return out, [], row_errors
 
 
 class ClimateCSVParser(CSVParser):

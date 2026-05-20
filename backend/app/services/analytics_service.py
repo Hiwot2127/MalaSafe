@@ -44,26 +44,21 @@ class AnalyticsService:
         
         # Build base query
         query = select(
-            func.sum(MalariaData.cases).label('total_cases'),
-            func.sum(MalariaData.deaths).label('total_deaths'),
+            func.sum(MalariaData.positive).label('total_positive'),
             func.count(func.distinct(MalariaData.district_id)).label('districts_count')
         ).where(MalariaData.year == year)
-        
+
         if month:
             query = query.where(MalariaData.month == month)
-        
+
         if region:
             query = query.join(District).where(District.region == region)
-        
+
         result = await self.db.execute(query)
         stats = result.first()
-        
-        total_cases = stats.total_cases or 0
-        total_deaths = stats.total_deaths or 0
-        
-        # Calculate case fatality rate
-        cfr = (total_deaths / total_cases * 100) if total_cases > 0 else 0.0
-        
+
+        total_positive = stats.total_positive or 0
+
         # Get active alerts count
         alert_query = select(func.count(Alert.id)).where(Alert.is_active == True)
         if region:
@@ -95,12 +90,9 @@ class AnalyticsService:
         prediction_window_days = 30
 
         methodology = {
-            "total_cases": (
-                f"Sum of MalariaData.cases for {period_label}"
+            "total_positive": (
+                f"Sum of MalariaData.positive for {period_label}"
                 + (f" in region {region}." if region else " across all regions.")
-            ),
-            "total_deaths": (
-                f"Sum of MalariaData.deaths for {period_label} (reported via the monthly CSV)."
             ),
             "active_alerts": "Count of currently-active alerts (no age filter applied).",
             "high_risk_districts": (
@@ -141,11 +133,9 @@ class AnalyticsService:
             logger.warning(f"Dashboard could not attach model metadata: {exc}")
 
         return {
-            "total_cases": int(total_cases),
-            "total_deaths": int(total_deaths),
+            "total_positive": int(total_positive),
             "active_alerts": int(active_alerts),
             "high_risk_districts": int(high_risk_districts),
-            "case_fatality_rate": round(cfr, 2),
             "period": period,
             "period_label": period_label,
             "prediction_window_days": prediction_window_days,
@@ -176,8 +166,7 @@ class AnalyticsService:
         # Build query
         query = select(
             District.region,
-            func.sum(MalariaData.cases).label('total_cases'),
-            func.sum(MalariaData.deaths).label('total_deaths'),
+            func.sum(MalariaData.positive).label('total_positive'),
             func.count(func.distinct(District.id)).label('districts_count')
         ).join(
             MalariaData, District.id == MalariaData.district_id
@@ -186,7 +175,7 @@ class AnalyticsService:
         ).group_by(
             District.region
         ).order_by(
-            desc('total_cases')
+            desc('total_positive')
         )
         
         if month:
@@ -214,8 +203,7 @@ class AnalyticsService:
             
             region_stats.append({
                 "region": region_data.region,
-                "total_cases": int(region_data.total_cases or 0),
-                "total_deaths": int(region_data.total_deaths or 0),
+                "total_positive": int(region_data.total_positive or 0),
                 "districts_count": int(region_data.districts_count or 0),
                 "high_risk_count": int(high_risk_count)
             })
@@ -249,8 +237,7 @@ class AnalyticsService:
             query = select(
                 MalariaData.week,
                 MalariaData.year,
-                func.sum(MalariaData.cases).label('cases'),
-                func.sum(MalariaData.deaths).label('deaths')
+                func.sum(MalariaData.positive).label('positive')
             ).where(
                 MalariaData.week.isnot(None),
                 MalariaData.year == year
@@ -261,33 +248,26 @@ class AnalyticsService:
                 MalariaData.year.desc(),
                 MalariaData.week.desc()
             ).limit(limit)
-            
+
             if region:
                 query = query.join(District).where(District.region == region)
-            
+
             result = await self.db.execute(query)
             rows = result.all()
-            
+
             data = []
             for row in reversed(rows):  # Reverse to get chronological order
-                cases = int(row.cases or 0)
-                deaths = int(row.deaths or 0)
-                cfr = (deaths / cases * 100) if cases > 0 else 0.0
-                
                 data.append({
                     "period": f"{row.year}-W{row.week:02d}",
-                    "cases": cases,
-                    "deaths": deaths,
-                    "case_fatality_rate": round(cfr, 2)
+                    "positive": int(row.positive or 0),
                 })
-            
+
         else:  # monthly
             # Monthly trends
             query = select(
                 MalariaData.month,
                 MalariaData.year,
-                func.sum(MalariaData.cases).label('cases'),
-                func.sum(MalariaData.deaths).label('deaths')
+                func.sum(MalariaData.positive).label('positive')
             ).where(
                 MalariaData.year == year
             ).group_by(
@@ -297,24 +277,18 @@ class AnalyticsService:
                 MalariaData.year.desc(),
                 MalariaData.month.desc()
             ).limit(limit)
-            
+
             if region:
                 query = query.join(District).where(District.region == region)
-            
+
             result = await self.db.execute(query)
             rows = result.all()
-            
+
             data = []
             for row in reversed(rows):  # Reverse to get chronological order
-                cases = int(row.cases or 0)
-                deaths = int(row.deaths or 0)
-                cfr = (deaths / cases * 100) if cases > 0 else 0.0
-                
                 data.append({
                     "period": f"{row.year}-{row.month:02d}",
-                    "cases": cases,
-                    "deaths": deaths,
-                    "case_fatality_rate": round(cfr, 2)
+                    "positive": int(row.positive or 0),
                 })
         
         return period_type, data, len(data)
@@ -347,11 +321,11 @@ class AnalyticsService:
             Prediction.district_id
         ).subquery()
         
-        # Cases/deaths are pulled for the SAME month the prediction targets,
-        # not for today's calendar month. Before this change the join mixed
+        # Positive counts are pulled for the SAME month the prediction targets,
+        # not for today's calendar month. Before this alignment the join mixed
         # "forecast for next month" (risk_level) with "observed in this
-        # incomplete month" (recent_cases), producing the visual disconnect
-        # the reviewer flagged (district badged HIGH but cases=0/deaths=0).
+        # incomplete month" (recent_positive), producing the visual disconnect
+        # the reviewer flagged (district badged HIGH but positive=0).
         query = select(
             District.id.label('district_id'),
             District.district_code,
@@ -366,7 +340,7 @@ class AnalyticsService:
             Prediction.prediction_reason,
             Prediction.prediction_date.label('prediction_date'),
             func.coalesce(
-                select(func.sum(MalariaData.cases))
+                select(func.sum(MalariaData.positive))
                 .where(
                     MalariaData.district_id == District.id,
                     MalariaData.year == func.extract('year', Prediction.prediction_date),
@@ -374,17 +348,7 @@ class AnalyticsService:
                 )
                 .scalar_subquery(),
                 0
-            ).label('recent_cases'),
-            func.coalesce(
-                select(func.sum(MalariaData.deaths))
-                .where(
-                    MalariaData.district_id == District.id,
-                    MalariaData.year == func.extract('year', Prediction.prediction_date),
-                    MalariaData.month == func.extract('month', Prediction.prediction_date),
-                )
-                .scalar_subquery(),
-                0
-            ).label('recent_deaths')
+            ).label('recent_positive')
         ).join(
             subquery,
             and_(
@@ -441,11 +405,10 @@ class AnalyticsService:
                     "confidence_score": float(row.confidence_score),
                     "prediction_score": float(row.prediction_score),
                     "prediction_reason": row.prediction_reason,
-                    "recent_cases": int(row.recent_cases),
-                    "recent_deaths": int(row.recent_deaths),
+                    "recent_positive": int(row.recent_positive),
                     # `prediction_period` is the month the badge is FOR — the
-                    # cases/deaths above are scoped to this same period so a
-                    # client can render "HIGH (May 2026) · 0 cases observed".
+                    # positive count above is scoped to this same period so a
+                    # client can render "HIGH (May 2026) · 0 positive observed".
                     "prediction_period": prediction_period,
                     "prediction_period_label": prediction_period_label,
                 },
@@ -502,8 +465,8 @@ class AnalyticsService:
             else_=5,
         )
 
-        # `recent_cases` is scoped to the prediction's target month — same
-        # alignment as get_risk_map_data — so the "RECENT CASES" column next
+        # `recent_positive` is scoped to the prediction's target month — same
+        # alignment as get_risk_map_data — so the "RECENT POSITIVE" column next
         # to the risk badge refers to the same period the badge does.
         base = select(
             District.id.label("district_id"),
@@ -518,7 +481,7 @@ class AnalyticsService:
             Prediction.prediction_score,
             Prediction.prediction_reason,
             func.coalesce(
-                select(func.sum(MalariaData.cases))
+                select(func.sum(MalariaData.positive))
                 .where(
                     MalariaData.district_id == District.id,
                     MalariaData.year == func.extract('year', Prediction.prediction_date),
@@ -526,7 +489,7 @@ class AnalyticsService:
                 )
                 .scalar_subquery(),
                 0,
-            ).label("recent_cases"),
+            ).label("recent_positive"),
         ).join(
             latest,
             and_(
@@ -615,7 +578,7 @@ class AnalyticsService:
                 "confidence_score": float(row.confidence_score),
                 "prediction_score": float(row.prediction_score),
                 "prediction_reason": row.prediction_reason,
-                "recent_cases": int(row.recent_cases),
+                "recent_positive": int(row.recent_positive),
             })
 
         return items, int(total)

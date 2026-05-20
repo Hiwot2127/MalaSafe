@@ -15,7 +15,7 @@ export default function DashboardScreen() {
   const { signOut } = useAuth();
   const screenWidth = Dimensions.get("window").width;
 
-  const [stats, setStats] = useState({ total_cases: 0, total_deaths: 0, active_alerts: 0 });
+  const [stats, setStats] = useState({ total_positive: 0, active_alerts: 0 });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -36,8 +36,7 @@ export default function DashboardScreen() {
       const trends = data.recent_trends || [];
 
       setStats({
-        total_cases: summary?.total_cases || 0,
-        total_deaths: summary?.total_deaths || 0,
+        total_positive: summary?.total_positive || 0,
         active_alerts: summary?.active_alerts || 0
       });
 
@@ -45,7 +44,7 @@ export default function DashboardScreen() {
         setDynamicChartData({
           labels: trends.map((t: any) => t.period.split('-')[1] || t.period), 
           datasets: [{
-            data: trends.map((t: any) => t.cases),
+            data: trends.map((t: any) => t.positive),
             color: (opacity = 1) => `rgba(2, 132, 199, ${opacity})`,
             strokeWidth: 3
           }],
@@ -118,7 +117,7 @@ export default function DashboardScreen() {
         <View style={styles.statusInfo}>
           <Text style={styles.statusTitle}>System Status</Text>
           <Text style={styles.statusLevel}>{stats.active_alerts > 0 ? 'ACTIVE ALERTS' : 'SYSTEM CLEAR'}</Text>
-          <Text style={styles.statusArea}>Monitoring {stats.total_cases} Live Cases</Text>
+          <Text style={styles.statusArea}>Monitoring {stats.total_positive} Live Cases</Text>
         </View>
         <Ionicons name={stats.active_alerts > 0 ? "warning" : "shield-checkmark"} size={60} color="white" />
       </View>
@@ -130,12 +129,8 @@ export default function DashboardScreen() {
 
       <View style={styles.statsGrid}>
         <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{stats.total_cases}</Text>
+          <Text style={styles.statNumber}>{stats.total_positive}</Text>
           <Text style={styles.statLabel}>Total Cases</Text>
-        </View>
-        <View style={[styles.statBox, { borderLeftColor: '#ef4444', borderLeftWidth: 4 }]}>
-          <Text style={[styles.statNumber, { color: '#ef4444' }]}>{stats.total_deaths}</Text>
-          <Text style={styles.statLabel}>Deaths</Text>
         </View>
         <View style={[styles.statBox, { borderLeftColor: '#f59e0b', borderLeftWidth: 4 }]}>
           <Text style={[styles.statNumber, { color: '#f59e0b' }]}>{stats.active_alerts}</Text>

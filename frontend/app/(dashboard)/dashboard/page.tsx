@@ -92,11 +92,9 @@ export default function DashboardPage() {
     );
   }
 
-  const cases = stats?.total_cases ?? 0;
-  const deaths = stats?.total_deaths ?? 0;
+  const cases = stats?.total_positive ?? 0;
   const activeAlerts = stats?.active_alerts ?? 0;
   const highRisk = stats?.high_risk_districts ?? 0;
-  const cfr = stats?.case_fatality_rate ?? 0;
   const period = stats?.period || 'Current period';
   const periodLabel = stats?.period_label || period;
   const predWindow = stats?.prediction_window_days ?? 30;
@@ -132,7 +130,7 @@ export default function DashboardPage() {
   const alertDescription =
     activeAlerts > 0
       ? `Review the alerts queue to triage and dispatch (${periodLabel}).`
-      : `No alerts open against ${periodLabel}. Caseload and CFR within expected thresholds.`;
+      : `No alerts open against ${periodLabel}. Caseload within expected thresholds.`;
   const alertStats =
     activeAlerts > 0 || highRisk > 0
       ? [
@@ -146,7 +144,7 @@ export default function DashboardPage() {
       <PageHeader
         eyebrow={`MalaSafe · ${period}`}
         title="Surveillance dashboard"
-        description="A standing read on caseload, mortality, alerting posture, and risk concentration. Numbers update with each monthly close."
+        description="A standing read on caseload, alerting posture, and risk concentration. Numbers update with each monthly close."
       />
 
       {/* Posture alert hero - leads with the most actionable signal. */}
@@ -176,23 +174,14 @@ export default function DashboardPage() {
           </div>
         </SectionHeader>
         <EditorialCard>
-          <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 sm:divide-x lg:grid-cols-4">
+          <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 sm:divide-x lg:grid-cols-3">
             <Metric
               eyebrow="Total cases"
               value={cases.toLocaleString()}
               caption={`Reported · ${periodLabel}`}
               help={
                 methodology.total_cases ||
-                `Sum of MalariaData.cases reported for ${periodLabel} (uploaded CSV data, not predicted).`
-              }
-            />
-            <Metric
-              eyebrow="Total deaths"
-              value={deaths.toLocaleString()}
-              caption={`CFR ${cfr.toFixed(2)}% · ${periodLabel}`}
-              help={
-                methodology.total_deaths ||
-                `Sum of MalariaData.deaths reported for ${periodLabel} (from the monthly CSV "deaths" column).`
+                `Sum of MalariaData.positive reported for ${periodLabel} (uploaded CSV data, not predicted).`
               }
             />
             <Metric
@@ -225,8 +214,7 @@ export default function DashboardPage() {
               Caseload signal
             </p>
             <p className="mt-3 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
-              Case fatality ratio of {cfr.toFixed(2)}% across the reporting window.
-              CFR &gt; 1% triggers an automatic flag to the district lead.
+              Aggregated positive case counts across the reporting window.
             </p>
           </div>
           <div className="bg-card p-6">
@@ -279,24 +267,13 @@ export default function DashboardPage() {
       <section className="flex flex-col gap-5">
         <SectionHeader index="002" label="How this works" tone="signal" />
         <EditorialCard className="p-0">
-          <Accordion type="single" collapsible defaultValue="item-cfr">
-            <AccordionItem value="item-cfr">
-              <AccordionTrigger eyebrow="Case fatality">
-                What does CFR &gt; 1% trigger?
-              </AccordionTrigger>
-              <AccordionContent>
-                Any district that closes a month above the 1% case-fatality ratio is
-                auto-flagged. The district lead receives a notification and an alert
-                is opened against the close. Reviewing the alert and acknowledging
-                the action clears the flag from the surveillance posture.
-              </AccordionContent>
-            </AccordionItem>
+          <Accordion type="single" collapsible defaultValue="item-predict">
             <AccordionItem value="item-predict">
               <AccordionTrigger eyebrow="Forecasting">
                 How are predictions generated?
               </AccordionTrigger>
               <AccordionContent>
-                A LightGBM model trained on historical case counts, mortality,
+                A LightGBM model trained on historical case counts, tests, travel,
                 weekly climate, and district geography produces a forward-looking
                 risk score per district per month. Cold-start districts use a
                 climate + geography-only sub-model until enough history accumulates.

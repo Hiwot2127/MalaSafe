@@ -27,7 +27,7 @@ export interface LocalPreviewResult {
 }
 
 const REQUIRED_BY_KIND: Record<UploadKind, string[]> = {
-  monthly: ["district_code", "month", "year", "cases", "deaths"],
+  monthly: ["organisationunitid", "eth_month_year", "travel", "positive", "tests"],
   climate: ["district_code", "date", "rainfall", "temperature"],
 };
 
@@ -90,32 +90,21 @@ export async function parseLocalPreview(
 
             // Per-kind numeric ranges (best-effort, matches backend tier-1 rules).
             if (kind === "monthly") {
-              if (row.month && !inRange(row.month, 1, 12)) {
-                issues.push({ row: rowNumber, column: "month", value: row.month, error: "Month must be 1–12" });
+              if (row.positive && !isFiniteNumber(row.positive)) {
+                issues.push({ row: rowNumber, column: "positive", value: row.positive, error: "Positive must be numeric" });
               }
-              if (row.year && !inRange(row.year, 2000, 2100)) {
-                issues.push({ row: rowNumber, column: "year", value: row.year, error: "Year must be 2000–2100" });
-              }
-              if (row.cases && !isFiniteNumber(row.cases)) {
-                issues.push({ row: rowNumber, column: "cases", value: row.cases, error: "Cases must be numeric" });
-              }
-              if (row.deaths && !isFiniteNumber(row.deaths)) {
-                issues.push({ row: rowNumber, column: "deaths", value: row.deaths, error: "Deaths must be numeric" });
-              }
-              if (row.cases && row.deaths && Number(row.deaths) > Number(row.cases)) {
-                issues.push({
-                  row: rowNumber, column: "deaths", value: row.deaths,
-                  error: `Deaths (${row.deaths}) cannot exceed cases (${row.cases})`,
-                });
-              }
-              if ("tests" in row && row.tests && !isFiniteNumber(row.tests)) {
+              if (row.tests && !isFiniteNumber(row.tests)) {
                 issues.push({ row: rowNumber, column: "tests", value: row.tests, error: "Tests must be numeric" });
               }
-              if (row.month && row.year &&
-                inRange(row.month, 1, 12) && inRange(row.year, 2000, 2100)) {
-                const m = String(Math.trunc(Number(row.month))).padStart(2, "0");
-                const y = String(Math.trunc(Number(row.year))).padStart(4, "0");
-                months.add(`${y}-${m}`);
+              if (row.travel && !isFiniteNumber(row.travel)) {
+                issues.push({ row: rowNumber, column: "travel", value: row.travel, error: "Travel must be numeric" });
+              }
+              // We don't ship an Ethiopian-calendar helper to the frontend yet, so
+              // use the raw `eth_month_year` cell as the distinct-month key. The
+              // predicted_mode derivation only counts distinct months, so this is
+              // sufficient even without Gregorian alignment.
+              if (row.eth_month_year) {
+                months.add(row.eth_month_year);
               }
             } else if (kind === "climate") {
               if (row.rainfall && Number(row.rainfall) < 0) {

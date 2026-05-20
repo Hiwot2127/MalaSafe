@@ -3,11 +3,9 @@ import type { ReportsOverview, RegionTotals } from '@/types/reports';
 
 interface RawDashboard {
   summary: {
-    total_cases: number;
-    total_deaths: number;
+    total_positive: number;
     active_alerts: number;
     high_risk_districts: number;
-    case_fatality_rate: number;
     period: string;
   };
   by_region: RegionTotals[];
@@ -17,9 +15,7 @@ interface RawTrend {
   period_type: 'weekly' | 'monthly';
   data: {
     period: string;
-    cases: number;
-    deaths: number;
-    case_fatality_rate: number;
+    positive: number;
   }[];
 }
 
@@ -41,9 +37,7 @@ export const reportsApi = {
     const t = trendRes.data;
     return {
       year: String(y),
-      total_cases: d.summary.total_cases,
-      total_deaths: d.summary.total_deaths,
-      case_fatality_rate: d.summary.case_fatality_rate,
+      total_positive: d.summary.total_positive,
       active_alerts: d.summary.active_alerts,
       high_risk_districts: d.summary.high_risk_districts,
       by_region: d.by_region,

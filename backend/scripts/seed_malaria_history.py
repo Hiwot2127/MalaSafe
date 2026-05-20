@@ -1,8 +1,10 @@
 """Seed malaria_data from temp/climate-pipeline/outputs/*EC_with_climate.csv.
 
-Each output CSV row is (facility, month) -> Positive cases. The MalaSafe
-schema is keyed at (district, year, month) without a facility dimension, so
-we aggregate Positive by (ADM3_PCODE, Period_Gregorian_start).
+Each output CSV row is (facility, month) -> Positive / Tests / Travel.
+The MalaSafe schema is keyed at (district, year, month) without a facility
+dimension, so we aggregate Positive, Tests, and Travel by
+(ADM3_PCODE, Period_Gregorian_start) and write them to malaria_data.positive,
+malaria_data.tests, malaria_data.travel.
 
 Result: ~49,400 rows in malaria_data (one per resolved woreda x month).
 That populates the autoregressive lag features the predictor's warm path
@@ -29,7 +31,7 @@ def load_all() -> pd.DataFrame:
     frames = []
     for f in sorted(OUTPUTS_DIR.glob("final_processed_df_*EC_with_climate.csv")):
         df = pd.read_csv(f, usecols=["ADM3_PCODE", "Period_Gregorian_start",
-                                       "Positive", "Tests"])
+                                       "Positive", "Tests", "Travel"])
         df["_src"] = f.name
         frames.append(df)
     return pd.concat(frames, ignore_index=True)
@@ -50,7 +52,9 @@ def main() -> None:
 
     # Aggregate facility -> woreda-month
     agg = (df.groupby(["ADM3_PCODE", "year", "month"], as_index=False)
-             .agg(cases=("Positive", "sum")))
+             .agg(positive=("Positive", "sum"),
+                  tests=("Tests", "sum"),
+                  travel=("Travel", "sum")))
     print(f"  aggregated to {len(agg):,} (woreda, year, month) rows")
 
     if args.limit:
@@ -58,8 +62,12 @@ def main() -> None:
 
     if args.dry_run:
         print(agg.head(10).to_string())
-        print(f"\ncases distribution: min={agg['cases'].min()} med={agg['cases'].median():.0f} "
-              f"max={agg['cases'].max()} mean={agg['cases'].mean():.1f}")
+        print(f"\npositive distribution: min={agg['positive'].min()} med={agg['positive'].median():.0f} "
+              f"max={agg['positive'].max()} mean={agg['positive'].mean():.1f}")
+        print(f"tests distribution:    min={agg['tests'].min()} med={agg['tests'].median():.0f} "
+              f"max={agg['tests'].max()} mean={agg['tests'].mean():.1f}")
+        print(f"travel distribution:   min={agg['travel'].min()} med={agg['travel'].median():.0f} "
+              f"max={agg['travel'].max()} mean={agg['travel'].mean():.1f}")
         return
 
     from app.models import District, MalariaData
@@ -86,8 +94,9 @@ def main() -> None:
                 week=None,
                 month=int(row["month"]),
                 year=int(row["year"]),
-                cases=int(row["cases"]),
-                deaths=0,
+                positive=int(row["positive"]),
+                tests=int(row["tests"]),
+                travel=int(row["travel"]),
             ))
             inserted += 1
             if len(batch) >= 2000:

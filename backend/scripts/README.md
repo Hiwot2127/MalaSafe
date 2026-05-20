@@ -11,7 +11,7 @@ workspace and run the predictor over historical months. All scripts accept
 | 1 | `alembic upgrade head` | Applies schema migrations 001 + 002 | `\d districts` shows `adm3_pcode`, `latitude`, `longitude`, `elevation_m`; `\d climate_data` shows `min_temp`, `max_temp`, `humidity` |
 | 2 | `python scripts/seed_districts.py` | Loads 1,082 woredas from `reference_geo_names.csv` + climate centroids | `inserted 1082, updated 0` |
 | 3 | `python scripts/seed_climate_history.py` | Loads 49,390 climate rows (55 months × 898 woredas) | `inserted 49390, skipped 0` |
-| 4 | `python scripts/seed_malaria_history.py` | Loads 49,390 aggregated woreda-month case rows | `inserted 49390, skipped 0` |
+| 4 | `python scripts/seed_malaria_history.py` | Loads 49,390 aggregated woreda-month rows (positive / tests / travel) | `inserted 49390, skipped 0` |
 | 5 | `python scripts/compute_baselines.py` | Writes `models/regional_baselines.json` (10,776 entries) | File present at `backend/models/regional_baselines.json` |
 | 6 | `python test_predictor.py` | Standalone smoke test (no DB) | `✓ smoke test PASS` |
 | 7 | `python scripts/backfill_predictions.py` | Runs predictor over full historic window (~10 min) | `wrote ≈59,000 predictions` |
@@ -43,10 +43,10 @@ python scripts/backfill_predictions.py --limit 10 --start 2025-06-01 --end 2025-
 ### `seed_malaria_history.py`
 
 - **Reads**: 5 files matching `final_processed_df_*EC_with_climate.csv` (60,940 facility-month rows)
-- **Aggregates**: sum of `Positive` per `(ADM3_PCODE, year, month)` - drops to 49,390 woreda-month rows
+- **Aggregates**: per `(ADM3_PCODE, year, month)`, writes `positive = sum(Positive)`, `tests = sum(Tests)`, `travel = sum(Travel)` - drops to 49,390 woreda-month rows
 - **Writes**: `malaria_data` table with `source_type = 'historical_seed'`
 - **Idempotent**: yes (`--force` truncates rows tagged `historical_seed` first)
-- **Caveat**: MalariaData schema has no `tests` column, so `cases = sum(Positive)`, `deaths = 0`. The predictor's exposure-offset uses a regional median fallback at inference time.
+- **Caveat**: when source `Tests` is missing, the row stores `tests = NULL` and the predictor falls back to a regional-median exposure proxy at inference time.
 
 ### `compute_baselines.py`
 

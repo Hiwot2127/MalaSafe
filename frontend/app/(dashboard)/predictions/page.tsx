@@ -357,7 +357,6 @@ export default function PredictionsPage() {
                   <tr>
                     <Th>Date</Th>
                     <Th align="right">Cases</Th>
-                    <Th align="right">Deaths</Th>
                     <Th align="right">Score</Th>
                     <Th>Risk</Th>
                   </tr>
@@ -372,10 +371,7 @@ export default function PredictionsPage() {
                         {formatDate(h.date)}
                       </Td>
                       <Td align="right" className="tabular-nums">
-                        {h.predicted_cases?.toLocaleString() ?? '—'}
-                      </Td>
-                      <Td align="right" className="tabular-nums">
-                        {h.predicted_deaths?.toLocaleString() ?? '—'}
+                        {h.predicted_positive?.toLocaleString() ?? '—'}
                       </Td>
                       <Td align="right" className="tabular-nums">
                         {h.prediction_score?.toFixed(1) ?? '—'}
@@ -514,7 +510,7 @@ export default function PredictionsPage() {
                           {(row.confidence_score * 100).toFixed(0)}%
                         </Td>
                         <Td align="right" className="tabular-nums">
-                          {row.recent_cases.toLocaleString()}
+                          {row.recent_positive.toLocaleString()}
                         </Td>
                       </tr>
                     );

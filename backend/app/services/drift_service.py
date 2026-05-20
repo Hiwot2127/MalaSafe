@@ -51,11 +51,11 @@ class DriftService:
 
         findings: list[DriftFinding] = []
 
-        # --- cases (from malaria_data) -----------------------------------
-        cases_now = await self._malaria_observed(month)
-        cases_baseline = await self._malaria_baseline(month)
+        # --- positive (from malaria_data) --------------------------------
+        positive_now = await self._malaria_observed(month)
+        positive_baseline = await self._malaria_baseline(month)
         findings.extend(self._score(
-            monthly_close_id, month, "cases", cases_now, cases_baseline,
+            monthly_close_id, month, "positive", positive_now, positive_baseline,
         ))
 
         # --- climate metrics (from climate_data) -------------------------
@@ -124,7 +124,7 @@ class DriftService:
     async def _malaria_observed(self, month: date) -> dict[UUID, float]:
         rows = (
             await self.db.execute(
-                select(MalariaData.district_id, MalariaData.cases).where(and_(
+                select(MalariaData.district_id, MalariaData.positive).where(and_(
                     MalariaData.year == month.year,
                     MalariaData.month == month.month,
                     MalariaData.week.is_(None),
@@ -137,7 +137,7 @@ class DriftService:
         baseline_years = [month.year - i for i in range(1, BASELINE_YEARS + 1)]
         rows = (
             await self.db.execute(
-                select(MalariaData.district_id, MalariaData.cases).where(and_(
+                select(MalariaData.district_id, MalariaData.positive).where(and_(
                     MalariaData.year.in_(baseline_years),
                     MalariaData.month == month.month,
                     MalariaData.week.is_(None),
@@ -145,8 +145,8 @@ class DriftService:
             )
         ).all()
         baseline: dict[UUID, list[float]] = {}
-        for did, cases in rows:
-            baseline.setdefault(did, []).append(float(cases))
+        for did, value in rows:
+            baseline.setdefault(did, []).append(float(value))
         return baseline
 
     async def _climate_observed(self, month: date) -> dict[UUID, dict[str, Optional[float]]]:

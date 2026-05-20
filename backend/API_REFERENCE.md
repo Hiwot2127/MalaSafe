@@ -100,7 +100,7 @@ All upload endpoints require an *official* role. See [CSV_UPLOAD_DOCUMENTATION.m
 ### `POST /uploads/malaria/monthly`
 **Auth**: official.
 **Body**: `multipart/form-data` with `file=<CSV>`.
-CSV columns: `district_code, month, year, cases, deaths` (+ optional `tests`).
+CSV columns: `organisationunitid, Eth_Month_Year, Travel, Positive, Tests`. Backend resolves `organisationunitid` to its parent woreda, parses `Eth_Month_Year` to Gregorian `(year, month)`, then aggregates facility rows to one woreda-month row.
 Validates rows, persists into `malaria_data`, creates an `uploaded_files` provenance row, and — for a "close" upload (`month_span ≤ 2`) — dispatches a `MonthlyClose` orchestration in the background.
 **Returns**: `UploadResponse` with success status, processed/created/skipped counts, validation errors, and `file_id`.
 
@@ -128,12 +128,12 @@ CSV columns: `district_code, month, year, rainfall, temperature, humidity` (prox
 ### `GET /analytics/dashboard`
 **Auth**: any authenticated user.
 **Query**: `year?` (default current), `month?` (1–12), `region?`.
-Returns summary KPIs (`total_cases`, `total_deaths`, `active_alerts`, `high_risk_districts`, `case_fatality_rate`, `period`), a `by_region` breakdown (omitted when `region` is set), and a `recent_trends` series (last 6 months).
+Returns summary KPIs (`total_positive`, `total_tests`, `active_alerts`, `high_risk_districts`, `period`), a `by_region` breakdown (omitted when `region` is set), and a `recent_trends` series (last 6 months).
 
 ### `GET /analytics/trends`
 **Auth**: any authenticated user.
-**Query**: `period_type=weekly|monthly` (default `monthly`), `year?`, `limit` (1–52, default 12), `region?`.
-Returns `{period_type, data: [{period, cases, deaths, case_fatality_rate}, ...], total_periods}`.
+**Query**: `period_type=monthly` (only `monthly` is supported), `year?`, `limit` (1–52, default 12), `region?`.
+Returns `{period_type, data: [{period, positive, tests, travel}, ...], total_periods}`.
 
 ---
 
@@ -142,7 +142,7 @@ Returns `{period_type, data: [{period, cases, deaths, case_fatality_rate}, ...],
 ### `GET /maps/risk`
 **Auth**: any authenticated user.
 **Query**: `date_filter?` (default today), `region?`.
-Returns a **GeoJSON FeatureCollection**. Each feature carries district risk properties (`district_code`, `district_name`, `region`, `geojson_key`, `risk_level`, `confidence_score`, `prediction_score`, `recent_cases`, `recent_deaths`) and `geometry: null` — the client is expected to join `geojson_key` against the local boundary GeoJSON to render the polygon. The response also includes a `metadata` object with `total_districts` and per-risk-band counts.
+Returns a **GeoJSON FeatureCollection**. Each feature carries district risk properties (`district_code`, `district_name`, `region`, `geojson_key`, `risk_level`, `confidence_score`, `prediction_score`, `recent_positive`) and `geometry: null` — the client is expected to join `geojson_key` against the local boundary GeoJSON to render the polygon. The response also includes a `metadata` object with `total_districts` and per-risk-band counts.
 
 ---
 

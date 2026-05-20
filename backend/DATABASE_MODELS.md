@@ -13,7 +13,7 @@ PostgreSQL 14+, UUID primary keys, server-side `now()` defaults.
 | [User](#user) | `users` | Auth subjects + RBAC role |
 | [District](#district) | `districts` | Ethiopian woredas (admin level 3) |
 | [DistrictEnvironment](#districtenvironment) | `district_environment` | Per-district static features (altitude) |
-| [MalariaData](#malariadata) | `malaria_data` | Monthly cases/deaths per district |
+| [MalariaData](#malariadata) | `malaria_data` | Monthly positive cases / tests / travel per district |
 | [ClimateData](#climatedata) | `climate_data` | Monthly rainfall/temperature/humidity |
 | [Prediction](#prediction) | `predictions` | Model output for a (district, month) |
 | [Alert](#alert) | `alerts` | High-risk notifications surfaced to users |
@@ -101,17 +101,18 @@ MonthlyClose ──┬─< BacktestResult
 
 ## MalariaData
 
-`malaria_data` — monthly cases/deaths per district, the ingest target for `/uploads/malaria/monthly`.
+`malaria_data` — monthly positive cases / tests / travel per woreda, the ingest target for `/uploads/malaria/monthly`.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | UUID PK | |
 | `district_id` | UUID FK → districts.id | |
 | `source_type` | String(50) | `manual` \| `file_upload` \| `api` |
-| `week` | Integer, nullable | optional weekly granularity |
-| `month`, `year` | Integer | indexed jointly |
-| `cases`, `deaths` | Integer | `deaths` is validated `≤ cases` on ingest |
-| `tests` | Integer, nullable | real exposure when reported; falls back to `cases × 5` proxy |
+| `week` | Integer, nullable | optional weekly granularity (legacy column, unused by the monthly pipeline) |
+| `month`, `year` | Integer | indexed jointly; Gregorian, derived from `Eth_Month_Year` on ingest |
+| `positive` | Integer | required, ≥ 0 — confirmed positive cases (aggregated from facility rows) |
+| `tests` | Integer, nullable | ≥ 0 — tests performed; falls back to a regional-median proxy at inference time when NULL |
+| `travel` | Integer, nullable | ≥ 0 — travel-history-positive cases |
 | `uploaded_by` | UUID FK → users.id, nullable | provenance |
 | `created_at` | timestamptz | |
 
@@ -262,8 +263,8 @@ MonthlyClose ──┬─< BacktestResult
 | `model_version_id` | UUID FK → model_versions.id, nullable | which model produced the prediction |
 | `district_id` | UUID FK → districts.id | |
 | `month` | Date | the month being backtested (typically `monthly_close.month - 1`) |
-| `actual_cases` | Integer | observed |
-| `predicted_cases` | Float | model output |
+| `actual_positive` | Integer | observed positive cases |
+| `predicted_positive` | Float | model output |
 | `predicted_risk` | String(20), nullable | risk band at prediction time |
 | `q10`, `q90` | Float, nullable | quantile bounds |
 | `abs_error` | Float | `|predicted - actual|`; sort key for the API |
@@ -294,6 +295,6 @@ MonthlyClose ──┬─< BacktestResult
 
 **Index**: `(monthly_close_id, severity)`.
 
-**`DriftMetric` values**: `cases`, `rainfall`, `temp`, `humidity`.
+**`DriftMetric` values**: `positive`, `rainfall`, `temp`, `humidity`.
 
 **`DriftSeverity` values**: `warn` (`|z| ≥ 2`), `critical` (`|z| ≥ 3`).

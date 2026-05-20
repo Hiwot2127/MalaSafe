@@ -44,26 +44,23 @@ async def get_dashboard(
     - region: Filter by region name (optional)
     
     **Returns:**
-    - Summary statistics (cases, deaths, alerts, CFR)
+    - Summary statistics (positive cases, alerts, high-risk districts)
     - Statistics by region
     - Recent trends
-    
+
     **Example Response:**
     ```json
     {
       "summary": {
-        "total_cases": 15420,
-        "total_deaths": 523,
+        "total_positive": 15420,
         "active_alerts": 12,
         "high_risk_districts": 8,
-        "case_fatality_rate": 3.39,
         "period": "2024-01"
       },
       "by_region": [
         {
           "region": "Oromia",
-          "total_cases": 5420,
-          "total_deaths": 180,
+          "total_positive": 5420,
           "districts_count": 15,
           "high_risk_count": 3
         }
@@ -124,9 +121,9 @@ async def get_trends(
     
     **Returns:**
     - Period type
-    - Trend data points (period, cases, deaths, CFR)
+    - Trend data points (period, positive)
     - Total periods
-    
+
     **Example Response:**
     ```json
     {
@@ -134,15 +131,11 @@ async def get_trends(
       "data": [
         {
           "period": "2024-01",
-          "cases": 1250,
-          "deaths": 42,
-          "case_fatality_rate": 3.36
+          "positive": 1250
         },
         {
           "period": "2024-02",
-          "cases": 1380,
-          "deaths": 48,
-          "case_fatality_rate": 3.48
+          "positive": 1380
         }
       ],
       "total_periods": 12

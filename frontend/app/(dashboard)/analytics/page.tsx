@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Activity, HeartPulse, Sparkles, TrendingUp } from 'lucide-react';
+import { Activity, Sparkles } from 'lucide-react';
 import { analyticsApi } from '@/lib/api/analytics';
 import { TrendDataPoint } from '@/types/analytics';
 import {
@@ -58,21 +58,15 @@ export default function AnalyticsPage() {
 
   const totals = trends.reduce(
     (acc, t) => {
-      acc.cases += t.cases;
-      acc.deaths += t.deaths;
+      acc.positive += t.positive;
       return acc;
     },
-    { cases: 0, deaths: 0 },
+    { positive: 0 },
   );
-  const averageCfr =
-    totals.cases > 0 ? ((totals.deaths / totals.cases) * 100).toFixed(2) : '0.00';
 
-  // Sparkline geometry - cases + deaths over time. Each series is normalised
-  // against the max of the cases series so death movement is visible on the
-  // same axis without overwhelming a death line that's an order of magnitude
-  // smaller than the cases line.
-  const seriesMax = trends.reduce((m, t) => Math.max(m, t.cases), 0);
-  const buildPoints = (key: 'cases' | 'deaths') =>
+  // Sparkline geometry - cases over time, normalised against the series max.
+  const seriesMax = trends.reduce((m, t) => Math.max(m, t.positive), 0);
+  const buildPoints = (key: 'positive') =>
     trends.length
       ? trends
         .slice()
@@ -84,8 +78,7 @@ export default function AnalyticsPage() {
         })
         .join(' ')
       : '';
-  const casesPoints = buildPoints('cases');
-  const deathsPoints = buildPoints('deaths');
+  const casesPoints = buildPoints('positive');
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-14">
@@ -94,35 +87,21 @@ export default function AnalyticsPage() {
         title="Analytics"
         description={
           trendType === 'weekly'
-            ? 'Week-over-week case and mortality movement. (Weekly view is planned — the current data pipeline is monthly-only.)'
-            : 'Month-over-month case and mortality movement. Cases and deaths are aggregated from the monthly malaria CSV uploads (columns: cases, deaths).'
+            ? 'Week-over-week case movement. (Weekly view is planned — the current data pipeline is monthly-only.)'
+            : 'Month-over-month case movement. Cases are aggregated from the monthly malaria CSV uploads (columns: positive, tests, travel).'
         }
       />
 
       {/* Headline tiles — hidden under the weekly placeholder because the
           totals would render as 0/0 when no weekly rows are returned. */}
       {trendType === 'weekly' ? null : (
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
           <StatCard
             eyebrow="Total cases"
-            value={totals.cases.toLocaleString()}
+            value={totals.positive.toLocaleString()}
             caption={`Sum across ${trends.length} month${trends.length === 1 ? '' : 's'} (uploaded CSV data)`}
             icon={Activity}
             tone="signal"
-          />
-          <StatCard
-            eyebrow="Total deaths"
-            value={totals.deaths.toLocaleString()}
-            caption={`From CSV "deaths" column · CFR ${averageCfr}%`}
-            icon={HeartPulse}
-            tone={parseFloat(averageCfr) > 1 ? 'error' : 'valid'}
-          />
-          <StatCard
-            eyebrow="Avg CFR"
-            value={`${averageCfr}%`}
-            caption="Deaths ÷ cases across window"
-            icon={TrendingUp}
-            tone={parseFloat(averageCfr) > 1 ? 'warn' : 'valid'}
           />
           <StatCard
             eyebrow="Periods"
@@ -201,27 +180,11 @@ export default function AnalyticsPage() {
                     points={casesPoints}
                     vectorEffect="non-scaling-stroke"
                   />
-                  <polyline
-                    fill="none"
-                    stroke="hsl(var(--chart-2))"
-                    strokeWidth="1"
-                    strokeDasharray="2 1.5"
-                    points={deathsPoints}
-                    vectorEffect="non-scaling-stroke"
-                  />
                 </svg>
                 <div className="flex items-center gap-5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
                   <span className="inline-flex items-center gap-2">
                     <span aria-hidden className="inline-block size-2.5 bg-chart-1" />
                     Cases
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <span
-                      aria-hidden
-                      className="inline-block h-[2px] w-3 bg-chart-2"
-                      style={{ background: 'repeating-linear-gradient(90deg, hsl(var(--chart-2)) 0 4px, transparent 4px 7px)' }}
-                    />
-                    Deaths
                   </span>
                 </div>
                 <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground tabular-nums">
@@ -229,10 +192,8 @@ export default function AnalyticsPage() {
                   <span>{trends[0]?.period ?? '-'}</span>
                 </div>
               </div>
-              <div className="grid grid-cols-1 gap-px bg-border sm:grid-cols-3 lg:grid-cols-1 lg:divide-y lg:divide-border lg:bg-card">
-                <Metric eyebrow="Total cases" value={totals.cases.toLocaleString()} />
-                <Metric eyebrow="Total deaths" value={totals.deaths.toLocaleString()} />
-                <Metric eyebrow="Average CFR" value={`${averageCfr}%`} />
+              <div className="grid grid-cols-1 gap-px bg-border sm:grid-cols-1 lg:grid-cols-1 lg:divide-y lg:divide-border lg:bg-card">
+                <Metric eyebrow="Total cases" value={totals.positive.toLocaleString()} />
               </div>
             </EditorialCard>
 
@@ -249,35 +210,21 @@ export default function AnalyticsPage() {
                     <Th>Period</Th>
                     <Th>Year</Th>
                     <Th align="right">Cases</Th>
-                    <Th align="right">Deaths</Th>
-                    <Th align="right">CFR (%)</Th>
                   </tr>
                 </thead>
                 <tbody>
-                  {trends.map((trend, index) => {
-                    const cfr =
-                      trend.cases > 0
-                        ? ((trend.deaths / trend.cases) * 100).toFixed(2)
-                        : '0.00';
-                    return (
-                      <tr
-                        key={index}
-                        className="border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40"
-                      >
-                        <Td>{trend.period}</Td>
-                        <Td>{trend.year}</Td>
-                        <Td align="right" numeric>
-                          {trend.cases.toLocaleString()}
-                        </Td>
-                        <Td align="right" numeric>
-                          {trend.deaths.toLocaleString()}
-                        </Td>
-                        <Td align="right" numeric>
-                          {cfr}%
-                        </Td>
-                      </tr>
-                    );
-                  })}
+                  {trends.map((trend, index) => (
+                    <tr
+                      key={index}
+                      className="border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40"
+                    >
+                      <Td>{trend.period}</Td>
+                      <Td>{trend.year}</Td>
+                      <Td align="right" numeric>
+                        {trend.positive.toLocaleString()}
+                      </Td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </EditorialCard>

@@ -10,12 +10,11 @@ export interface RiskFeature {
     latitude?: number | null;
     longitude?: number | null;
     risk_level: RiskLevel;
-    recent_cases?: number;
-    recent_deaths?: number;
+    recent_positive?: number;
     prediction_score?: number;
     confidence_score?: number;
     prediction_reason?: string;
-    /** "YYYY-MM" the prediction (and its co-aligned cases/deaths) covers. */
+    /** "YYYY-MM" the prediction covers. */
     prediction_period?: string | null;
     /** Human-readable form of `prediction_period`, e.g. "May 2026". */
     prediction_period_label?: string | null;

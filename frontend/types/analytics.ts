@@ -9,9 +9,7 @@ export interface RiskThresholds {
 }
 
 export interface DashboardSummary {
-  total_cases: number;
-  total_deaths: number;
-  case_fatality_rate: number;
+  total_positive: number;
   active_alerts: number;
   high_risk_districts: number;
   period: string;
@@ -37,8 +35,7 @@ export interface DashboardSummary {
 
 export interface TrendDataPoint {
   period: string;
-  cases: number;
-  deaths: number;
+  positive: number;
   week?: number;
   month?: number;
   year: number;

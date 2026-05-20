@@ -48,7 +48,7 @@ def fake_malaria_history(district_id: str, target: date) -> list[SimpleNamespace
             m += 12; y -= 1
         rows.append(SimpleNamespace(
             district_id=district_id, year=y, month=m, week=None,
-            cases=80 + k * 12, deaths=2, tests=400 + k * 20))
+            positive=80 + k * 12, tests=400 + k * 20, travel=5 + k))
     return rows
 
 

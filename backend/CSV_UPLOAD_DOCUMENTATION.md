@@ -9,8 +9,8 @@ Complete CSV upload system for malaria and climate data with validation, parsing
 ✅ **CSV File Upload** - Upload malaria and climate data via CSV files
 ✅ **Pandas Parsing** - Efficient CSV parsing with pandas
 ✅ **Data Validation** - Comprehensive validation of all fields
-✅ **District Mapping** - Automatic district code validation and mapping
-✅ **Season Generation** - Automatic Ethiopian season assignment
+✅ **Facility → Woreda Aggregation** - Backend rolls facility rows up to woreda automatically
+✅ **Ethiopian Calendar Parsing** - `Eth_Month_Year` strings are converted to Gregorian `(year, month)` server-side
 ✅ **Duplicate Detection** - Prevents duplicate data entries
 ✅ **Error Reporting** - Clear, row-specific error messages
 ✅ **Background Tasks** - Async AI prediction processing
@@ -19,65 +19,34 @@ Complete CSV upload system for malaria and climate data with validation, parsing
 
 ## Upload Types
 
-### 1. Weekly Malaria Data
-
-**Endpoint:** `POST /api/v1/uploads/malaria/weekly`
-
-**CSV Format:**
-```csv
-district_code,week,year,cases,deaths
-AA-001,1,2024,150,5
-OR-001,1,2024,200,8
-AM-001,1,2024,180,6
-```
-
-**Required Columns:**
-- `district_code` - District code (must exist in database)
-- `week` - Week number (1-53)
-- `year` - Year (2000-2100)
-- `cases` - Number of cases (≥0)
-- `deaths` - Number of deaths (≥0, ≤cases)
-
-**Validation Rules:**
-- All columns required
-- Week must be 1-53
-- Year must be 2000-2100
-- Cases must be ≥ 0
-- Deaths must be ≥ 0
-- Deaths cannot exceed cases
-- District code must exist
-- No duplicates (same district, week, year)
-
-### 2. Monthly Malaria Data
+### 1. Monthly Malaria Data
 
 **Endpoint:** `POST /api/v1/uploads/malaria/monthly`
 
 **CSV Format:**
 ```csv
-district_code,month,year,cases,deaths
-AA-001,1,2024,600,20
-OR-001,1,2024,800,32
-AM-001,1,2024,720,24
+organisationunitid,Eth_Month_Year,Travel,Positive,Tests
+JgBKioqJo5h,Ginbot 2016,12,45,210
+jKfQ1lzqQOg,Hamle 2015,3,18,160
+gN2EJsiQS3J,Sene 2016,7,32,180
 ```
 
 **Required Columns:**
-- `district_code` - District code (must exist in database)
-- `month` - Month number (1-12)
-- `year` - Year (2000-2100)
-- `cases` - Number of cases (≥0)
-- `deaths` - Number of deaths (≥0, ≤cases)
+- `organisationunitid` - Facility identifier (string). Backend joins this to the parent woreda.
+- `Eth_Month_Year` - Ethiopian month and year, e.g. `Ginbot 2016`. Server converts to Gregorian `(year, month)`.
+- `Travel` - Number of travel-history-positive cases (≥0)
+- `Positive` - Number of confirmed positive cases (≥0)
+- `Tests` - Number of tests performed (≥0)
 
 **Validation Rules:**
 - All columns required
-- Month must be 1-12
-- Year must be 2000-2100
-- Cases must be ≥ 0
-- Deaths must be ≥ 0
-- Deaths cannot exceed cases
-- District code must exist
-- No duplicates (same district, month, year)
+- `Eth_Month_Year` must be a recognised Ethiopian month name plus year
+- `Travel`, `Positive`, `Tests` must be numeric and ≥ 0
+- `organisationunitid` must map to a facility whose parent woreda exists in `districts`
+- Backend aggregates facility rows → one woreda-month row before persisting
+- No duplicates per `(woreda, year, month)` once aggregated
 
-### 3. Climate Data
+### 2. Climate Data
 
 **Endpoint:** `POST /api/v1/uploads/climate`
 
@@ -108,10 +77,10 @@ AM-001,2024-01-15,8.5,20.1
 
 ### Upload Endpoints
 
-#### 1. Upload Weekly Malaria Data
+#### 1. Upload Monthly Malaria Data
 
 ```http
-POST /api/v1/uploads/malaria/weekly
+POST /api/v1/uploads/malaria/monthly
 Authorization: Bearer <token>
 Content-Type: multipart/form-data
 
@@ -131,19 +100,7 @@ file: <CSV file>
 }
 ```
 
-#### 2. Upload Monthly Malaria Data
-
-```http
-POST /api/v1/uploads/malaria/monthly
-Authorization: Bearer <token>
-Content-Type: multipart/form-data
-
-file: <CSV file>
-```
-
-**Response:** Same as weekly upload
-
-#### 3. Upload Climate Data
+#### 2. Upload Climate Data
 
 ```http
 POST /api/v1/uploads/climate
@@ -157,15 +114,7 @@ file: <CSV file>
 
 ### Template Download Endpoints
 
-#### 1. Download Weekly Malaria Template
-
-```http
-GET /api/v1/uploads/templates/malaria/weekly
-```
-
-**Response:** CSV file download
-
-#### 2. Download Monthly Malaria Template
+#### 1. Download Monthly Malaria Template
 
 ```http
 GET /api/v1/uploads/templates/malaria/monthly
@@ -173,7 +122,7 @@ GET /api/v1/uploads/templates/malaria/monthly
 
 **Response:** CSV file download
 
-#### 3. Download Climate Template
+#### 2. Download Climate Template
 
 ```http
 GET /api/v1/uploads/templates/climate
@@ -195,21 +144,21 @@ GET /api/v1/uploads/templates/climate
   "errors": [
     {
       "row": 5,
-      "column": "cases",
+      "column": "Positive",
       "value": "-10",
       "error": "Value must be >= 0"
     },
     {
       "row": 12,
-      "column": "district_code",
+      "column": "organisationunitid",
       "value": "INVALID",
-      "error": "Invalid district code: INVALID"
+      "error": "Unknown facility id: INVALID"
     },
     {
       "row": 18,
-      "column": "deaths",
-      "value": "150",
-      "error": "Deaths (150) cannot exceed cases (100)"
+      "column": "Eth_Month_Year",
+      "value": "Foobar 2016",
+      "error": "Unrecognised Ethiopian month name"
     }
   ],
   "file_id": "123e4567-e89b-12d3-a456-426614174000"
@@ -221,17 +170,17 @@ GET /api/v1/uploads/templates/climate
 **Missing Columns:**
 ```json
 {
-  "error": "Missing required columns: cases, deaths"
+  "error": "Missing required columns: Positive, Tests"
 }
 ```
 
-**Invalid District Code:**
+**Invalid Facility ID:**
 ```json
 {
   "row": 5,
-  "column": "district_code",
-  "value": "INVALID-CODE",
-  "error": "Invalid district code: INVALID-CODE"
+  "column": "organisationunitid",
+  "value": "INVALID-ID",
+  "error": "Unknown facility id: INVALID-ID"
 }
 ```
 
@@ -239,7 +188,7 @@ GET /api/v1/uploads/templates/climate
 ```json
 {
   "row": 8,
-  "column": "cases",
+  "column": "Positive",
   "value": "abc",
   "error": "Value must be numeric"
 }
@@ -249,19 +198,19 @@ GET /api/v1/uploads/templates/climate
 ```json
 {
   "row": 10,
-  "column": "week",
-  "value": "55",
-  "error": "Value must be <= 53"
+  "column": "Positive",
+  "value": "-10",
+  "error": "Value must be >= 0"
 }
 ```
 
-**Deaths Exceed Cases:**
+**Invalid Ethiopian Month:**
 ```json
 {
   "row": 15,
-  "column": "deaths",
-  "value": "150",
-  "error": "Deaths (150) cannot exceed cases (100)"
+  "column": "Eth_Month_Year",
+  "value": "Foobar 2016",
+  "error": "Unrecognised Ethiopian month name"
 }
 ```
 
@@ -270,12 +219,12 @@ GET /api/v1/uploads/templates/climate
 {
   "row": 20,
   "column": "duplicate",
-  "value": "AA-001, Week 1, 2024",
+  "value": "Adwa woreda, Ginbot 2016",
   "error": "Duplicate record already exists"
 }
 ```
 
-**Invalid Date Format:**
+**Invalid Date Format (climate only):**
 ```json
 {
   "row": 7,
@@ -293,7 +242,7 @@ GET /api/v1/uploads/templates/climate
 
 **Classes:**
 - `CSVParser` - Base parser with common validation
-- `MalariaCSVParser` - Malaria-specific parsing
+- `MalariaCSVParser` - Malaria-specific parsing (Ethiopian-month aware)
 - `ClimateCSVParser` - Climate-specific parsing
 
 **Methods:**
@@ -305,10 +254,7 @@ df = CSVParser.read_csv_file(file_content)
 missing = CSVParser.validate_required_columns(df, required_columns)
 
 # Validate numeric column
-errors = CSVParser.validate_numeric_column(df, 'cases', min_value=0)
-
-# Parse weekly malaria data
-df, errors = MalariaCSVParser.parse_weekly_data(file_content)
+errors = CSVParser.validate_numeric_column(df, 'Positive', min_value=0)
 
 # Parse monthly malaria data
 df, errors = MalariaCSVParser.parse_monthly_data(file_content)
@@ -319,7 +265,7 @@ df, errors = ClimateCSVParser.parse_climate_data(file_content)
 
 ### 2. District Mapper (`district_mapper.py`)
 
-**Purpose:** Map and validate district codes
+**Purpose:** Map facility ids to woredas and validate district codes
 
 **Class:** `DistrictMapper`
 
@@ -331,14 +277,14 @@ mapper = DistrictMapper(db)
 # Load districts into cache
 await mapper.load_districts()
 
-# Get district by code
-district = await mapper.get_district_by_code("AA-001")
+# Resolve facility id to its parent woreda
+district = await mapper.get_district_by_facility_id("JgBKioqJo5h")
 
-# Validate district code
-is_valid, district_id, error = await mapper.validate_district_code("AA-001")
+# Validate facility id
+is_valid, district_id, error = await mapper.validate_facility_id("JgBKioqJo5h")
 
-# Validate multiple codes
-results = await mapper.validate_district_codes_batch(["AA-001", "OR-001"])
+# Validate multiple facility ids
+results = await mapper.validate_facility_ids_batch(["JgBKioqJo5h", "jKfQ1lzqQOg"])
 ```
 
 ### 3. Season Generator (`season_generator.py`)
@@ -375,15 +321,9 @@ is_rainy = SeasonGenerator.is_rainy_season('kiremt')  # Returns True
 
 **Methods:**
 
-### Process Weekly Malaria Upload
-```python
-service = UploadService(db, user_id)
-success, message, processed, created, skipped, errors, file_id = \
-    await service.process_weekly_malaria_upload(file_content, filename)
-```
-
 ### Process Monthly Malaria Upload
 ```python
+service = UploadService(db, user_id)
 success, message, processed, created, skipped, errors, file_id = \
     await service.process_monthly_malaria_upload(file_content, filename)
 ```
@@ -401,14 +341,14 @@ success, message, processed, created, skipped, errors, file_id = \
 After successful upload, a background task is triggered to process AI predictions for affected districts.
 
 ```python
-@router.post("/uploads/malaria/weekly")
-async def upload_weekly_malaria_data(
+@router.post("/uploads/malaria/monthly")
+async def upload_monthly_malaria_data(
     background_tasks: BackgroundTasks,
     ...
 ):
     # Process upload
     ...
-    
+
     # Trigger background prediction
     if created > 0:
         background_tasks.add_task(trigger_prediction_processing, district_ids, db)
@@ -437,10 +377,10 @@ login_response = requests.post(
 )
 token = login_response.json()["access_token"]
 
-# Upload weekly malaria data
-with open("malaria_weekly.csv", "rb") as f:
+# Upload monthly malaria data
+with open("malaria_monthly.csv", "rb") as f:
     response = requests.post(
-        "http://localhost:8000/api/v1/uploads/malaria/weekly",
+        "http://localhost:8000/api/v1/uploads/malaria/monthly",
         headers={"Authorization": f"Bearer {token}"},
         files={"file": f}
     )
@@ -458,9 +398,9 @@ TOKEN=$(curl -X POST "http://localhost:8000/api/v1/auth/login" \
   | jq -r '.access_token')
 
 # Upload file
-curl -X POST "http://localhost:8000/api/v1/uploads/malaria/weekly" \
+curl -X POST "http://localhost:8000/api/v1/uploads/malaria/monthly" \
   -H "Authorization: Bearer $TOKEN" \
-  -F "file=@malaria_weekly.csv"
+  -F "file=@malaria_monthly.csv"
 ```
 
 ### Download Template (JavaScript)
@@ -468,14 +408,14 @@ curl -X POST "http://localhost:8000/api/v1/uploads/malaria/weekly" \
 ```javascript
 async function downloadTemplate() {
   const response = await fetch(
-    'http://localhost:8000/api/v1/uploads/templates/malaria/weekly'
+    'http://localhost:8000/api/v1/uploads/templates/malaria/monthly'
   );
-  
+
   const blob = await response.blob();
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'malaria_weekly_template.csv';
+  a.download = 'malaria_monthly_template.csv';
   a.click();
 }
 ```
@@ -487,13 +427,13 @@ async function downloadTemplate() {
 ```bash
 # Create test CSV
 cat > test_malaria.csv << EOF
-district_code,week,year,cases,deaths
-AA-001,1,2024,150,5
-OR-001,1,2024,200,8
+organisationunitid,Eth_Month_Year,Travel,Positive,Tests
+JgBKioqJo5h,Ginbot 2016,12,45,210
+jKfQ1lzqQOg,Hamle 2015,3,18,160
 EOF
 
 # Upload
-curl -X POST "http://localhost:8000/api/v1/uploads/malaria/weekly" \
+curl -X POST "http://localhost:8000/api/v1/uploads/malaria/monthly" \
   -H "Authorization: Bearer $TOKEN" \
   -F "file=@test_malaria.csv"
 ```
@@ -503,15 +443,15 @@ curl -X POST "http://localhost:8000/api/v1/uploads/malaria/weekly" \
 ```bash
 # Create CSV with errors
 cat > test_errors.csv << EOF
-district_code,week,year,cases,deaths
-INVALID,1,2024,150,5
-AA-001,60,2024,200,8
-AA-001,1,2024,-10,5
-AA-001,1,2024,100,150
+organisationunitid,Eth_Month_Year,Travel,Positive,Tests
+INVALID,Ginbot 2016,12,45,210
+JgBKioqJo5h,Foobar 2016,3,18,160
+JgBKioqJo5h,Ginbot 2016,12,-10,210
+JgBKioqJo5h,Ginbot 2016,abc,45,210
 EOF
 
 # Upload and see validation errors
-curl -X POST "http://localhost:8000/api/v1/uploads/malaria/weekly" \
+curl -X POST "http://localhost:8000/api/v1/uploads/malaria/monthly" \
   -H "Authorization: Bearer $TOKEN" \
   -F "file=@test_errors.csv"
 ```
@@ -522,8 +462,8 @@ curl -X POST "http://localhost:8000/api/v1/uploads/malaria/weekly" \
 
 - Use UTF-8 encoding
 - Include all required columns
-- Use correct date format (YYYY-MM-DD)
-- Validate district codes before upload
+- Use Ethiopian month names for `Eth_Month_Year` (e.g. `Ginbot 2016`)
+- Validate facility ids before upload
 - Remove empty rows
 - Check for duplicates
 
@@ -552,35 +492,34 @@ curl -X POST "http://localhost:8000/api/v1/uploads/malaria/weekly" \
 
 ### "Missing required columns"
 - Check CSV headers match exactly
-- Column names are case-insensitive
+- Column names are case-sensitive for `Eth_Month_Year`, `Travel`, `Positive`, `Tests`
 - Remove extra spaces in headers
 
-### "Invalid district code"
-- Verify district exists in database
-- Check district code format
-- Use correct district codes
+### "Unknown facility id"
+- Verify facility id exists in the master facility list
+- Check id casing and whitespace
+- Confirm the facility's parent woreda is loaded in `districts`
 
 ### "Duplicate record already exists"
 - Check if data was already uploaded
-- Verify date/week/month/year combination
+- Verify woreda + Ethiopian month + year combination
 - Remove duplicates from CSV
 
 ### "Value must be numeric"
-- Ensure numeric fields contain only numbers
+- Ensure `Travel`, `Positive`, `Tests` contain only numbers
 - Remove commas from numbers
 - Check for text in numeric columns
 
-### "Deaths cannot exceed cases"
-- Verify death count is correct
-- Check cases count is correct
-- Fix data in CSV file
+### "Unrecognised Ethiopian month name"
+- Use one of: Meskerem, Tikimt, Hidar, Tahsas, Tir, Yekatit, Megabit, Miyazya, Ginbot, Sene, Hamle, Nehase, Pagumē
+- Year is the Ethiopian year (e.g. `2016`)
 
 ## Performance
 
 ### Optimization Tips
 
 1. **Batch Processing** - Upload in batches of 1000-5000 records
-2. **Caching** - District mapper caches districts for fast lookup
+2. **Caching** - District mapper caches facility → woreda lookups
 3. **Async Processing** - Background tasks don't block response
 4. **Validation** - Early validation prevents database operations
 5. **Indexing** - Database indexes speed up duplicate detection
@@ -617,16 +556,15 @@ curl -X POST "http://localhost:8000/api/v1/uploads/malaria/weekly" \
 ## Summary
 
 ✅ **Complete CSV Upload System**
-- Weekly malaria data
-- Monthly malaria data
+- Monthly malaria data (facility-level, aggregated to woreda)
 - Climate data
 
 ✅ **Comprehensive Validation**
 - Required columns
 - Numeric ranges
-- District codes
+- Facility ids
+- Ethiopian month parsing
 - Duplicates
-- Data integrity
 
 ✅ **User-Friendly**
 - Clear error messages

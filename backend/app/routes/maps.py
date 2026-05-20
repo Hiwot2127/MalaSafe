@@ -54,8 +54,7 @@ async def get_risk_map(
     - risk_level: low, moderate, high, very_high
     - confidence_score: Prediction confidence (0-1)
     - prediction_score: Model prediction score
-    - recent_cases: Cases in current month
-    - recent_deaths: Deaths in current month
+    - recent_positive: Positive cases scoped to the prediction's target month
     
     **Usage with Leaflet:**
     ```javascript
@@ -102,8 +101,7 @@ async def get_risk_map(
             "risk_level": "high",
             "confidence_score": 0.85,
             "prediction_score": 0.78,
-            "recent_cases": 150,
-            "recent_deaths": 5
+            "recent_positive": 150
           },
           "geometry": null
         }

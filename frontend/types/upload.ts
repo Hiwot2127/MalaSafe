@@ -4,7 +4,7 @@ export interface UploadError {
   value?: string;
   error: string;
   // Original row payload, populated by the preview endpoint so the modal can
-  // show what was in the bad row, not just "row 5: deaths > cases".
+  // show what was in the bad row, not just "row 5: positive must be >= 0".
   row_data?: Record<string, string | number | null>;
 }
 

@@ -92,9 +92,30 @@ class MalariaPredictor:
         target_month: date,
         malaria_history: Iterable,
         climate_history: Iterable,
-        tests_hint: float,
-        ec_month_name: str | None,
+        tests_hint: float | None = None,
+        ec_month_name: str | None = None,
     ) -> PredictionResult:
+        # Materialise so we can inspect for a tests_hint default without
+        # exhausting a generator before build_features() sees it.
+        malaria_history = list(malaria_history)
+
+        # `tests_hint` defaults to the latest non-null `tests` value on the
+        # malaria_history rows (newest by year/month). Falls back to the
+        # legacy implicit default of 0.0 if none is present, preserving the
+        # exposure-factor behaviour for cold-start districts.
+        if tests_hint is None:
+            latest_tests: float | None = None
+            for m in sorted(
+                malaria_history,
+                key=lambda r: (r.year, r.month),
+                reverse=True,
+            ):
+                t = getattr(m, "tests", None)
+                if t is not None:
+                    latest_tests = float(t)
+                    break
+            tests_hint = latest_tests if latest_tests is not None else 0.0
+
         # 1. Build features
         f, is_warm = build_features(
             district=district,
