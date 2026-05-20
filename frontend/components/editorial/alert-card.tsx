@@ -1,6 +1,6 @@
 import * as React from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, CheckCircle2, Info, XCircle } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tone = "info" | "valid" | "warn" | "error";
@@ -8,35 +8,35 @@ type Tone = "info" | "valid" | "warn" | "error";
 const TONE_STYLES: Record<
   Tone,
   {
-    card: string;
-    badge: string;
-    icon: string;
-    Component: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+    rail: string;
+    pill: string;
+    dot: string;
+    ctaFilled: string;
   }
 > = {
   info: {
-    card: "border-accent-signal/30",
-    badge: "bg-accent-signal-tint",
-    icon: "text-accent-signal",
-    Component: Info,
+    rail: "bg-accent-signal",
+    pill: "bg-accent-signal-tint text-foreground",
+    dot: "bg-accent-signal",
+    ctaFilled: "bg-accent-signal text-primary-foreground hover:opacity-90",
   },
   valid: {
-    card: "border-status-valid/30",
-    badge: "bg-status-valid-tint",
-    icon: "status-valid",
-    Component: CheckCircle2,
+    rail: "bg-status-valid",
+    pill: "bg-status-valid-tint text-foreground",
+    dot: "bg-status-valid",
+    ctaFilled: "bg-status-valid text-primary-foreground hover:opacity-90",
   },
   warn: {
-    card: "border-status-warn/30",
-    badge: "bg-status-warn-tint",
-    icon: "status-warn",
-    Component: AlertTriangle,
+    rail: "bg-status-warn",
+    pill: "bg-status-warn-tint text-foreground",
+    dot: "bg-status-warn",
+    ctaFilled: "bg-status-warn text-foreground hover:opacity-90",
   },
   error: {
-    card: "border-status-error/30",
-    badge: "bg-status-error-tint",
-    icon: "status-error",
-    Component: XCircle,
+    rail: "bg-status-error",
+    pill: "bg-status-error-tint text-foreground",
+    dot: "bg-status-error",
+    ctaFilled: "bg-status-error text-primary-foreground hover:opacity-90",
   },
 };
 
@@ -47,17 +47,17 @@ interface AlertCardStat {
 
 interface AlertCardProps {
   tone?: Tone;
-  /** Mono micro-label rendered above the title. */
+  /** Mono micro-label rendered as a status pill above the title. */
   eyebrow?: string;
-  /** Headline. Kept short — the stats below carry the weight. */
+  /** Headline. Kept short — the stats below carry the magnitude. */
   title: string;
   /** One-line context under the stats. */
   description?: React.ReactNode;
-  /** Lead-with-the-numbers slot. When provided, takes visual priority over
-   *  the title. Use for alerts where the magnitude is the message
-   *  (e.g. "23,264 alerts open across 516 districts"). */
+  /** Hero stats slot. First item gets visual priority; additional items
+   *  appear alongside, divided by a hairline rule. Use for alerts where
+   *  the magnitude is the message. */
   stats?: AlertCardStat[];
-  /** Optional inline CTA. Either an href or a button-like onClick. */
+  /** Optional inline CTA. Filled for `error` tone, outlined otherwise. */
   cta?:
     | { label: string; href: string }
     | { label: string; onClick: () => void };
@@ -73,76 +73,97 @@ export function AlertCard({
   cta,
   className,
 }: AlertCardProps) {
-  const { card, badge, icon, Component: Icon } = TONE_STYLES[tone];
-  const ctaButtonClass =
-    "inline-flex shrink-0 items-center gap-1.5 self-start rounded-md border border-border bg-card px-3.5 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-secondary";
+  const { rail, pill, dot, ctaFilled } = TONE_STYLES[tone];
+
+  const ctaClass = cn(
+    "group/cta inline-flex shrink-0 items-center gap-2 self-start rounded-md px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.2em] transition-all",
+    tone === "error"
+      ? ctaFilled
+      : "border border-border bg-card text-foreground hover:bg-secondary",
+  );
+
+  const ctaInner = cta ? (
+    <>
+      {cta.label}
+      <ArrowRight
+        className="size-3.5 transition-transform group-hover/cta:translate-x-0.5"
+        strokeWidth={1.75}
+        aria-hidden
+      />
+    </>
+  ) : null;
 
   return (
     <section
       className={cn(
-        "relative flex flex-col gap-4 rounded-[var(--radius)] border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:gap-5 sm:p-5",
-        card,
+        "relative overflow-hidden rounded-[var(--radius)] border border-border bg-card shadow-sm",
         className,
       )}
     >
-      <span
-        aria-hidden
-        className={cn(
-          "inline-flex size-10 shrink-0 items-center justify-center rounded-lg",
-          badge,
-        )}
-      >
-        <Icon className={cn("size-5", icon)} strokeWidth={1.75} />
-      </span>
+      <span aria-hidden className={cn("absolute inset-y-0 left-0 w-[3px]", rail)} />
 
-      <div className="flex flex-1 flex-col gap-2 min-w-0">
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          {eyebrow ? (
-            <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              {eyebrow}
-            </span>
+      <div className="flex flex-col gap-6 p-5 pl-6 sm:p-6 sm:pl-7 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+        <div className="flex flex-1 flex-col gap-5 min-w-0">
+          <div className="flex flex-col gap-2.5">
+            {eyebrow ? (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-2 self-start rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.24em]",
+                  pill,
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn("size-1.5 rounded-full", dot)}
+                />
+                {eyebrow}
+              </span>
+            ) : null}
+            <h2 className="font-display text-xl font-semibold leading-[1.1] tracking-[-0.018em] text-foreground sm:text-2xl">
+              {title}
+            </h2>
+          </div>
+
+          {stats && stats.length > 0 ? (
+            <dl className="flex flex-wrap items-end gap-x-8 gap-y-5 border-t border-border pt-5 sm:gap-x-10">
+              {stats.map((stat, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "flex flex-col gap-1.5",
+                    i > 0 && "sm:border-l sm:border-border sm:pl-8 lg:pl-10",
+                  )}
+                >
+                  <dd className="font-display text-[2rem] font-semibold leading-none tabular-nums tracking-[-0.026em] text-foreground sm:text-[2.5rem]">
+                    {stat.value}
+                  </dd>
+                  <dt className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                    {stat.label}
+                  </dt>
+                </div>
+              ))}
+            </dl>
           ) : null}
-          <h2 className="font-display text-base font-semibold leading-tight tracking-tight text-foreground sm:text-lg">
-            {title}
-          </h2>
+
+          {description ? (
+            <p className="max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
+              {description}
+            </p>
+          ) : null}
         </div>
 
-        {stats && stats.length > 0 ? (
-          <dl className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
-            {stats.map((stat, i) => (
-              <div key={i} className="flex items-baseline gap-2">
-                <dt className="sr-only">{stat.label}</dt>
-                <dd className="font-display text-2xl font-semibold leading-none tabular-nums tracking-[-0.022em] text-foreground sm:text-3xl">
-                  {stat.value}
-                </dd>
-                <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                  {stat.label}
-                </span>
-              </div>
-            ))}
-          </dl>
-        ) : null}
-
-        {description ? (
-          <p className="font-sans text-sm leading-relaxed text-muted-foreground">
-            {description}
-          </p>
+        {cta ? (
+          "href" in cta ? (
+            <Link href={cta.href} className={ctaClass}>
+              {ctaInner}
+            </Link>
+          ) : (
+            <button type="button" onClick={cta.onClick} className={ctaClass}>
+              {ctaInner}
+            </button>
+          )
         ) : null}
       </div>
-
-      {cta ? (
-        "href" in cta ? (
-          <Link href={cta.href} className={ctaButtonClass}>
-            {cta.label}
-            <ArrowRight className="size-3.5" strokeWidth={1.5} aria-hidden />
-          </Link>
-        ) : (
-          <button type="button" onClick={cta.onClick} className={ctaButtonClass}>
-            {cta.label}
-            <ArrowRight className="size-3.5" strokeWidth={1.5} aria-hidden />
-          </button>
-        )
-      ) : null}
     </section>
   );
 }

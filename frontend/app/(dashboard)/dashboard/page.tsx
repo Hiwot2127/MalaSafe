@@ -159,62 +159,21 @@ export default function DashboardPage() {
         cta={activeAlerts > 0 ? { label: 'Review alerts', href: '/alerts' } : undefined}
       />
 
-      {/* Period summary - the brand-blue hero with the headline numbers. */}
-      <section className="relative flex flex-col gap-6 overflow-hidden rounded-[var(--radius)] bg-primary p-8 text-primary-foreground sm:p-10">
-        <span aria-hidden className="absolute inset-y-6 left-0 w-[3px] bg-accent-signal" />
-        <div className="flex flex-col gap-3">
-          <p className="font-mono text-[10px] uppercase tracking-[0.28em] opacity-70">
-            MalaSafe · {period}
-          </p>
-          <h2 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-0.022em] sm:text-4xl">
-            Reporting window
-          </h2>
-          <p className="max-w-prose font-sans text-base leading-relaxed opacity-85">
-            {cases.toLocaleString()} cases against {deaths.toLocaleString()} deaths
-            (CFR {cfr.toFixed(2)}%).{' '}
-            {activeAlerts > 0
-              ? `${activeAlerts.toLocaleString()} alerts open, ${highRisk.toLocaleString()} districts on watch.`
-              : 'No alerts open at this time.'}
-          </p>
-        </div>
-        <dl className="grid grid-cols-1 gap-6 border-t border-primary-foreground/15 pt-6 sm:grid-cols-4">
-          <div className="flex flex-col gap-1">
-            <dt className="font-mono text-[10px] uppercase tracking-[0.22em] opacity-60">Cases</dt>
-            <dd className="font-display text-2xl font-semibold tabular-nums tracking-[-0.022em]">
-              {cases.toLocaleString()}
-            </dd>
-          </div>
-          <div className="flex flex-col gap-1">
-            <dt className="font-mono text-[10px] uppercase tracking-[0.22em] opacity-60">Deaths</dt>
-            <dd className="font-display text-2xl font-semibold tabular-nums tracking-[-0.022em]">
-              {deaths.toLocaleString()}
-            </dd>
-          </div>
-          <div className="flex flex-col gap-1">
-            <dt className="font-mono text-[10px] uppercase tracking-[0.22em] opacity-60">
-              Active alerts
-            </dt>
-            <dd className="font-display text-2xl font-semibold tabular-nums tracking-[-0.022em]">
-              {activeAlerts.toLocaleString()}
-            </dd>
-          </div>
-          <div className="flex flex-col gap-1">
-            <dt className="font-mono text-[10px] uppercase tracking-[0.22em] opacity-60">
-              High-risk districts
-            </dt>
-            <dd className="font-display text-2xl font-semibold tabular-nums tracking-[-0.022em]">
-              {highRisk.toLocaleString()}
-            </dd>
-          </div>
-        </dl>
-      </section>
-
-      {/* Section 001 - Indicators */}
+      {/* Section 001 - Indicators + Posture */}
       <section className="flex flex-col gap-5">
-        <SectionHeader index="001" label="Indicators" tone="signal">
-          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            {period}
-          </span>
+        <SectionHeader index="001" label="Indicators" tone={postureStatus}>
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              {period}
+            </span>
+            <StatusPill kind={postureStatus}>
+              {postureStatus === 'valid'
+                ? 'Stable'
+                : postureStatus === 'error'
+                  ? 'Critical'
+                  : 'Monitoring'}
+            </StatusPill>
+          </div>
         </SectionHeader>
         <EditorialCard>
           <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 sm:divide-x lg:grid-cols-4">
@@ -260,6 +219,44 @@ export default function DashboardPage() {
             />
           </div>
         </EditorialCard>
+        <EditorialCard className="grid grid-cols-1 gap-px bg-border md:grid-cols-2">
+          <div className="bg-card p-6">
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+              Caseload signal
+            </p>
+            <p className="mt-3 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
+              Case fatality ratio of {cfr.toFixed(2)}% across the reporting window.
+              CFR &gt; 1% triggers an automatic flag to the district lead.
+            </p>
+          </div>
+          <div className="bg-card p-6">
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+              Geographic concentration
+            </p>
+            <p className="mt-3 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
+              {activeAlerts.toLocaleString()} active alerts open against the current close.
+              Open the risk surface to drill into a region.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Link
+                href="/maps"
+                className="inline-flex items-center gap-1.5 rounded-[var(--radius)] border border-border bg-card px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-secondary/40"
+              >
+                View risk surface
+                <ArrowUpRight className="size-3.5" strokeWidth={1.5} aria-hidden />
+              </Link>
+              {activeAlerts > 0 ? (
+                <Link
+                  href="/alerts"
+                  className="inline-flex items-center gap-1.5 rounded-[var(--radius)] bg-primary px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-primary-foreground transition-colors hover:opacity-90"
+                >
+                  Review alerts
+                  <ArrowUpRight className="size-3.5" strokeWidth={1.5} aria-hidden />
+                </Link>
+              ) : null}
+            </div>
+          </div>
+        </EditorialCard>
         {/* Version + threshold provenance. Lets reviewers audit which model
             and threshold package produced the numbers above. */}
         {(modelVersion || thresholdsVersion || riskThresholds) && (
@@ -278,59 +275,9 @@ export default function DashboardPage() {
         )}
       </section>
 
-      {/* Section 002 - Posture */}
+      {/* Section 002 - Operational checklist */}
       <section className="flex flex-col gap-5">
-        <SectionHeader index="002" label="Posture" tone={postureStatus}>
-          <StatusPill kind={postureStatus}>
-            {postureStatus === 'valid'
-              ? 'Stable'
-              : postureStatus === 'error'
-                ? 'Critical'
-                : 'Monitoring'}
-          </StatusPill>
-        </SectionHeader>
-        <EditorialCard className="grid grid-cols-1 gap-px bg-border md:grid-cols-2">
-          <div className="bg-card p-6">
-            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              Caseload signal
-            </p>
-            <p className="mt-3 font-display font-semibold text-2xl leading-tight tracking-tight">
-              {cases.toLocaleString()}{' '}
-              <span className="font-sans text-base text-muted-foreground">cases / {period}</span>
-            </p>
-            <p className="mt-3 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
-              Case fatality ratio of {cfr.toFixed(2)}% across the reporting window.
-              CFR &gt; 1% triggers an automatic flag to the district lead.
-            </p>
-          </div>
-          <div className="bg-card p-6">
-            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              Geographic concentration
-            </p>
-            <p className="mt-3 font-display font-semibold text-2xl leading-tight tracking-tight">
-              {highRisk.toLocaleString()}{' '}
-              <span className="font-sans text-base text-muted-foreground">
-                high-risk districts
-              </span>
-            </p>
-            <p className="mt-3 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
-              {activeAlerts.toLocaleString()} active alerts open against the current close.
-              Open the risk surface to drill into a region.
-            </p>
-            <Link
-              href="/maps"
-              className="mt-4 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:text-muted-foreground"
-            >
-              View risk surface
-              <ArrowUpRight className="size-3.5" strokeWidth={1.5} aria-hidden />
-            </Link>
-          </div>
-        </EditorialCard>
-      </section>
-
-      {/* Section 003 - Operational checklist */}
-      <section className="flex flex-col gap-5">
-        <SectionHeader index="003" label="How this works" tone="signal" />
+        <SectionHeader index="002" label="How this works" tone="signal" />
         <EditorialCard className="p-0">
           <Accordion type="single" collapsible defaultValue="item-cfr">
             <AccordionItem value="item-cfr">
@@ -370,9 +317,9 @@ export default function DashboardPage() {
         </EditorialCard>
       </section>
 
-      {/* Section 004 - Jump to */}
+      {/* Section 003 - Jump to */}
       <section className="flex flex-col gap-5">
-        <SectionHeader index="004" label="Jump to" tone="signal" />
+        <SectionHeader index="003" label="Jump to" tone="signal" />
         <ul className="grid grid-cols-1 gap-px overflow-hidden border border-border bg-border sm:grid-cols-3">
           {QUICK_LINKS.map((item) => (
             <li key={item.href}>
