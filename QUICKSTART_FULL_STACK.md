@@ -51,13 +51,13 @@ cd backend
 
 ### Create Virtual Environment
 ```bash
+# macOS / Linux
+python3 -m venv venv
+source venv/bin/activate
+
 # Windows
 python -m venv venv
 venv\Scripts\activate
-
-# Linux/Mac
-python3 -m venv venv
-source venv/bin/activate
 ```
 
 ### Install Dependencies
@@ -67,7 +67,10 @@ pip install -r requirements.txt
 
 ### Configure Environment
 ```bash
-# Copy environment template
+# macOS / Linux
+cp .env.example .env
+
+# Windows
 copy .env.example .env
 
 # Edit .env with your settings
@@ -75,10 +78,13 @@ copy .env.example .env
 
 **`.env` Configuration:**
 ```env
-# Database
-DATABASE_URL=postgresql://postgres:your_password@localhost:5432/malasafe
+# Database — async DSN used by the app at runtime
+DATABASE_URL=postgresql+asyncpg://postgres:your_password@localhost:5432/malasafe
 
-# Security
+# Sync DSN used by Alembic for migrations
+DATABASE_URL_SYNC=postgresql://postgres:your_password@localhost:5432/malasafe
+
+# Security — generate with: openssl rand -hex 32
 SECRET_KEY=your-secret-key-here-change-in-production
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
@@ -104,11 +110,9 @@ python setup_database.py
 python create_admin.py
 ```
 
-**Default Admin Credentials:**
-```
-Email: admin@malasafe.gov.et
-Password: admin@123
-```
+`create_admin.py` is interactive — it prompts for email and password and
+enforces password strength (8+ chars, upper, lower, digit, special). Pick a
+strong password at the prompt; there is no hardcoded default.
 
 ### Start Backend Server
 ```bash
@@ -121,7 +125,7 @@ run.bat
 
 **Backend should be running at:** http://localhost:8000
 
-**API Documentation:** http://localhost:8000/docs
+**API Documentation:** http://localhost:8000/api/docs
 
 ---
 
@@ -199,9 +203,10 @@ npx expo start
 
 ## 🤖 Step 5: AI/ML System Setup (Optional)
 
-### Prerequisites
-- Redis server installed
-- Celery installed (included in requirements.txt)
+No extra infrastructure required — no Redis, no Celery, no message broker.
+The monthly prediction pipeline runs in-process via `asyncio.create_task`
+when CSV uploads land, and ad-hoc / scheduled runs are triggered by hitting
+the API directly.
 
 ### Seed Initial Data
 ```bash
@@ -213,20 +218,21 @@ python scripts/compute_baselines.py       # Compute district baselines
 python scripts/backfill_predictions.py    # Generate initial predictions
 ```
 
-### Start Background Workers
+### Trigger the monthly prediction batch
+
+Manually (any time), with a valid admin JWT:
+
 ```bash
-# Terminal 1: Start Redis
-redis-server
-
-# Terminal 2: Start Celery Worker
-celery -A app.tasks.celery_app worker --loglevel=info
-
-# Terminal 3: Start Celery Beat (scheduler)
-celery -A app.tasks.celery_app beat --loglevel=info
+curl -X POST http://localhost:8000/api/v1/monthly-close/predict-monthly \
+  -H "Authorization: Bearer $ADMIN_JWT"
 ```
 
-**AI system will now:**
-- Generate monthly predictions automatically
+For production, schedule the same call from external cron — Render Cron
+Jobs or a GitHub Actions workflow on the 5th of each month — instead of
+running a worker process. There is no embedded scheduler.
+
+**The pipeline will:**
+- Generate next-month predictions for every mapped district
 - Create outbreak alerts for high-risk districts
 - Update risk classifications
 
@@ -237,16 +243,14 @@ celery -A app.tasks.celery_app beat --loglevel=info
 ## ✅ Step 6: Verify Installation
 
 ### Check Backend
-1. Visit http://localhost:8000/docs
+1. Visit http://localhost:8000/api/docs
 2. Should see FastAPI Swagger documentation
 3. Try the health check endpoint: http://localhost:8000/health
 
 ### Check Frontend
 1. Visit http://localhost:3000
 2. Should redirect to login page
-3. Enter admin credentials:
-   - Email: `admin@malasafe.gov.et`
-   - Password: `admin123`
+3. Log in with the email + password you set in `create_admin.py`
 4. Should redirect to dashboard
 
 ### Check Mobile (if installed)
@@ -291,7 +295,7 @@ celery -A app.tasks.celery_app beat --loglevel=info
 2. View alert list
 3. Filter by status and risk level
 
-### Test Predictions (if AI system is running)
+### Test Predictions (after seeding + backfill from Step 5)
 1. Navigate to Analytics page
 2. View prediction charts
 3. Check confidence intervals
@@ -319,7 +323,9 @@ celery -A app.tasks.celery_app beat --loglevel=info
 
 ## 🛠️ Development Workflow
 
-**Backend:** `cd backend && venv\Scripts\activate && uvicorn app.main:app --reload`
+**Backend (macOS / Linux):** `cd backend && source venv/bin/activate && uvicorn app.main:app --reload`
+
+**Backend (Windows):** `cd backend && venv\Scripts\activate && uvicorn app.main:app --reload`
 
 **Frontend:** `cd frontend && npm run dev`
 
@@ -357,13 +363,14 @@ MalaSafe/
 **Predictions:** Generate prediction, Prediction history  
 **Mobile:** Register, Risk dashboard
 
-📖 Full API docs at http://localhost:8000/docs
+📖 Full API docs at http://localhost:8000/api/docs
 
 ---
 
-## 🔐 Default Users
+## 🔐 Users
 
-**Admin:** admin@malasafe.gov.et / admin123
+**First admin:** created interactively by `python create_admin.py` — pick a
+strong password at the prompt (8+ chars, upper, lower, digit, special).
 
 Create additional users via:
 - Officials: `POST /api/v1/auth/create-official` (admin only)
@@ -375,7 +382,8 @@ Create additional users via:
 
 **Backend (.env):**
 ```env
-DATABASE_URL=postgresql://user:pass@localhost:5432/malasafe
+DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/malasafe
+DATABASE_URL_SYNC=postgresql://user:pass@localhost:5432/malasafe
 SECRET_KEY=your-secret-key
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 CORS_ORIGINS=http://localhost:3000
@@ -405,7 +413,7 @@ Set `ENVIRONMENT=production` in backend .env
 
 ## 📚 Additional Resources
 
-- **API Docs**: http://localhost:8000/docs
+- **API Docs**: http://localhost:8000/api/docs
 - **AI Integration**: `AI_INTEGRATION_NOTES.md`
 - **Backend README**: `backend/README.md`
 - **Mobile README**: `mobile/README.md`
@@ -429,8 +437,7 @@ Set `ENVIRONMENT=production` in backend .env
 - [ ] Login successful
 - [ ] Dashboard loads
 - [ ] (Optional) Mobile app running on device
-- [ ] (Optional) AI/ML system initialized
-- [ ] (Optional) Redis and Celery workers running
+- [ ] (Optional) AI/ML system seeded and backfilled
 
 ---
 
@@ -441,11 +448,10 @@ Your MalaSafe malaria surveillance system is now running!
 **Backend:** http://localhost:8000  
 **Frontend:** http://localhost:3000  
 **Mobile:** Expo Go app on your device  
-**API Docs:** http://localhost:8000/docs
+**API Docs:** http://localhost:8000/api/docs
 
-**Login with:**
-- Email: `admin@malasafe.gov.et`
-- Password: `admin123`
+**Login with:** the admin email + password you set when running
+`python create_admin.py`.
 
 ---
 
@@ -455,7 +461,7 @@ Your MalaSafe malaria surveillance system is now running!
 2. Explore analytics and trends
 3. View risk heatmap
 4. Test mobile app on device
-5. Initialize AI system for predictions
+5. Trigger a monthly prediction batch via `/api/v1/monthly-close/predict-monthly`
 6. Create additional users
 
 

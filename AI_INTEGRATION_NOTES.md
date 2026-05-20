@@ -16,8 +16,12 @@ those describe the pre-AI surveillance system. This one is forward-looking.
 - `app/schemas/predictions.py` - request/response models for generate endpoints.
 - `app/routes/predictions.py` - adds `POST /predictions/generate` (admin/MOH/EPHI)
   and `POST /predictions/generate-batch` (admin/MOH, returns 202 + background).
-- `app/tasks/{celery_app,predict_monthly}.py` - Celery beat scheduled the 5th
-  of every month at 02:00 EAT.
+- `app/tasks/{monthly_close,predict_monthly}.py` - in-process orchestrator
+  (close pipeline: backtest → drift → predict) plus the monthly batch
+  predictor. Dispatched via `asyncio.create_task` on uploads and triggered
+  on demand by `POST /api/v1/monthly-close/predict-monthly`. No Celery, no
+  Redis — scheduled runs come from external cron (Render Cron Jobs or
+  GitHub Actions) on the 5th of each month.
 - `alembic/versions/002_extend_for_ml.py` - adds geo columns to `districts`,
   full-set climate columns to `climate_data`, and a unique constraint on
   `(district_id, prediction_date)` so backfill is idempotent.
@@ -99,11 +103,12 @@ curl -X POST http://localhost:8000/api/v1/predictions/generate \
   -H "Content-Type: application/json" \
   -d '{"district_id": "<uuid-from-districts-table>", "target_month": "2025-08-01"}'
 
-# 10. (Optional) Start monthly forward job
-redis-server                               # if not already running
-celery -A app.tasks.celery_app worker --loglevel=info &
-celery -A app.tasks.celery_app beat --loglevel=info &
-# Or trigger ad-hoc: python -c "from app.tasks.predict_monthly import run_monthly_predictions; run_monthly_predictions.delay()"
+# 10. (Optional) Trigger the monthly forward predictions
+# Manually (any time), with a valid admin JWT:
+curl -X POST http://localhost:8000/api/v1/monthly-close/predict-monthly \
+  -H "Authorization: Bearer $ADMIN_JWT"
+# For production: schedule the same call from Render Cron Jobs or GitHub
+# Actions on the 5th of each month. There is no embedded scheduler.
 ```
 
 After step 7, open `http://localhost:3000/dashboard` and the analytics /
@@ -161,7 +166,8 @@ Then point `SEED_DATA_DIR` at `backend/seed_data/`.
 | `regional_baselines.json` missing → bland predictions, no anomaly signal | step 5 not run | `python scripts/compute_baselines.py` |
 | `risk_level` always "moderate" | per-pcode threshold lookup failing → falling back to global | confirm `seed_districts.py` ran first (predictor reads `district.adm3_pcode`) |
 | Backfill very slow (>30 min) | most rows being persisted one-at-a-time | the script commits in batches of 500; if still slow, lower `HISTORY_WINDOW_MONTHS` in `prediction_service.py` |
-| Celery beat not firing | beat process not running, or `REDIS_URL` wrong | `redis-cli ping` to confirm, `celery -A app.tasks.celery_app beat` |
+| Monthly close stuck in `pending` | the in-process task crashed or never started | re-dispatch with `POST /api/v1/monthly-close/{id}/run` (admin only); check server logs for the original failure |
+| Scheduled forward predictions not appearing | external cron not configured | hit `POST /api/v1/monthly-close/predict-monthly` manually, then verify the Render Cron Job / GitHub Actions workflow is enabled |
 
 ---
 
@@ -187,8 +193,8 @@ backend/
 │   │   └── prediction_service.py                    NEW
 │   └── tasks/
 │       ├── __init__.py                              NEW
-│       ├── celery_app.py                            NEW
-│       └── predict_monthly.py                       NEW
+│       ├── monthly_close.py                         NEW (in-process close orchestrator)
+│       └── predict_monthly.py                       NEW (monthly batch predictor)
 ├── models/                                          NEW DIR
 │   ├── lightgbm_main.txt
 │   ├── lightgbm_q10.txt

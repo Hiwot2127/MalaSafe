@@ -16,28 +16,40 @@ A mobile application built for the **general public** to access real-time malari
 
 ## 🚀 Quick Start
 
-**Prerequisites:** Python 3.9+, Node.js 18+, PostgreSQL 14+
+**Prerequisites:** Python 3.10+, Node.js 18+, PostgreSQL 14+
 
-**Backend:** `cd backend && python -m venv venv && venv\Scripts\activate && pip install -r requirements.txt && alembic upgrade head && uvicorn app.main:app --reload`
+**Backend (macOS / Linux):**
+```bash
+cd backend
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env       # edit DATABASE_URL + DATABASE_URL_SYNC + SECRET_KEY
+alembic upgrade head
+python create_admin.py     # interactive — pick a strong password
+uvicorn app.main:app --reload
+```
+
+**Backend (Windows):** same steps; use `venv\Scripts\activate` and `copy` instead of `cp`.
 
 **Frontend:** `cd frontend && npm install && npm run dev`
 
 **Mobile:** `cd mobile && npm install && npx expo start`
 
-**Login:** admin@malasafe.gov.et / admin123
+**Login:** use the admin email + password you set in `create_admin.py`.
 
 📖 [Full Setup Guide](QUICKSTART_FULL_STACK.md)
 
 ---
 
-## � Technical Details
+## Technical Details
 
-**Stack:** FastAPI, PostgreSQL, Next.js 14, React Native, LightGBM  
-**Database:** 8 tables (users, districts, malaria_data, climate_data, predictions, alerts, uploaded_files, district_environment)  
-**API:** 17 endpoints (Auth, Data Upload, Analytics, Predictions, Alerts, Maps)  
+**Stack:** FastAPI, PostgreSQL, Next.js 16 + React 19, React Native (Expo), LightGBM
+**Database:** 12 tables (users, districts, malaria_data, climate_data, district_environment, predictions, alerts, uploaded_files, model_versions, monthly_close, backtest_results, drift_findings) — see [backend/DATABASE_MODELS.md](backend/DATABASE_MODELS.md)
+**API:** 10 routers under `/api/v1` (Health, Auth, Mobile, Uploads, Analytics, Maps, Predictions, Alerts, Monthly Close, Examples) — see [backend/API_REFERENCE.md](backend/API_REFERENCE.md)
+**Background work:** in-process via `asyncio.create_task`; scheduled by external cron hitting `/api/v1/monthly-close/predict-monthly`. No Redis, no Celery.
 **Security:** JWT authentication, bcrypt hashing, role-based access, CORS, input validation
 
-📖 [API Documentation](http://localhost:8000/docs)
+📖 [API Documentation](http://localhost:8000/api/docs)
 
 ---
 
@@ -49,10 +61,13 @@ A mobile application built for the **general public** to access real-time malari
 
 ---
 
-## 📞 Support
+## Support
 
-- 📖 [Setup Guide](QUICKSTART_FULL_STACK.md)
-- 📖 [API Docs](http://localhost:8000/docs)
+- [Setup Guide](QUICKSTART_FULL_STACK.md)
+- [API Docs](http://localhost:8000/api/docs)
+- [Backend README](backend/README.md)
+- [Architecture](backend/ARCHITECTURE.md)
+- [AI Integration Notes](AI_INTEGRATION_NOTES.md)
 
 ---
 
@@ -71,5 +86,5 @@ MIT License - See [LICENSE](LICENSE) file
 **Access Points:**
 - 🖥️ Web: http://localhost:3000
 - ⚙️ API: http://localhost:8000
-- 📖 Docs: http://localhost:8000/docs
+- 📖 Docs: http://localhost:8000/api/docs
 - 📱 Mobile: Scan QR with Expo Go
