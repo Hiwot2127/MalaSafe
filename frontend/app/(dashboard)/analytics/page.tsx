@@ -81,7 +81,7 @@ export default function AnalyticsPage() {
   const casesPoints = buildPoints('positive');
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-14">
+    <div className="mx-auto flex max-w-6xl flex-col gap-14 animate-fade-in">
       <PageHeader
         eyebrow="MalaSafe · Trends"
         title="Analytics"
@@ -95,7 +95,7 @@ export default function AnalyticsPage() {
       {/* Headline tiles — hidden under the weekly placeholder because the
           totals would render as 0/0 when no weekly rows are returned. */}
       {trendType === 'weekly' ? null : (
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
           <StatCard
             eyebrow="Total cases"
             value={totals.positive.toLocaleString()}
@@ -113,7 +113,7 @@ export default function AnalyticsPage() {
       )}
 
       {/* Section 001 - Series */}
-      <section className="flex flex-col gap-5">
+      <section className="flex flex-col gap-5 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         <SectionHeader
           index="001"
           label={trendType === 'weekly' ? 'Weekly series' : 'Monthly series'}
