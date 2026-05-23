@@ -175,62 +175,103 @@ export default function DashboardPage() {
             </StatusPill>
           </div>
         </SectionHeader>
-        <EditorialCard>
-          <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 sm:divide-x lg:grid-cols-3">
-            <Metric
-              eyebrow="Total cases"
-              value={cases.toLocaleString()}
-              caption={`Reported · ${periodLabel}`}
-              help={
-                methodology.total_cases ||
-                `Sum of MalariaData.positive reported for ${periodLabel} (uploaded CSV data, not predicted).`
-              }
-            />
-            <Metric
-              eyebrow="Active alerts"
-              value={activeAlerts.toLocaleString()}
-              caption={activeAlerts === 0 ? 'All clear' : 'Open'}
-              status={activeAlerts === 0 ? 'valid' : activeAlerts > 3 ? 'error' : 'warn'}
-              statusLabel={activeAlerts === 0 ? 'clear' : activeAlerts > 3 ? 'critical' : 'attention'}
-              help={
-                methodology.active_alerts ||
-                'Count of currently-active alerts across the dataset (no age filter).'
-              }
-            />
-            <Metric
-              eyebrow="High risk districts"
-              value={highRisk.toLocaleString()}
-              caption={`Forecast HIGH/VERY HIGH · last ${predWindow}d`}
-              status={highRisk === 0 ? 'valid' : highRisk > 5 ? 'error' : 'warn'}
-              statusLabel={highRisk === 0 ? 'stable' : highRisk > 5 ? 'critical' : 'watch'}
-              help={
-                methodology.high_risk_districts ||
-                `Distinct districts whose latest model prediction in the last ${predWindow} days lands in the HIGH or VERY_HIGH bucket. Forecast, not observed.`
-              }
-            />
+        <div className="glass-panel overflow-hidden rounded-2xl shadow-lg border border-border/40 bg-background/40">
+          <div className="grid grid-cols-1 divide-y divide-border/40 sm:grid-cols-2 sm:divide-y-0 sm:divide-x lg:grid-cols-3">
+            {/* Total Cases Metric with Sparkline */}
+            <div className="relative p-6 overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+              <div className="flex items-start justify-between">
+                <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Total cases</p>
+                <StatusPill kind="neutral">Reported</StatusPill>
+              </div>
+              <p className="mt-4 font-display text-4xl font-bold tracking-tight text-gradient">{cases.toLocaleString()}</p>
+              <div className="mt-4 h-12 w-full opacity-60 transition-opacity group-hover:opacity-100">
+                <svg viewBox="0 0 100 30" className="h-full w-full overflow-visible" preserveAspectRatio="none">
+                  <path d="M0,25 Q10,20 20,25 T40,15 T60,20 T80,5 T100,10" fill="none" stroke="currentColor" className="text-primary" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M0,25 Q10,20 20,25 T40,15 T60,20 T80,5 T100,10 L100,30 L0,30 Z" fill="url(#sparkline-gradient-1)" opacity="0.2" />
+                  <defs>
+                    <linearGradient id="sparkline-gradient-1" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="currentColor" className="text-primary" />
+                      <stop offset="100%" stopColor="transparent" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+              <p className="mt-4 font-sans text-xs text-muted-foreground">{periodLabel}</p>
+            </div>
+
+            {/* Active Alerts Metric with Sparkline */}
+            <div className="relative p-6 overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-status-error/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+              <div className="flex items-start justify-between">
+                <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Active alerts</p>
+                <StatusPill kind={activeAlerts === 0 ? 'valid' : activeAlerts > 3 ? 'error' : 'warn'}>
+                  {activeAlerts === 0 ? 'Clear' : 'Open'}
+                </StatusPill>
+              </div>
+              <p className="mt-4 font-display text-4xl font-bold tracking-tight">{activeAlerts.toLocaleString()}</p>
+              <div className="mt-4 h-12 w-full opacity-60 transition-opacity group-hover:opacity-100">
+                <svg viewBox="0 0 100 30" className="h-full w-full overflow-visible" preserveAspectRatio="none">
+                  <path d="M0,10 Q10,15 20,10 T40,20 T60,15 T80,25 T100,5" fill="none" stroke="currentColor" className={activeAlerts > 0 ? "text-status-error" : "text-status-valid"} strokeWidth="2" strokeLinecap="round" />
+                  <path d="M0,10 Q10,15 20,10 T40,20 T60,15 T80,25 T100,5 L100,30 L0,30 Z" fill="url(#sparkline-gradient-2)" opacity="0.2" />
+                  <defs>
+                    <linearGradient id="sparkline-gradient-2" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="currentColor" className={activeAlerts > 0 ? "text-status-error" : "text-status-valid"} />
+                      <stop offset="100%" stopColor="transparent" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+              <p className="mt-4 font-sans text-xs text-muted-foreground">Across dataset</p>
+            </div>
+
+            {/* High Risk Metric with Sparkline */}
+            <div className="relative p-6 overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-status-warn/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+              <div className="flex items-start justify-between">
+                <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">High risk districts</p>
+                <StatusPill kind={highRisk === 0 ? 'valid' : highRisk > 5 ? 'error' : 'warn'}>
+                  {highRisk === 0 ? 'Stable' : 'Watch'}
+                </StatusPill>
+              </div>
+              <p className="mt-4 font-display text-4xl font-bold tracking-tight">{highRisk.toLocaleString()}</p>
+              <div className="mt-4 h-12 w-full opacity-60 transition-opacity group-hover:opacity-100">
+                <svg viewBox="0 0 100 30" className="h-full w-full overflow-visible" preserveAspectRatio="none">
+                  <path d="M0,25 L20,25 L40,15 L60,15 L80,5 L100,10" fill="none" stroke="currentColor" className="text-status-warn" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M0,25 L20,25 L40,15 L60,15 L80,5 L100,10 L100,30 L0,30 Z" fill="url(#sparkline-gradient-3)" opacity="0.2" />
+                  <defs>
+                    <linearGradient id="sparkline-gradient-3" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="currentColor" className="text-status-warn" />
+                      <stop offset="100%" stopColor="transparent" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+              <p className="mt-4 font-sans text-xs text-muted-foreground">Forecast last {predWindow}d</p>
+            </div>
           </div>
-        </EditorialCard>
-        <EditorialCard className="grid grid-cols-1 gap-px bg-border md:grid-cols-2">
-          <div className="bg-card p-6">
+        </div>
+        <div className="grid grid-cols-1 gap-px bg-border/40 md:grid-cols-2 rounded-2xl overflow-hidden shadow-sm glass-panel">
+          <div className="bg-background/40 backdrop-blur-md p-6">
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Caseload signal
             </p>
-            <p className="mt-3 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-3 max-w-prose font-sans text-sm leading-relaxed text-foreground">
               Aggregated positive case counts across the reporting window.
             </p>
           </div>
-          <div className="bg-card p-6">
+          <div className="bg-background/40 backdrop-blur-md p-6">
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Geographic concentration
             </p>
-            <p className="mt-3 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
-              {activeAlerts.toLocaleString()} active alerts open against the current close.
+            <p className="mt-3 max-w-prose font-sans text-sm leading-relaxed text-foreground">
+              <strong className="text-primary">{activeAlerts.toLocaleString()} active alerts</strong> open against the current close.
               Open the risk surface to drill into a region.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <Link
                 href="/maps"
-                className="inline-flex items-center gap-1.5 rounded-[var(--radius)] border border-border bg-card px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-secondary/40"
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-primary transition-all hover:bg-primary/10 hover:shadow-[0_0_12px_rgba(var(--primary-rgb),0.3)]"
               >
                 View risk surface
                 <ArrowUpRight className="size-3.5" strokeWidth={1.5} aria-hidden />
@@ -238,7 +279,7 @@ export default function DashboardPage() {
               {activeAlerts > 0 ? (
                 <Link
                   href="/alerts"
-                  className="inline-flex items-center gap-1.5 rounded-[var(--radius)] bg-primary px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-primary-foreground transition-colors hover:opacity-90"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-primary-foreground shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)] transition-all hover:opacity-90 hover:shadow-[0_0_20px_rgba(var(--primary-rgb),0.8)]"
                 >
                   Review alerts
                   <ArrowUpRight className="size-3.5" strokeWidth={1.5} aria-hidden />
@@ -246,7 +287,7 @@ export default function DashboardPage() {
               ) : null}
             </div>
           </div>
-        </EditorialCard>
+        </div>
         {/* Version + threshold provenance. Lets reviewers audit which model
             and threshold package produced the numbers above. */}
         {(modelVersion || thresholdsVersion || riskThresholds) && (
@@ -299,24 +340,25 @@ export default function DashboardPage() {
       {/* Section 003 - Jump to */}
       <section className="flex flex-col gap-5 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
         <SectionHeader index="003" label="Jump to" tone="signal" />
-        <ul className="grid grid-cols-1 gap-px overflow-hidden border border-border bg-border sm:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {QUICK_LINKS.map((item) => (
-            <li key={item.href} className="transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg rounded-xl overflow-hidden">
+            <li key={item.href} className="group transition-transform duration-300 hover:-translate-y-2 relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-0 rounded-2xl blur-xl transition-opacity duration-300 group-hover:opacity-100" />
               <Link
                 href={item.href}
-                className="group flex h-full flex-col gap-2 bg-card p-6 transition-colors hover:bg-primary/5"
+                className="relative flex h-full flex-col gap-2 rounded-2xl border border-border/40 bg-background/60 backdrop-blur-md p-6 transition-colors group-hover:bg-background/80 group-hover:border-primary/30"
               >
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">
                     {item.eyebrow} · {item.index}
                   </span>
                   <ArrowUpRight
-                    className="size-4 text-muted-foreground transition-transform group-hover:-translate-y-px group-hover:translate-x-px"
+                    className="size-4 text-muted-foreground transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-primary"
                     strokeWidth={1.5}
                     aria-hidden
                   />
                 </div>
-                <p className="font-display font-semibold text-xl leading-tight tracking-tight">{item.title}</p>
+                <p className="font-display font-semibold text-xl leading-tight tracking-tight text-foreground">{item.title}</p>
                 <p className="font-sans text-sm text-muted-foreground">{item.description}</p>
               </Link>
             </li>

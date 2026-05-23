@@ -146,31 +146,37 @@ export default function MapsPage() {
           />
         ) : (
           <>
-            {/* Map + legend */}
-            <EditorialCard className="overflow-hidden">
-              <div className="h-[520px]">
+            {/* Map + floating legend */}
+            <div className="relative overflow-hidden rounded-2xl border border-border/40 shadow-2xl group animate-in fade-in zoom-in-95 duration-700">
+              <div className="h-[600px] w-full">
                 <RiskMap data={mapData} />
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-card px-4 py-3">
-                <div className="flex flex-wrap items-center gap-3">
+              
+              {/* Floating Legend */}
+              <div className="absolute bottom-6 left-6 z-[400] flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/40 bg-background/70 px-5 py-4 backdrop-blur-xl shadow-lg transition-transform duration-500 group-hover:-translate-y-2">
+                <div className="flex flex-wrap items-center gap-5">
                   {LEGEND.map((item) => (
                     <span
                       key={item.key}
-                      className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground"
+                      className="inline-flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-foreground"
                     >
                       <span
                         aria-hidden
-                        className={`inline-block size-2.5 bg-risk-${item.risk}`}
+                        className={`inline-block size-3 rounded-full bg-risk-${item.risk} shadow-[0_0_8px_currentColor] text-risk-${item.risk}`}
                       />
                       {item.label}
                     </span>
                   ))}
                 </div>
-                <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground tabular-nums">
+              </div>
+
+              {/* Floating Counter */}
+              <div className="absolute top-6 right-6 z-[400] flex items-center justify-center rounded-lg border border-border/40 bg-background/70 px-4 py-2.5 backdrop-blur-xl shadow-lg">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-foreground tabular-nums">
                   {districtCount} districts loaded
                 </span>
               </div>
-            </EditorialCard>
+            </div>
 
             {/* Summary strip - StatCards with tinted icon circles. */}
             {summary ? (
@@ -232,16 +238,20 @@ export default function MapsPage() {
                     const p = feature.properties;
                     const lowConfidence =
                       typeof p.confidence_score === 'number' && p.confidence_score < 0.4;
+                    const status = riskStatus(p.risk_level);
                     return (
                       <tr
                         key={index}
-                        className="border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40"
+                        className="group border-b border-border/40 transition-all duration-300 last:border-0 hover:bg-primary/5 hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)] cursor-pointer"
                       >
                         <Td>{p.district_name}</Td>
                         <Td muted>{p.region}</Td>
                         <Td>
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <StatusPill kind={riskStatus(p.risk_level)}>
+                          <div className="flex flex-wrap items-center gap-2 relative">
+                            {status === 'error' && (
+                               <span className="absolute -left-3 top-2 h-1.5 w-1.5 animate-ping rounded-full bg-status-error" />
+                            )}
+                            <StatusPill kind={status}>
                               {riskLabel(p.risk_level)}
                             </StatusPill>
                             {lowConfidence ? (
@@ -251,7 +261,9 @@ export default function MapsPage() {
                         </Td>
                         <Td muted>{p.prediction_period_label ?? '—'}</Td>
                         <Td align="right" numeric>
-                          {(p.recent_positive ?? 0).toLocaleString()}
+                          <span className="font-medium text-foreground group-hover:text-primary transition-colors">
+                            {(p.recent_positive ?? 0).toLocaleString()}
+                          </span>
                         </Td>
                       </tr>
                     );

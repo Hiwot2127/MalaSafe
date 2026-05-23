@@ -76,10 +76,10 @@ export default function Sidebar() {
                 <Link
                   href={item.href}
                   className={cn(
-                    'mx-1 flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-300 ease-out active:scale-[0.98]',
+                    "group flex items-center gap-3 rounded-lg px-3 py-2.5 font-sans text-sm font-medium transition-all duration-200",
                     isActive
-                      ? 'bg-primary/10 text-primary font-medium shadow-sm'
-                      : 'text-muted-foreground hover:bg-secondary/80 hover:text-foreground hover:shadow-sm',
+                      ? "bg-primary/10 text-primary shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] border border-primary/20"
+                      : "text-muted-foreground hover:bg-secondary/40 hover:text-foreground",
                   )}
                 >
                   <Icon className={cn("size-4 shrink-0 transition-transform duration-300 group-hover:scale-110", isActive && "text-primary")} strokeWidth={1.5} />
