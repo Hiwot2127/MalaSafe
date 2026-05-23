@@ -45,7 +45,7 @@ export function LogoMark({
         width={size}
         height={size}
         priority={priority}
-        className="select-none"
+        className="select-none mix-blend-multiply dark:invert"
       />
     </span>
   );

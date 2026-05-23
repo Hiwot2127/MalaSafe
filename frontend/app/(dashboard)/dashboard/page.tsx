@@ -140,7 +140,7 @@ export default function DashboardPage() {
       : undefined;
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-14">
+    <div className="mx-auto flex max-w-6xl flex-col gap-14 animate-fade-in">
       <PageHeader
         eyebrow={`MalaSafe · ${period}`}
         title="Surveillance dashboard"
@@ -148,17 +148,19 @@ export default function DashboardPage() {
       />
 
       {/* Posture alert hero - leads with the most actionable signal. */}
-      <AlertCard
-        tone={postureStatus}
-        eyebrow={alertEyebrow}
-        title={postureLabel}
-        stats={alertStats}
-        description={alertDescription}
-        cta={activeAlerts > 0 ? { label: 'Review alerts', href: '/alerts' } : undefined}
-      />
+      <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+        <AlertCard
+          tone={postureStatus}
+          eyebrow={alertEyebrow}
+          title={postureLabel}
+          stats={alertStats}
+          description={alertDescription}
+          cta={activeAlerts > 0 ? { label: 'Review alerts', href: '/alerts' } : undefined}
+        />
+      </div>
 
       {/* Section 001 - Indicators + Posture */}
-      <section className="flex flex-col gap-5">
+      <section className="flex flex-col gap-5 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         <SectionHeader index="001" label="Indicators" tone={postureStatus}>
           <div className="flex items-center gap-3">
             <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -264,7 +266,7 @@ export default function DashboardPage() {
       </section>
 
       {/* Section 002 - Operational checklist */}
-      <section className="flex flex-col gap-5">
+      <section className="flex flex-col gap-5 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
         <SectionHeader index="002" label="How this works" tone="signal" />
         <EditorialCard className="p-0">
           <Accordion type="single" collapsible defaultValue="item-predict">
@@ -295,14 +297,14 @@ export default function DashboardPage() {
       </section>
 
       {/* Section 003 - Jump to */}
-      <section className="flex flex-col gap-5">
+      <section className="flex flex-col gap-5 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
         <SectionHeader index="003" label="Jump to" tone="signal" />
         <ul className="grid grid-cols-1 gap-px overflow-hidden border border-border bg-border sm:grid-cols-3">
           {QUICK_LINKS.map((item) => (
-            <li key={item.href}>
+            <li key={item.href} className="transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg rounded-xl overflow-hidden">
               <Link
                 href={item.href}
-                className="group flex h-full flex-col gap-2 bg-card p-6 transition-colors hover:bg-secondary/40"
+                className="group flex h-full flex-col gap-2 bg-card p-6 transition-colors hover:bg-primary/5"
               >
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">

@@ -70,6 +70,9 @@
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-fade-in-up: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-fade-in: fade-in 0.3s ease-out forwards;
+  --animate-float: float 4s ease-in-out infinite;
 
   @keyframes accordion-down {
     from {
@@ -87,16 +90,26 @@
       height: 0;
     }
   }
+  @keyframes fade-in-up {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
 }
 
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
 @layer base {
   *,
   ::after,
@@ -109,118 +122,111 @@
 
 @layer base {
   :root {
-    /* Surface: cool off-white, clinical paper. */
-    --background: 210 30% 99%;
-    --foreground: 220 35% 14%;
+    /* Surface: Modern sleek light mode with subtle cool undertones */
+    --background: 220 33% 98%;
+    --foreground: 224 71% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 35% 14%;
+    --card-foreground: 224 71% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 35% 14%;
+    --popover-foreground: 224 71% 10%;
 
-    /* Primary: brand blue - shield + map pin from the logo. */
-    --primary: 205 75% 56%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary: Vibrant, rich indigo-blue for a premium feel */
+    --primary: 230 80% 60%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 25% 95%;
-    --secondary-foreground: 220 35% 14%;
+    --secondary: 220 14% 94%;
+    --secondary-foreground: 220 20% 25%;
 
-    --muted: 210 25% 95%;
-    --muted-foreground: 220 12% 42%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 15% 45%;
 
-    --accent: 210 30% 96%;
-    --accent-foreground: 220 35% 14%;
+    --accent: 230 40% 94%;
+    --accent-foreground: 224 71% 10%;
 
-    /* Destructive: mockup red, higher saturation than the old terracotta. */
-    --destructive: 0 75% 58%;
+    /* Destructive: Crisp red */
+    --destructive: 350 85% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 90%;
-    --input: 210 20% 90%;
-    --ring: 205 75% 56%;
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
+    --ring: 230 80% 60%;
 
-    /* Softer keylines - cards breathe, inputs/buttons stay snappy. */
-    --radius: 0.625rem;
+    --radius: 0.8rem;
 
-    /* Domain accents - tuned to mockup signal palette. */
-    --status-valid: 145 55% 42%;       /* mockup green - LOW risk */
-    --status-warn: 35 90% 55%;         /* mockup amber - MODERATE */
-    --status-error: 0 75% 58%;         /* mockup red - HIGH */
+    /* Status Colors - Clean and vibrant */
+    --status-valid: 150 70% 40%;
+    --status-warn: 40 95% 55%;
+    --status-error: 350 85% 55%;
 
-    /* Signal accent - aligned with primary brand blue. */
-    --accent-signal: 205 75% 56%;
+    --accent-signal: 230 80% 60%;
     --accent-signal-foreground: 0 0% 100%;
 
-    /* Chart series palette - blue-led, brand-coherent. */
-    --chart-1: 205 75% 56%;            /* brand blue - cases */
-    --chart-2: 0 75% 58%;              /* red - deaths */
-    --chart-3: 252 60% 60%;            /* violet - predictions */
-    --chart-4: 35 90% 55%;             /* amber - drift */
-    --chart-5: 175 60% 42%;            /* teal - climate */
+    /* Chart series palette */
+    --chart-1: 230 80% 60%;
+    --chart-2: 350 85% 55%;
+    --chart-3: 270 70% 60%;
+    --chart-4: 40 95% 55%;
+    --chart-5: 180 70% 45%;
 
-    /* Map sequential risk ramp - 5 stops, low → very high (mockup palette). */
-    --risk-1: 145 55% 50%;             /* green */
-    --risk-2: 80 60% 50%;              /* lime-green */
-    --risk-3: 35 90% 55%;              /* amber */
-    --risk-4: 18 85% 55%;              /* orange */
-    --risk-5: 0 75% 58%;               /* red */
-
-    /* Font stacks - wired via geist/font in the root layout. */
-    --font-display: var(--font-geist-sans), system-ui, sans-serif;
-    --font-sans: var(--font-geist-sans), system-ui, sans-serif;
-    --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Consolas, monospace;
+    /* Map risk ramp */
+    --risk-1: 150 70% 45%;
+    --risk-2: 90 60% 50%;
+    --risk-3: 40 95% 55%;
+    --risk-4: 20 90% 55%;
+    --risk-5: 350 85% 55%;
   }
 
   .dark {
-    /* Dark surface: cool deep slate, not pure black. */
-    --background: 220 25% 8%;
-    --foreground: 210 25% 95%;
+    /* Dark surface: Rich, deep premium slate, highly readable */
+    --background: 224 25% 6%;
+    --foreground: 210 30% 96%;
 
-    --card: 220 22% 11%;
-    --card-foreground: 210 25% 95%;
+    --card: 224 20% 9%;
+    --card-foreground: 210 30% 96%;
 
-    --popover: 220 22% 11%;
-    --popover-foreground: 210 25% 95%;
+    --popover: 224 20% 9%;
+    --popover-foreground: 210 30% 96%;
 
-    /* Brand blue, brightened for dark surfaces. */
-    --primary: 205 80% 62%;
-    --primary-foreground: 220 25% 8%;
+    /* Primary: Brightened indigo for dark mode */
+    --primary: 230 85% 65%;
+    --primary-foreground: 224 25% 6%;
 
-    --secondary: 220 18% 16%;
-    --secondary-foreground: 210 25% 95%;
+    --secondary: 224 15% 15%;
+    --secondary-foreground: 210 30% 96%;
 
-    --muted: 220 18% 14%;
-    --muted-foreground: 210 12% 64%;
+    --muted: 224 15% 12%;
+    --muted-foreground: 215 15% 65%;
 
-    --accent: 220 18% 16%;
-    --accent-foreground: 210 25% 95%;
+    --accent: 224 20% 16%;
+    --accent-foreground: 210 30% 96%;
 
-    --destructive: 0 70% 62%;
+    --destructive: 350 80% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 16% 20%;
-    --input: 220 16% 20%;
-    --ring: 205 80% 62%;
+    --border: 224 15% 16%;
+    --input: 224 15% 16%;
+    --ring: 230 85% 65%;
 
-    --status-valid: 145 50% 52%;
-    --status-warn: 35 85% 62%;
-    --status-error: 0 70% 64%;
+    --status-valid: 150 65% 50%;
+    --status-warn: 40 90% 60%;
+    --status-error: 350 80% 60%;
 
-    --accent-signal: 205 80% 62%;
-    --accent-signal-foreground: 220 25% 8%;
+    --accent-signal: 230 85% 65%;
+    --accent-signal-foreground: 224 25% 6%;
 
-    --chart-1: 205 80% 62%;
-    --chart-2: 0 70% 64%;
-    --chart-3: 252 65% 70%;
-    --chart-4: 35 85% 62%;
-    --chart-5: 175 55% 52%;
+    --chart-1: 230 85% 65%;
+    --chart-2: 350 80% 60%;
+    --chart-3: 270 75% 70%;
+    --chart-4: 40 90% 60%;
+    --chart-5: 180 65% 55%;
 
-    --risk-1: 145 50% 56%;
-    --risk-2: 80 55% 56%;
-    --risk-3: 35 85% 62%;
-    --risk-4: 18 80% 60%;
-    --risk-5: 0 70% 64%;
+    --risk-1: 150 65% 50%;
+    --risk-2: 90 55% 55%;
+    --risk-3: 40 90% 60%;
+    --risk-4: 20 85% 60%;
+    --risk-5: 350 80% 60%;
   }
 }
 
@@ -229,54 +235,63 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
     font-family: var(--font-sans);
     font-feature-settings: 'ss01', 'ss03';
   }
 
-  /* Display text - Geist Sans at semibold weight with tightened tracking. */
+  /* Display text */
   h1, h2, h3 {
     font-family: var(--font-display);
     font-weight: 600;
     letter-spacing: -0.014em;
   }
-  h1 { letter-spacing: -0.022em; }
-  h2 { letter-spacing: -0.018em; }
-  h3 { letter-spacing: -0.014em; }
+  h1 { letter-spacing: -0.025em; }
+  h2 { letter-spacing: -0.020em; }
+  h3 { letter-spacing: -0.015em; }
 
-  /* Tabular numerals for data - counts, durations, IDs. */
+  /* Tabular numerals */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
 }
 
-/* Section labels - small monospaced eyebrow above each section, like
-   numbered footnote references in an editorial layout. */
+/* Glassmorphism Utilities */
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/70 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_24px_-8px_rgba(0,0,0,0.3)];
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-500;
+  }
+}
+
+/* Section labels */
 .section-label {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
+  font-weight: 600;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: hsl(var(--muted-foreground));
 }
 
-/* Status pills - used by the validation modal tabs. */
+/* Status pills */
 .status-valid { color: hsl(var(--status-valid)); }
 .status-warn { color: hsl(var(--status-warn)); }
 .status-error { color: hsl(var(--status-error)); }
-.bg-status-valid-tint { background-color: hsl(var(--status-valid) / 0.18); }
-.bg-status-warn-tint { background-color: hsl(var(--status-warn) / 0.18); }
-.bg-status-error-tint { background-color: hsl(var(--status-error) / 0.18); }
+.bg-status-valid-tint { background-color: hsl(var(--status-valid) / 0.15); }
+.bg-status-warn-tint { background-color: hsl(var(--status-warn) / 0.15); }
+.bg-status-error-tint { background-color: hsl(var(--status-error) / 0.15); }
 .bg-accent-signal-tint { background-color: hsl(var(--accent-signal) / 0.10); }
 
-/* Timeline stage reveal - used by upload-timeline.tsx. */
+/* Timeline stage reveal */
 @keyframes stage-in {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .stage-reveal {
-  animation: stage-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: stage-in 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Leaflet styles */
@@ -286,7 +301,6 @@
   z-index: 0;
 }
 
-/* Custom risk-marker hover card - strip leaflet's default tooltip chrome */
 .leaflet-tooltip.risk-tooltip,
 .leaflet-tooltip-top.risk-tooltip,
 .leaflet-tooltip-bottom.risk-tooltip,
@@ -304,3 +318,4 @@
   display: none !important;
   border: 0 !important;
 }
+

@@ -103,7 +103,7 @@ export default function MapsPage() {
   const districtCount = mapData?.features.length ?? 0;
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-14">
+    <div className="mx-auto flex max-w-6xl flex-col gap-14 animate-fade-in">
       <PageHeader
         eyebrow="MalaSafe · Risk surface"
         title="Risk maps"
@@ -123,7 +123,7 @@ export default function MapsPage() {
       />
 
       {/* Section 001 - Surface */}
-      <section className="flex flex-col gap-5">
+      <section className="flex flex-col gap-5 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
         <SectionHeader
           index="001"
           label="Surface"

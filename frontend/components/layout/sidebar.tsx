@@ -38,10 +38,10 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-card">
+    <aside className="flex w-64 shrink-0 flex-col border-r border-white/10 bg-card/90 backdrop-blur-xl z-20 shadow-[4px_0_24px_-8px_rgba(0,0,0,0.1)] dark:shadow-[4px_0_24px_-8px_rgba(0,0,0,0.3)] transition-all duration-300">
       {/* Brand block - locked to the same height as the top bar so the rule
           across the top of the app is continuous. */}
-      <div className="flex h-[4.5rem] shrink-0 items-center gap-3 border-b border-border px-6">
+      <div className="flex h-[4.5rem] shrink-0 items-center gap-3 border-b border-white/10 px-6">
         <LogoMark size={32} priority />
         <div className="flex flex-col gap-0.5 leading-none">
           <p className="font-display text-base font-semibold tracking-[-0.018em] text-foreground">
@@ -57,32 +57,32 @@ export default function Sidebar() {
         <p className="px-3 pb-3 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           Navigation
         </p>
-        <ul className="flex flex-col">
+        <ul className="flex flex-col gap-1">
           {navigation.map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href !== '/dashboard' && pathname?.startsWith(item.href));
             const Icon = item.icon;
             return (
-              <li key={item.href} className="relative">
-                {/* Active keyline */}
+              <li key={item.href} className="relative group">
+                {/* Active keyline with glow */}
                 <span
                   aria-hidden
                   className={cn(
-                    'absolute inset-y-1 left-0 w-[2px] bg-primary transition-opacity',
-                    isActive ? 'opacity-100' : 'opacity-0',
+                    'absolute inset-y-1 left-0 w-[3px] rounded-r-md bg-primary transition-all duration-300',
+                    isActive ? 'opacity-100 shadow-[0_0_12px_var(--color-primary)]' : 'opacity-0 scale-y-0',
                   )}
                 />
                 <Link
                   href={item.href}
                   className={cn(
-                    'mx-1 flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors',
+                    'mx-1 flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-300 ease-out active:scale-[0.98]',
                     isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground',
+                      ? 'bg-primary/10 text-primary font-medium shadow-sm'
+                      : 'text-muted-foreground hover:bg-secondary/80 hover:text-foreground hover:shadow-sm',
                   )}
                 >
-                  <Icon className="size-4 shrink-0" strokeWidth={1.5} />
+                  <Icon className={cn("size-4 shrink-0 transition-transform duration-300 group-hover:scale-110", isActive && "text-primary")} strokeWidth={1.5} />
                   <span className="flex flex-1 items-baseline justify-between gap-3">
                     <span className="font-sans text-sm">{item.name}</span>
                     <span className="font-mono text-[10px] tabular-nums text-muted-foreground">

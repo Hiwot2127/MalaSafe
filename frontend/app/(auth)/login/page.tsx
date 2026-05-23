@@ -118,8 +118,7 @@ function LoginForm() {
               Sign in
             </h1>
             <p className="font-sans text-sm leading-relaxed text-muted-foreground">
-              Access the MalaSafe surveillance dashboard. Authorised personnel only -
-              sessions are written to the audit ledger.
+              Access the MalaSafe surveillance dashboard. Authorised personnel only.
             </p>
           </header>
 
@@ -166,10 +165,6 @@ function LoginForm() {
             <PrimaryButton type="submit" disabled={loading} fullWidth>
               {loading ? 'Signing in…' : 'Sign in'}
             </PrimaryButton>
-
-            <p className="text-center font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              256-bit AES · Secure session
-            </p>
           </form>
 
           <EditorialCard className="bg-secondary/40 px-4 py-3 shadow-none">

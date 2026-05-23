@@ -25,7 +25,7 @@ export default function Header() {
   const isDark = mounted && resolvedTheme === 'dark';
 
   return (
-    <header className="flex h-[4.5rem] shrink-0 items-center justify-between gap-6 border-b border-border bg-background px-8">
+    <header className="flex h-[4.5rem] shrink-0 items-center justify-between gap-6 border-b border-white/10 bg-background/80 backdrop-blur-xl px-8 shadow-sm z-10 transition-all duration-300">
       <div className="flex flex-col gap-0.5">
         <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           Welcome back
