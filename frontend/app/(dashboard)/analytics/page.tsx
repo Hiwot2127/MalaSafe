@@ -95,20 +95,24 @@ export default function AnalyticsPage() {
       {/* Headline tiles — hidden under the weekly placeholder because the
           totals would render as 0/0 when no weekly rows are returned. */}
       {trendType === 'weekly' ? null : (
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-          <StatCard
-            eyebrow="Total cases"
-            value={totals.positive.toLocaleString()}
-            caption={`Sum across ${trends.length} month${trends.length === 1 ? '' : 's'} (uploaded CSV data)`}
-            icon={Activity}
-            tone="signal"
-          />
-          <StatCard
-            eyebrow="Periods"
-            value={trends.length.toLocaleString()}
-            caption="Monthly bins"
-            icon={Sparkles}
-          />
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both delay-100">
+          <div className="glass-panel rounded-2xl overflow-hidden p-1">
+            <StatCard
+              eyebrow="Total cases"
+              value={totals.positive.toLocaleString()}
+              caption={`Sum across ${trends.length} month${trends.length === 1 ? '' : 's'} (uploaded CSV data)`}
+              icon={Activity}
+              tone="signal"
+            />
+          </div>
+          <div className="glass-panel rounded-2xl overflow-hidden p-1">
+            <StatCard
+              eyebrow="Periods"
+              value={trends.length.toLocaleString()}
+              caption="Monthly bins"
+              icon={Sparkles}
+            />
+          </div>
         </section>
       )}
 
@@ -148,54 +152,71 @@ export default function AnalyticsPage() {
         ) : (
           <>
             {/* Sparkline strip + summary */}
-            <EditorialCard className="grid grid-cols-1 gap-px bg-border lg:grid-cols-[1.4fr_1fr]">
-              <div className="flex flex-col gap-4 bg-card p-6">
-                <div className="flex items-center justify-between">
+            <div className="grid grid-cols-1 gap-px bg-border/40 lg:grid-cols-[1.4fr_1fr] rounded-2xl overflow-hidden glass-panel shadow-lg">
+              <div className="flex flex-col gap-4 bg-background/40 backdrop-blur-md p-6 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none" />
+                <div className="flex items-center justify-between relative z-10">
                   <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
                     Cases · oldest → most recent
                   </p>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground tabular-nums">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary tabular-nums">
                     {trends.length} mo
                   </p>
                 </div>
-                <svg
-                  viewBox="0 0 100 50"
-                  preserveAspectRatio="none"
-                  className="h-32 w-full"
-                  aria-hidden
-                >
-                  <line
-                    x1="0"
-                    y1="49.5"
-                    x2="100"
-                    y2="49.5"
-                    stroke="hsl(var(--border))"
-                    strokeWidth="0.5"
-                    vectorEffect="non-scaling-stroke"
-                  />
-                  <polyline
-                    fill="none"
-                    stroke="hsl(var(--chart-1))"
-                    strokeWidth="1"
-                    points={casesPoints}
-                    vectorEffect="non-scaling-stroke"
-                  />
-                </svg>
-                <div className="flex items-center gap-5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                <div className="relative h-32 w-full mt-2 transition-transform duration-500 group-hover:scale-[1.02]">
+                  <svg
+                    viewBox="0 0 100 50"
+                    preserveAspectRatio="none"
+                    className="h-full w-full overflow-visible"
+                    aria-hidden
+                  >
+                    <line
+                      x1="0"
+                      y1="49.5"
+                      x2="100"
+                      y2="49.5"
+                      stroke="hsl(var(--border))"
+                      strokeWidth="0.5"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    <polyline
+                      fill="none"
+                      stroke="currentColor"
+                      className="text-primary"
+                      strokeWidth="2"
+                      points={casesPoints}
+                      vectorEffect="non-scaling-stroke"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d={`M0,50 L${casesPoints} L100,50 Z`}
+                      fill="url(#trend-gradient)"
+                      opacity="0.1"
+                    />
+                    <defs>
+                      <linearGradient id="trend-gradient" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stopColor="currentColor" className="text-primary" />
+                        <stop offset="100%" stopColor="transparent" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+                <div className="flex items-center gap-5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground relative z-10">
                   <span className="inline-flex items-center gap-2">
-                    <span aria-hidden className="inline-block size-2.5 bg-chart-1" />
+                    <span aria-hidden className="inline-block size-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.8)]" />
                     Cases
                   </span>
                 </div>
-                <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground tabular-nums">
+                <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground tabular-nums relative z-10">
                   <span>{trends[trends.length - 1]?.period ?? '-'}</span>
                   <span>{trends[0]?.period ?? '-'}</span>
                 </div>
               </div>
-              <div className="grid grid-cols-1 gap-px bg-border sm:grid-cols-1 lg:grid-cols-1 lg:divide-y lg:divide-border lg:bg-card">
+              <div className="flex items-center justify-center bg-background/40 backdrop-blur-md p-6 border-t lg:border-t-0 lg:border-l border-border/40">
                 <Metric eyebrow="Total cases" value={totals.positive.toLocaleString()} />
               </div>
-            </EditorialCard>
+            </div>
 
             {/* Section 002 - Table */}
             <SectionHeader index="002" label="Periods" tone="signal">
@@ -203,31 +224,35 @@ export default function AnalyticsPage() {
                 {trends.length} rows
               </span>
             </SectionHeader>
-            <EditorialCard className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <Th>Period</Th>
-                    <Th>Year</Th>
-                    <Th align="right">Cases</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {trends.map((trend, index) => (
-                    <tr
-                      key={index}
-                      className="border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40"
-                    >
-                      <Td>{trend.period}</Td>
-                      <Td>{trend.year}</Td>
-                      <Td align="right" numeric>
-                        {trend.positive.toLocaleString()}
-                      </Td>
+            <div className="overflow-hidden rounded-2xl glass-panel border border-border/40 mt-2 shadow-lg">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border/40">
+                      <Th>Period</Th>
+                      <Th>Year</Th>
+                      <Th align="right">Cases</Th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </EditorialCard>
+                  </thead>
+                  <tbody>
+                    {trends.map((trend, index) => (
+                      <tr
+                        key={index}
+                        className="group border-b border-border/40 transition-all duration-300 last:border-0 hover:bg-primary/5 hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)] cursor-pointer"
+                      >
+                        <Td>{trend.period}</Td>
+                        <Td>{trend.year}</Td>
+                        <Td align="right" numeric>
+                          <span className="font-medium text-foreground group-hover:text-primary transition-colors">
+                            {trend.positive.toLocaleString()}
+                          </span>
+                        </Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </>
         )}
       </section>

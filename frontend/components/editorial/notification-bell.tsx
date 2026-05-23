@@ -33,12 +33,15 @@ export function NotificationBell({
     >
       <Bell className="size-4" strokeWidth={1.75} aria-hidden />
       {display ? (
-        <span
-          aria-hidden
-          className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-status-error px-1 font-mono text-[9px] font-semibold leading-none text-white tabular-nums ring-2 ring-background"
-        >
-          {display}
-        </span>
+        <>
+          <span className="absolute -right-1 -top-1 h-4 w-4 animate-ping rounded-full bg-status-error opacity-75"></span>
+          <span
+            aria-hidden
+            className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-status-error px-1 font-mono text-[9px] font-semibold leading-none text-white tabular-nums ring-2 ring-background shadow-[0_0_8px_hsl(var(--status-error))]"
+          >
+            {display}
+          </span>
+        </>
       ) : null}
     </Link>
   );

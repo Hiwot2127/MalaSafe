@@ -34,7 +34,7 @@ export function PageHeader({ eyebrow, title, description, actions, className }: 
         <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
           {eyebrow}
         </p>
-        <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-[-0.022em]">
+        <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-[-0.022em] text-gradient">
           {title}
         </h1>
         {description ? (
@@ -116,8 +116,8 @@ export function EditorialCard({
   return (
     <Tag
       className={cn(
-        "rounded-[var(--radius)] border border-border bg-card shadow-sm",
-        hover && "transition-all hover:shadow-md hover:border-primary/30",
+        "glass-panel glass-panel-hover rounded-[var(--radius)] overflow-hidden",
+        hover && "hover:-translate-y-1 hover:shadow-lg hover:border-primary/50",
         className,
       )}
       {...rest}
@@ -158,7 +158,7 @@ export function Metric({ eyebrow, value, caption, status, statusLabel, help, cla
           </span>
         ) : null}
       </p>
-      <p className="font-display text-3xl font-semibold leading-none tabular-nums tracking-[-0.022em]">
+      <p className="font-display text-3xl font-semibold leading-none tabular-nums tracking-[-0.022em] text-gradient">
         {value}
       </p>
       <div className="flex items-center gap-2 pt-1">
@@ -224,7 +224,7 @@ export function MonoAction({
   ...rest
 }: MonoActionProps) {
   const classes = cn(
-    "inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50",
+    "inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-all duration-300 hover:text-primary hover:drop-shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)] disabled:cursor-not-allowed disabled:opacity-50",
     className,
   );
   if (as === "a") {
@@ -367,7 +367,7 @@ export const EditorialInput = React.forwardRef<HTMLInputElement, EditorialInputP
         ref={ref}
         {...rest}
         className={cn(
-          "block w-full rounded-md border border-input bg-card px-3 py-2.5 font-sans text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors focus:outline-none focus:ring-2 focus:ring-accent-signal/40",
+          "block w-full rounded-md border border-input/50 bg-card/40 backdrop-blur-md px-3 py-2.5 font-sans text-sm text-foreground placeholder:text-muted-foreground/60 transition-all duration-300 hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/60 focus:bg-card/60",
           className,
         )}
       />
@@ -391,7 +391,7 @@ export function PrimaryButton({
     <button
       {...rest}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 font-sans text-sm font-medium tracking-tight text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 font-sans text-sm font-medium tracking-tight text-primary-foreground shadow-[0_4px_14px_0_rgba(var(--primary-rgb),0.39)] transition-all duration-300 hover:bg-primary/90 hover:shadow-[0_6px_20px_rgba(var(--primary-rgb),0.5)] hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none",
         fullWidth && "w-full",
         className,
       )}
