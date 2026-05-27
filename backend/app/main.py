@@ -5,6 +5,7 @@ from app.middleware import setup_cors
 from app.routes import (
     health_router,
     auth_router,
+    admin_router,
     mobile_router,
     uploads_router,
     analytics_router,
@@ -40,6 +41,10 @@ openapi_tags = [
     {
         "name": "Authentication",
         "description": "JWT login, user creation (admin), current-user lookup. Tokens are bearer JWTs issued by `/auth/login`.",
+    },
+    {
+        "name": "Admin",
+        "description": "Admin-only routes for user management, upload monitoring, audit logs, and system health. Admins can create/edit users, reset passwords, and view system metrics but CANNOT access raw CSV contents.",
     },
     {
         "name": "Mobile",
@@ -129,6 +134,7 @@ async def global_exception_handler(request, exc):
 # Include routers with API versioning
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(admin_router, prefix="/api/v1")
 app.include_router(mobile_router, prefix="/api/v1")
 app.include_router(uploads_router, prefix="/api/v1")
 app.include_router(analytics_router, prefix="/api/v1")

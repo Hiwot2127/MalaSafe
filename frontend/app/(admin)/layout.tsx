@@ -1,8 +1,8 @@
 /**
- * Operational Dashboard Layout
+ * Admin Dashboard Layout
  * 
- * Layout for operational users (MOH, EPHI, Regional Officers).
- * Includes RBAC-based route protection and navigation.
+ * Layout for admin-only pages with sidebar navigation.
+ * Only accessible to users with ADMIN role.
  */
 
 'use client';
@@ -10,11 +10,12 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { canAccessDashboard } from '@/lib/rbac';
-import Sidebar from '@/components/layout/sidebar';
-import Header from '@/components/layout/header';
+import { UserRole } from '@/types/auth';
+import { canAccessAdminPanel } from '@/lib/rbac';
+import { AdminSidebar } from '@/components/admin/admin-sidebar';
+import { AdminHeader } from '@/components/admin/admin-header';
 
-export default function DashboardLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -26,14 +27,10 @@ export default function DashboardLayout({
     if (!isLoading) {
       if (!user) {
         // Not authenticated - redirect to login
-        router.push('/login?next=/dashboard');
-      } else if (!canAccessDashboard(user.role)) {
-        // Not authorized for dashboard - redirect based on role
-        if (user.role === 'admin') {
-          router.push('/admin');
-        } else {
-          router.push('/login');
-        }
+        router.push('/login?next=/admin');
+      } else if (!canAccessAdminPanel(user.role)) {
+        // Not admin - redirect to their dashboard
+        router.push('/dashboard');
       }
     }
   }, [user, isLoading, router]);
@@ -51,16 +48,22 @@ export default function DashboardLayout({
   }
 
   // Don't render if not authorized
-  if (!user || !canAccessDashboard(user.role)) {
+  if (!user || !canAccessAdminPanel(user.role)) {
     return null;
   }
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
-      <Sidebar />
+    <div className="flex h-screen overflow-hidden bg-background">
+      {/* Sidebar */}
+      <AdminSidebar />
+
+      {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-y-auto px-8 py-10">
+        {/* Header */}
+        <AdminHeader />
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>
       </div>
