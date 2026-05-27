@@ -20,6 +20,7 @@ import {
   Database,
   FileUp,
   type LucideIcon,
+  ShieldAlert,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LogoMark } from '@/components/brand/logo';
