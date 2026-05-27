@@ -25,7 +25,9 @@ export default function Header() {
 
   useEffect(() => setMounted(true), []);
 
-  const role = user?.role?.replace(/_/g, ' ').toUpperCase() ?? 'USER';
+  const role = user?.role === 'admin' 
+    ? 'MOH Data Officer' 
+    : user?.role?.replace(/_/g, ' ').toUpperCase() ?? 'USER';
   const isDark = mounted && resolvedTheme === 'dark';
   const pageName = pathname === '/dashboard' ? 'Overview' : pathname?.split('/')[1]?.replace(/-/g, ' ') ?? 'Overview';
 

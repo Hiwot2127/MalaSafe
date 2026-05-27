@@ -12,15 +12,18 @@ import {
   Activity,
   FileText,
   type LucideIcon,
+  ShieldAlert,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LogoMark } from '@/components/brand/logo';
+import { useAuth } from '@/lib/hooks/use-auth';
 
 interface NavItem {
   index: string;
   name: string;
   href: string;
   icon: LucideIcon;
+  adminOnly?: boolean;
 }
 
 const navigation: NavItem[] = [
@@ -31,11 +34,17 @@ const navigation: NavItem[] = [
   { index: '05', name: 'Predictions', href: '/predictions', icon: Activity },
   { index: '06', name: 'Reports', href: '/reports', icon: FileText },
   { index: '07', name: 'Alerts', href: '/alerts', icon: AlertTriangle },
-  { index: '08', name: 'Settings', href: '/settings', icon: Settings },
+  { index: '08', name: 'Admin', href: '/admin', icon: ShieldAlert, adminOnly: true },
+  { index: '09', name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  
+  const filteredNavigation = navigation.filter(
+    item => !item.adminOnly || user?.role === 'admin'
+  );
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-white/10 bg-card/90 backdrop-blur-xl z-20 shadow-[4px_0_24px_-8px_rgba(0,0,0,0.1)] dark:shadow-[4px_0_24px_-8px_rgba(0,0,0,0.3)] transition-all duration-300">
@@ -58,7 +67,7 @@ export default function Sidebar() {
           Navigation
         </p>
         <ul className="flex flex-col gap-1">
-          {navigation.map((item) => {
+          {filteredNavigation.map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href !== '/dashboard' && pathname?.startsWith(item.href));

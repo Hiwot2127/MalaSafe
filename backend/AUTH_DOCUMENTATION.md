@@ -40,7 +40,7 @@ The MalaSafe backend implements a comprehensive JWT-based authentication system 
 
 | Role | Value | Description | Creation Method |
 |------|-------|-------------|-----------------|
-| **Admin** | `admin` | System administrators with full access | Admin creates |
+| **Admin** | `admin` | MOH Data Officer with full access | Admin creates |
 | **MOH Officer** | `moh_officer` | Ministry of Health officials | Admin creates |
 | **EPHI Officer** | `ephi_officer` | Ethiopian Public Health Institute officials | Admin creates |
 | **Regional Officer** | `regional_officer` | District/regional health officers | Admin creates |
@@ -401,7 +401,7 @@ async def create_admin():
         admin = User(
             id=uuid.uuid4(),
             email="admin@malasafe.gov.et",
-            full_name="System Administrator",
+            full_name="Abebe Kebede",
             password_hash=get_password_hash("Admin@2024!"),
             role=UserRole.ADMIN,
             is_active=True
