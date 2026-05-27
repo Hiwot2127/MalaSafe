@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
@@ -20,6 +20,7 @@ from app.utils.dependencies import (
     get_current_user,
     require_admin,
 )
+from app.services.audit_service import AuditService
 from loguru import logger
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -37,6 +38,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 )
 async def login(
     credentials: LoginRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -65,6 +67,14 @@ async def login(
     
     if not user or not verify_password(credentials.password, user.password_hash):
         logger.warning(f"Failed login attempt for email: {credentials.email}")
+        # Audit log for failed login
+        await AuditService.log_login_attempt(
+            db=db,
+            email=credentials.email,
+            success=False,
+            reason="Invalid credentials",
+            request=request
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -73,6 +83,14 @@ async def login(
     
     if not user.is_active:
         logger.warning(f"Login attempt for inactive user: {credentials.email}")
+        # Audit log for inactive user login attempt
+        await AuditService.log_login_attempt(
+            db=db,
+            email=credentials.email,
+            success=False,
+            reason="Account inactive",
+            request=request
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive"
@@ -85,6 +103,14 @@ async def login(
             "email": user.email,
             "role": user.role.value
         }
+    )
+    
+    # Audit log for successful login
+    await AuditService.log_login_attempt(
+        db=db,
+        email=credentials.email,
+        success=True,
+        request=request
     )
     
     logger.info(f"Successful login for user: {user.email} (role: {user.role.value})")
