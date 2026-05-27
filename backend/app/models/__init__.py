@@ -10,6 +10,7 @@ from .model_version import ModelVersion, ModelVersionStatus
 from .monthly_close import MonthlyClose, MonthlyCloseMode, MonthlyCloseStatus
 from .backtest_result import BacktestResult
 from .drift_finding import DriftFinding, DriftMetric, DriftSeverity
+from .audit_log import AuditLog
 
 __all__ = [
     "User",
@@ -31,4 +32,5 @@ __all__ = [
     "DriftFinding",
     "DriftMetric",
     "DriftSeverity",
+    "AuditLog",
 ]

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Activity, LineChart, ShieldCheck, Globe, Eye, EyeOff, Loader2, ArrowLeft, ChevronDown, Mail, Lock, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { getDefaultRedirect } from '@/lib/rbac';
 import {
   AlertBanner,
   EditorialCard,
@@ -25,7 +26,6 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') || '/dashboard';
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -220,12 +220,17 @@ function LoginForm() {
     setError('');
 
     try {
-      await login(email, password);
+      const response = await login(email, password);
       setLoginSuccess(true);
+      
+      // Get redirect path based on role
+      const nextParam = searchParams.get('next');
+      const defaultRedirect = getDefaultRedirect(response.user.role);
+      const redirectTo = nextParam || defaultRedirect;
       
       // Brief success state before redirect
       setTimeout(() => {
-        router.push(next);
+        router.push(redirectTo);
         router.refresh();
       }, 800);
     } catch (err: unknown) {

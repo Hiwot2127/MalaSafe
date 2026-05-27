@@ -1,9 +1,18 @@
+export enum UserRole {
+  ADMIN = 'admin',
+  MOH_OFFICER = 'moh_officer',
+  EPHI_OFFICER = 'ephi_officer',
+  REGIONAL_OFFICER = 'regional_officer',
+  PUBLIC_USER = 'public_user',
+}
+
 export interface User {
   id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'moh_officer' | 'ephi_officer' | 'regional_officer' | 'public_user';
+  role: UserRole;
   district_id?: string;
+  is_active: boolean;
   created_at: string;
 }
 
