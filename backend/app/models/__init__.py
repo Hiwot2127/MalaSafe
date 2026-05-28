@@ -11,6 +11,7 @@ from .monthly_close import MonthlyClose, MonthlyCloseMode, MonthlyCloseStatus
 from .backtest_result import BacktestResult
 from .drift_finding import DriftFinding, DriftMetric, DriftSeverity
 from .audit_log import AuditLog
+from .response_recommendation import ResponseRecommendation
 
 __all__ = [
     "User",
@@ -33,4 +34,5 @@ __all__ = [
     "DriftMetric",
     "DriftSeverity",
     "AuditLog",
+    "ResponseRecommendation",
 ]

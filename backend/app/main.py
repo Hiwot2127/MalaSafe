@@ -22,6 +22,7 @@ from app.routes import (
     operations_router,
 )
 from app.routes.exports import router as exports_router
+from app.routes.recommendations import router as recommendations_router
 from loguru import logger
 import sys
 
@@ -96,6 +97,10 @@ openapi_tags = [
     {
         "name": "Exports",
         "description": "PDF export functionality for district reports and analytics summaries.",
+    },
+    {
+        "name": "Recommendations",
+        "description": "Response recommendation system for malaria predictions. Generates practical, rule-based action plans.",
     },
     {
         "name": "Protected Examples",
@@ -179,6 +184,7 @@ app.include_router(alerts_router, prefix="/api/v1")
 app.include_router(monthly_close_router, prefix="/api/v1")
 app.include_router(operations_router, prefix="/api/v1")
 app.include_router(exports_router, prefix="/api/v1")
+app.include_router(recommendations_router, prefix="/api/v1")
 
 
 # Startup event
