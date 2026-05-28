@@ -1,46 +1,63 @@
+/**
+ * API Client Configuration
+ * 
+ * Axios instance with:
+ * - HttpOnly cookie authentication
+ * - Automatic token refresh
+ * - Request/response interceptors
+ * - Error handling
+ */
+
 import axios from 'axios';
 import { API_URL } from '../constants';
-import { setSessionCookie } from './session-cookie';
 
 export const apiClient = axios.create({
   baseURL: API_URL,
+  withCredentials: true, // Send cookies with requests
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000, // 30 seconds
 });
 
-// Request interceptor to add auth token
+// Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
+    // Cookies are automatically sent with withCredentials: true
+    // No need to manually add Authorization header
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response interceptor for error handling
+// Response interceptor for automatic token refresh
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      const isLoginRequest = error.config?.url?.includes('/auth/login');
-      
-      if (typeof window !== 'undefined' && !isLoginRequest) {
-        setSessionCookie(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+  async (error) => {
+    const originalRequest = error.config;
+    const isLoginRequest = originalRequest?.url?.includes('/auth/login');
+
+    // If 401 and we haven't tried to refresh yet
+    if (error.response?.status === 401 && !originalRequest._retry && !isLoginRequest) {
+      originalRequest._retry = true;
+
+      try {
+        // Try to refresh the session
+        await apiClient.post('/auth/refresh');
         
-        // Prevent hard reload loop if already on the login page
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
+        // Retry the original request
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        // Refresh failed - redirect to login
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          const currentPath = window.location.pathname;
+          window.location.href = `/login?next=${encodeURIComponent(currentPath)}`;
         }
+        return Promise.reject(refreshError);
       }
     }
+
     return Promise.reject(error);
   }
 );
+
