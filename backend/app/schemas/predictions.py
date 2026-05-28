@@ -1,9 +1,29 @@
 """Pydantic schemas for prediction generation endpoints."""
 from datetime import date, datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+
+class FeatureContribution(BaseModel):
+    """Individual feature contribution to prediction"""
+    feature_name: str
+    display_name: str
+    value: float
+    impact: float  # SHAP value
+    impact_percentage: float  # Percentage of total impact
+    direction: str  # "positive" or "negative"
+
+
+class PredictionExplanation(BaseModel):
+    """Enhanced prediction explanation with SHAP details"""
+    summary: str  # Human-readable summary
+    top_factors: List[FeatureContribution]  # Top 5 contributing features
+    confidence_level: str  # "high", "medium", "low"
+    confidence_score: float
+    total_positive_impact: float
+    total_negative_impact: float
 
 
 class GeneratePredictionRequest(BaseModel):
@@ -29,6 +49,7 @@ class PredictionResultResponse(BaseModel):
     prediction_score: float
     confidence_score: float
     prediction_reason: Optional[str]
+    explanation: Optional[PredictionExplanation] = None  # Enhanced explanation
     is_warm: bool
     created_at: Optional[str] = None
 
@@ -44,6 +65,23 @@ class PredictionResultResponse(BaseModel):
                 "prediction_score": 412.5,
                 "confidence_score": 0.78,
                 "prediction_reason": "elevated cases last month; heavy rain 3 months ago; located in Tigray",
+                "explanation": {
+                    "summary": "High risk predicted due to recent case increases and favorable climate conditions",
+                    "top_factors": [
+                        {
+                            "feature_name": "lag_1_cases",
+                            "display_name": "Cases Last Month",
+                            "value": 385.0,
+                            "impact": 45.2,
+                            "impact_percentage": 35.0,
+                            "direction": "positive"
+                        }
+                    ],
+                    "confidence_level": "high",
+                    "confidence_score": 0.78,
+                    "total_positive_impact": 95.5,
+                    "total_negative_impact": -12.3
+                },
                 "is_warm": True,
                 "created_at": "2026-05-17T00:00:00Z",
             }

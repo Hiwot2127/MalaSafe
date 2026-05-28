@@ -24,12 +24,38 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    
+    # Redis
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: Optional[str] = None
+    REDIS_DB_CACHE: int = 2
+    REDIS_DB_RATE_LIMIT: int = 0
+    REDIS_DB_CELERY: int = 1
+    
+    # Sentry
+    SENTRY_DSN: Optional[str] = None
+    SENTRY_ENVIRONMENT: str = "production"
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.1
+    
+    # Celery
+    CELERY_BROKER_URL: Optional[str] = None
+    CELERY_RESULT_BACKEND: Optional[str] = None
+    
+    # Rate Limiting
+    RATE_LIMIT_ENABLED: bool = True
+    
+    # Caching
+    CACHE_ENABLED: bool = True
+    CACHE_DEFAULT_TTL: int = 300
     
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:3000"]
     CORS_ALLOW_CREDENTIALS: bool = True
-    CORS_ALLOW_METHODS: List[str] = ["*"]
-    CORS_ALLOW_HEADERS: List[str] = ["*"]
+    CORS_ALLOW_METHODS: List[str] = ["GET", "POST", "PUT", "DELETE", "PATCH"]
+    CORS_ALLOW_HEADERS: List[str] = ["Content-Type", "Authorization"]
+    CORS_MAX_AGE: int = 600
     
     # File Upload
     MAX_UPLOAD_SIZE: int = 10485760  # 10MB

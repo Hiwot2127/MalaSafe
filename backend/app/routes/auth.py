@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, Cookie
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
@@ -14,13 +14,16 @@ from app.utils import (
     verify_password,
     get_password_hash,
     validate_password_strength,
-    create_access_token,
 )
+from app.utils.jwt import create_access_token, create_refresh_token
 from app.utils.dependencies import (
     get_current_user,
     require_admin,
 )
 from app.services.audit_service import AuditService
+from app.middleware.rate_limit import limiter
+from jose import jwt, JWTError
+from app.config import settings
 from loguru import logger
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -36,13 +39,15 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
         403: {"description": "Account is inactive"},
     },
 )
+@limiter.limit("5/minute")  # Rate limit: 5 attempts per minute
 async def login(
-    credentials: LoginRequest,
     request: Request,
+    credentials: LoginRequest,
+    response: Response,
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Login endpoint for all users.
+    Login endpoint for all users with HttpOnly cookie support.
     
     **Request Body:**
     - email: User's email address
@@ -52,6 +57,11 @@ async def login(
     - access_token: JWT token for authentication
     - token_type: "bearer"
     - user: User information
+    
+    **Cookies Set:**
+    - session_token: HttpOnly access token (30 min)
+    - refresh_token: HttpOnly refresh token (7 days)
+    - user_role: User role for frontend middleware
     
     **Example:**
     ```json
@@ -103,6 +113,42 @@ async def login(
             "email": user.email,
             "role": user.role.value
         }
+    )
+    
+    # Create refresh token
+    refresh_token = create_refresh_token(
+        data={"user_id": str(user.id)}
+    )
+    
+    # Set HttpOnly cookies
+    response.set_cookie(
+        key="session_token",
+        value=access_token,
+        httponly=True,
+        secure=True,  # HTTPS only in production
+        samesite="lax",  # CSRF protection
+        max_age=1800,  # 30 minutes
+        path="/",
+    )
+    
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=604800,  # 7 days
+        path="/api/v1/auth/refresh",  # Only sent to refresh endpoint
+    )
+    
+    # Also set user_role for frontend middleware
+    response.set_cookie(
+        key="user_role",
+        value=user.role.value,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=1800,
     )
     
     # Audit log for successful login
@@ -204,6 +250,166 @@ async def create_official(
     )
     
     return new_user
+
+
+@router.post(
+    "/refresh",
+    response_model=Token,
+    status_code=status.HTTP_200_OK,
+    summary="Refresh access token using refresh token",
+    responses={
+        401: {"description": "Invalid or expired refresh token"},
+    },
+)
+async def refresh_token(
+    request: Request,
+    response: Response,
+    refresh_token: str = Cookie(None, alias="refresh_token"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Refresh access token using the refresh token from HttpOnly cookie.
+    
+    **Cookies Required:**
+    - refresh_token: HttpOnly refresh token
+    
+    **Returns:**
+    - New access_token
+    - token_type: "bearer"
+    - user: User information
+    
+    **Cookies Set:**
+    - session_token: New HttpOnly access token (30 min)
+    - refresh_token: New HttpOnly refresh token (7 days) - token rotation
+    - user_role: User role for frontend middleware
+    """
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Decode refresh token
+    try:
+        payload = jwt.decode(
+            refresh_token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
+        user_id: str = payload.get("user_id")
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Get user from database
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive"
+        )
+    
+    # Create new tokens (token rotation for security)
+    new_access_token = create_access_token(
+        data={
+            "user_id": str(user.id),
+            "email": user.email,
+            "role": user.role.value
+        }
+    )
+    
+    new_refresh_token = create_refresh_token(
+        data={"user_id": str(user.id)}
+    )
+    
+    # Set new HttpOnly cookies
+    response.set_cookie(
+        key="session_token",
+        value=new_access_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=1800,  # 30 minutes
+        path="/",
+    )
+    
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=604800,  # 7 days
+        path="/api/v1/auth/refresh",
+    )
+    
+    response.set_cookie(
+        key="user_role",
+        value=user.role.value,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=1800,
+    )
+    
+    logger.info(f"Token refreshed for user: {user.email}")
+    
+    return {
+        "access_token": new_access_token,
+        "token_type": "bearer",
+        "user": user
+    }
+
+
+@router.post(
+    "/logout",
+    status_code=status.HTTP_200_OK,
+    summary="Log out and clear authentication cookies",
+)
+async def logout(
+    response: Response,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Logout endpoint - clears all authentication cookies.
+    
+    **Authorization:** Valid JWT token required
+    
+    **Returns:**
+    - Success message
+    
+    **Cookies Cleared:**
+    - session_token
+    - refresh_token
+    - user_role
+    """
+    # Clear all auth cookies by setting them to expire immediately
+    response.delete_cookie(key="session_token", path="/")
+    response.delete_cookie(key="refresh_token", path="/api/v1/auth/refresh")
+    response.delete_cookie(key="user_role", path="/")
+    
+    logger.info(f"User logged out: {current_user.email}")
+    
+    return {"message": "Successfully logged out"}
 
 
 @router.get("/me", response_model=UserResponse, summary="Get the authenticated user's profile")

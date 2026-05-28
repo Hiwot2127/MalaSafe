@@ -4,7 +4,7 @@ Prediction endpoints for malaria risk predictions.
 
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, desc, func
 from app.database import get_db
@@ -21,6 +21,7 @@ from app.schemas.predictions import (
 from app.services.prediction_service import PredictionService
 from app.services.analytics_service import AnalyticsService
 from app.ai import get_predictor
+from app.middleware.rate_limit import limiter
 from typing import Optional
 from datetime import date, datetime, timedelta
 
@@ -202,7 +203,9 @@ async def get_latest_predictions(
     summary="Generate a prediction for one district",
     responses={404: {"description": "District not found"}},
 )
+@limiter.limit("20/hour")  # Rate limit: 20 predictions per hour
 async def generate_prediction(
+    request: Request,
     payload: GeneratePredictionRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_roles(
@@ -252,7 +255,9 @@ async def generate_prediction(
     status_code=status.HTTP_202_ACCEPTED,
     summary="Queue batch prediction for many districts",
 )
+@limiter.limit("5/hour")  # Rate limit: 5 batch jobs per hour (more restrictive)
 async def generate_batch(
+    request: Request,
     payload: BatchGenerateRequest,
     background: BackgroundTasks,
     db: AsyncSession = Depends(get_db),

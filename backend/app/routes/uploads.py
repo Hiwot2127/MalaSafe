@@ -2,7 +2,7 @@
 Upload endpoints for malaria and climate data CSV files.
 """
 
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, BackgroundTasks, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
@@ -10,6 +10,8 @@ from app.models import User
 from app.utils.dependencies import get_current_user, require_official
 from app.schemas.upload import UploadResponse, UploadError, StageResult, UploadPreviewResponse
 from app.services.upload_service import UploadService
+from app.middleware.rate_limit import limiter
+from app.cache.decorators import invalidate_cache
 from io import StringIO, BytesIO
 import csv
 from loguru import logger
@@ -38,7 +40,9 @@ async def trigger_prediction_processing(district_ids: list[str], db: AsyncSessio
     summary="Upload monthly malaria cases CSV",
     responses={400: {"description": "Bad file or validation error"}, 403: {"description": "Public users cannot upload"}},
 )
+@limiter.limit("10/hour")  # Rate limit: 10 uploads per hour
 async def upload_monthly_malaria_data(
+    request: Request,
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
@@ -123,6 +127,14 @@ async def upload_monthly_malaria_data(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing upload: {str(e)}"
         )
+    finally:
+        # Invalidate analytics caches after upload (success or failure)
+        try:
+            await invalidate_cache("analytics:*")
+            await invalidate_cache("maps:*")
+            logger.info("Analytics and maps caches invalidated after upload")
+        except Exception as cache_error:
+            logger.warning(f"Failed to invalidate cache: {cache_error}")
 
 
 @router.post(
@@ -131,7 +143,9 @@ async def upload_monthly_malaria_data(
     summary="Validate a malaria CSV (dry-run, no write)",
     responses={400: {"description": "Bad file or validation error"}},
 )
+@limiter.limit("20/hour")  # Rate limit: 20 previews per hour (more lenient than actual uploads)
 async def preview_monthly_malaria_upload(
+    request: Request,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_official),
@@ -174,7 +188,9 @@ async def preview_monthly_malaria_upload(
     summary="Upload climate data CSV (rainfall, temperature, etc.)",
     responses={400: {"description": "Bad file or validation error"}, 403: {"description": "Public users cannot upload"}},
 )
+@limiter.limit("10/hour")  # Rate limit: 10 uploads per hour
 async def upload_climate_data(
+    request: Request,
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
@@ -256,6 +272,14 @@ async def upload_climate_data(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing upload: {str(e)}"
         )
+    finally:
+        # Invalidate analytics caches after climate upload
+        try:
+            await invalidate_cache("analytics:*")
+            await invalidate_cache("maps:*")
+            logger.info("Analytics and maps caches invalidated after climate upload")
+        except Exception as cache_error:
+            logger.warning(f"Failed to invalidate cache: {cache_error}")
 
 
 @router.get(
