@@ -37,7 +37,9 @@ class AuditLog(Base):
     
     # Details
     description = Column(Text, nullable=False)
-    metadata = Column(JSON, nullable=True)  # Additional context (IP, user agent, etc.)
+    
+    # FIXED: Renamed 'metadata' to 'extra_info' because 'metadata' is a reserved SQLAlchemy word
+    extra_info = Column(JSON, nullable=True)  # Additional context (IP, user agent, etc.)
     
     # When
     timestamp = Column(DateTime(timezone=True), server_default=func.now(), index=True)
