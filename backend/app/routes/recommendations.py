@@ -9,7 +9,7 @@ from typing import List
 from uuid import UUID
 
 from app.database.base import get_db
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.models.prediction import Prediction
 from app.models.district import District
 from app.models.response_recommendation import ResponseRecommendation
@@ -119,7 +119,7 @@ async def get_recommendations_for_prediction(
             "confidence_score": prediction.confidence_score,
             "prediction_score": prediction.prediction_score,
             "prediction_date": prediction.prediction_date.isoformat(),
-            "district_name": district.name if district else "Unknown",
+            "district_name": district.district_name if district else "Unknown",
             "district_code": district.adm3_pcode if district else None
         }
     )
@@ -176,7 +176,7 @@ async def get_recommendations_for_district(
         ],
         total=len(recommendations),
         prediction_info={
-            "district_name": district.name,
+            "district_name": district.district_name,
             "district_code": district.adm3_pcode,
             "region": district.region
         }
@@ -200,7 +200,7 @@ async def generate_recommendations(
     """
     
     # Check authorization
-    if current_user.role not in ["admin", "moh", "ephi"]:
+    if current_user.role not in (UserRole.ADMIN, UserRole.MOH_OFFICER, UserRole.EPHI_OFFICER):
         raise HTTPException(
             status_code=403,
             detail="Only admin, MOH, and EPHI users can generate recommendations"

@@ -15,7 +15,7 @@ class TestLogin:
         """Test successful login."""
         response = await client.post(
             "/api/v1/auth/login",
-            json={"email": "admin@test.com", "password": "admin123"}
+            json={"email": "admin@test.com", "password": "Admin123!"}
         )
         
         assert response.status_code == 200
@@ -60,13 +60,14 @@ class TestLogin:
         
         response = await client.post(
             "/api/v1/auth/login",
-            json={"email": "admin@test.com", "password": "admin123"}
+            json={"email": "admin@test.com", "password": "Admin123!"}
         )
         
         assert response.status_code == 403
         assert "inactive" in response.json()["detail"].lower()
     
     @pytest.mark.asyncio
+    @pytest.mark.rate_limit
     async def test_login_rate_limiting(self, client: AsyncClient):
         """Test rate limiting on login endpoint."""
         # Make 6 requests (limit is 5/minute)
@@ -91,7 +92,7 @@ class TestRefreshToken:
         # Login first
         login_response = await client.post(
             "/api/v1/auth/login",
-            json={"email": "admin@test.com", "password": "admin123"}
+            json={"email": "admin@test.com", "password": "Admin123!"}
         )
         assert login_response.status_code == 200
         
@@ -141,7 +142,7 @@ class TestLogout:
         # Login first
         login_response = await client.post(
             "/api/v1/auth/login",
-            json={"email": "admin@test.com", "password": "admin123"}
+            json={"email": "admin@test.com", "password": "Admin123!"}
         )
         cookies = login_response.cookies
         
@@ -189,7 +190,7 @@ class TestGetCurrentUser:
         # Login to get cookies
         login_response = await client.post(
             "/api/v1/auth/login",
-            json={"email": "admin@test.com", "password": "admin123"}
+            json={"email": "admin@test.com", "password": "Admin123!"}
         )
         cookies = login_response.cookies
         
@@ -283,3 +284,109 @@ class TestCreateOfficial:
         )
         
         assert response.status_code == 403
+
+
+class TestChangePassword:
+    """Tests for password change endpoint."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.auth
+    async def test_change_password_success(self, client: AsyncClient, moh_headers: dict):
+        response = await client.post(
+            "/api/v1/auth/change-password",
+            headers=moh_headers,
+            json={
+                "current_password": "Moh12345!",
+                "new_password": "NewMoh12345!",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["force_password_change"] is False
+
+        login_response = await client.post(
+            "/api/v1/auth/login",
+            json={"email": "moh@test.com", "password": "NewMoh12345!"},
+        )
+        assert login_response.status_code == 200
+
+    @pytest.mark.asyncio
+    @pytest.mark.auth
+    async def test_change_password_wrong_current(self, client: AsyncClient, moh_headers: dict):
+        response = await client.post(
+            "/api/v1/auth/change-password",
+            headers=moh_headers,
+            json={
+                "current_password": "WrongPassword123!",
+                "new_password": "AnotherMoh12345!",
+            },
+        )
+
+        assert response.status_code == 400
+        assert "incorrect" in response.json()["detail"].lower()
+
+    @pytest.mark.asyncio
+    @pytest.mark.auth
+    async def test_change_password_requires_auth(self, client: AsyncClient):
+        response = await client.post(
+            "/api/v1/auth/change-password",
+            json={
+                "current_password": "Moh12345!",
+                "new_password": "NewMoh12345!",
+            },
+        )
+
+        assert response.status_code == 401
+
+
+class TestAccountLockout:
+    """Tests for failed-login lockout behaviour."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.auth
+    async def test_failed_login_increments_attempt_counter(
+        self, client: AsyncClient, test_admin_user: User, db_session
+    ):
+        for _ in range(3):
+            await client.post(
+                "/api/v1/auth/login",
+                json={"email": "admin@test.com", "password": "wrong-password"},
+            )
+
+        await db_session.refresh(test_admin_user)
+        assert test_admin_user.failed_login_attempts >= 3
+
+    @pytest.mark.asyncio
+    @pytest.mark.auth
+    async def test_successful_login_resets_failed_attempts(
+        self, client: AsyncClient, test_admin_user: User, db_session
+    ):
+        test_admin_user.failed_login_attempts = 3
+        await db_session.commit()
+
+        response = await client.post(
+            "/api/v1/auth/login",
+            json={"email": "admin@test.com", "password": "Admin123!"},
+        )
+        assert response.status_code == 200
+
+        await db_session.refresh(test_admin_user)
+        assert test_admin_user.failed_login_attempts == 0
+
+
+class TestForcePasswordChange:
+    """Tests for forced password change flag on login."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.auth
+    async def test_login_returns_force_password_change_flag(
+        self, client: AsyncClient, test_forced_password_user: User
+    ):
+        response = await client.post(
+            "/api/v1/auth/login",
+            json={"email": "forced@test.com", "password": "Forced123!"},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["force_password_change"] is True

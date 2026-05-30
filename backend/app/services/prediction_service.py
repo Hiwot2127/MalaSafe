@@ -134,7 +134,7 @@ class PredictionService:
         if vals:
             return float(sorted(vals)[len(vals) // 2])
         # malaria_data has no Tests column in current schema -> use cases as a hint
-        cases = [float(m.cases) for m in recent if m.cases]
+        cases = [float(m.positive) for m in recent if m.positive]
         if cases:
             return max(sum(cases) / len(cases) * 5.0, 50.0)  # rough TPR=20% proxy
         return float(DEFAULT_TESTS_HINT)

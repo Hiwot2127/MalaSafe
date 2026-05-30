@@ -45,7 +45,7 @@ async def export_district_report(
         raise HTTPException(status_code=404, detail="District not found")
     
     district_data = {
-        "name": district.name,
+        "name": district.district_name,
         "code": district.adm3_pcode or "N/A",
         "region": district.region or "N/A"
     }
@@ -81,7 +81,7 @@ async def export_district_report(
     )
     
     # Return as streaming response
-    filename = f"malasafe_district_{district.name.replace(' ', '_')}_{datetime.utcnow().strftime('%Y%m%d')}.pdf"
+    filename = f"malasafe_district_{district.district_name.replace(' ', '_')}_{datetime.utcnow().strftime('%Y%m%d')}.pdf"
     
     return StreamingResponse(
         pdf_buffer,
@@ -109,7 +109,7 @@ async def export_analytics_summary(
     
     # Total positive cases
     total_positive_result = await db.execute(
-        select(func.sum(MalariaData.positive_cases))
+        select(func.sum(MalariaData.positive))
         .where(MalariaData.date >= cutoff_date)
     )
     total_positive = total_positive_result.scalar() or 0
@@ -140,13 +140,13 @@ async def export_analytics_summary(
     regional_result = await db.execute(
         select(
             District.region,
-            func.sum(MalariaData.positive_cases).label("total_cases"),
+            func.sum(MalariaData.positive).label("total_cases"),
             func.count(func.distinct(MalariaData.district_id)).label("district_count")
         )
         .join(MalariaData, District.id == MalariaData.district_id)
         .where(MalariaData.date >= cutoff_date)
         .group_by(District.region)
-        .order_by(func.sum(MalariaData.positive_cases).desc())
+        .order_by(func.sum(MalariaData.positive).desc())
     )
     
     regional_data = [
@@ -164,7 +164,7 @@ async def export_analytics_summary(
     trends_result = await db.execute(
         select(
             func.date_trunc('week', MalariaData.date).label("week"),
-            func.sum(MalariaData.positive_cases).label("total_cases")
+            func.sum(MalariaData.positive).label("total_cases")
         )
         .where(MalariaData.date >= cutoff_date)
         .group_by(func.date_trunc('week', MalariaData.date))

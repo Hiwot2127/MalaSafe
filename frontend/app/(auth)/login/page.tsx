@@ -379,6 +379,7 @@ function LoginForm() {
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary pointer-events-none" strokeWidth={1.5} />
                 <input
                   id="email"
+                  name="email"
                   type="email"
                   autoComplete="email"
                   placeholder="admin@malasafe.gov.et"
@@ -416,6 +417,7 @@ function LoginForm() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary pointer-events-none" strokeWidth={1.5} />
                 <input
                   id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   value={password}
