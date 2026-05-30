@@ -70,6 +70,12 @@ class UserListResponse(BaseModel):
     role: UserRole
     district_id: Optional[str]
     is_active: bool
+    force_password_change: bool
+    failed_login_attempts: int
+    account_locked_until: Optional[datetime]
+    last_login_at: Optional[datetime]
+    last_login_ip: Optional[str]
+    status: str
     created_at: datetime
     
     class Config:
@@ -365,6 +371,11 @@ async def reset_user_password(
     
     # Update password
     user.password_hash = get_password_hash(reset_data.new_password)
+    
+    # Set force password change if requested
+    if reset_data.require_change_on_login:
+        user.force_password_change = True
+    
     await db.commit()
     
     # Audit log
@@ -372,7 +383,61 @@ async def reset_user_password(
     
     logger.info(f"Admin {current_user.email} reset password for user {user.email}")
     
-    return {"message": "Password reset successfully"}
+    return {"message": "Password reset successfully", "force_password_change": user.force_password_change}
+
+
+@router.post(
+    "/users/{user_id}/unlock",
+    status_code=status.HTTP_200_OK,
+    summary="Unlock user account",
+    dependencies=[Depends(require_admin)]
+)
+async def unlock_user_account(
+    user_id: UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """
+    Unlock a user account that was locked due to failed login attempts.
+    
+    **Authorization:** Admin only
+    
+    **Returns:**
+    - Success message
+    - User status
+    """
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    if not user.is_locked():
+        return {"message": "Account is not locked", "status": user.status}
+    
+    # Unlock account
+    user.unlock_account()
+    await db.commit()
+    
+    # Audit log
+    await AuditService.log_action(
+        db=db,
+        actor=current_user,
+        action="unlock_account",
+        resource_type="user",
+        resource_id=str(user.id),
+        description=f"Admin unlocked account for {user.email}",
+        request=request,
+        status="success"
+    )
+    
+    logger.info(f"Admin {current_user.email} unlocked account for user {user.email}")
+    
+    return {"message": "Account unlocked successfully", "status": user.status}
 
 
 # ============================================================================
@@ -461,6 +526,128 @@ async def list_audit_logs(
 # ============================================================================
 # SYSTEM HEALTH
 # ============================================================================
+
+class DashboardSummaryResponse(BaseModel):
+    """Dashboard summary with key metrics."""
+    total_users: int
+    active_users: int
+    inactive_users: int
+    locked_users: int
+    password_reset_required: int
+    monthly_uploads: int
+    predictions_generated: int
+    active_alerts: int
+    failed_login_attempts: int
+    
+    class Config:
+        from_attributes = True
+
+
+@router.get(
+    "/dashboard-summary",
+    response_model=DashboardSummaryResponse,
+    summary="Get admin dashboard summary",
+    dependencies=[Depends(require_admin)]
+)
+async def get_dashboard_summary(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """
+    Get comprehensive dashboard summary with key metrics.
+    
+    **Authorization:** Admin only
+    
+    **Returns:**
+    - Total Users: All users in system
+    - Active Users: Users with is_active=true and not locked
+    - Inactive Users: Users with is_active=false
+    - Locked Users: Users currently locked due to failed login attempts
+    - Password Reset Required: Users with force_password_change=true
+    - Monthly Uploads: Uploads in current month
+    - Predictions Generated: Total predictions
+    - Active Alerts: Unresolved alerts
+    - Failed Login Attempts: Failed logins in last 24 hours
+    """
+    from datetime import timedelta
+    from app.models.prediction import Prediction
+    from app.models.alert import Alert
+    
+    # Total users
+    total_users_result = await db.execute(select(func.count(User.id)))
+    total_users = total_users_result.scalar()
+    
+    # Active users (is_active=true and not locked)
+    active_users_result = await db.execute(
+        select(func.count(User.id)).where(
+            User.is_active == True,
+            (User.account_locked_until == None) | (User.account_locked_until < datetime.utcnow())
+        )
+    )
+    active_users = active_users_result.scalar()
+    
+    # Inactive users
+    inactive_users_result = await db.execute(
+        select(func.count(User.id)).where(User.is_active == False)
+    )
+    inactive_users = inactive_users_result.scalar()
+    
+    # Locked users
+    locked_users_result = await db.execute(
+        select(func.count(User.id)).where(
+            User.account_locked_until != None,
+            User.account_locked_until > datetime.utcnow()
+        )
+    )
+    locked_users = locked_users_result.scalar()
+    
+    # Password reset required
+    password_reset_result = await db.execute(
+        select(func.count(User.id)).where(User.force_password_change == True)
+    )
+    password_reset_required = password_reset_result.scalar()
+    
+    # Monthly uploads (current month)
+    first_day_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    monthly_uploads_result = await db.execute(
+        select(func.count(UploadedFile.id)).where(
+            UploadedFile.uploaded_at >= first_day_of_month
+        )
+    )
+    monthly_uploads = monthly_uploads_result.scalar()
+    
+    # Predictions generated (total)
+    predictions_result = await db.execute(select(func.count(Prediction.id)))
+    predictions_generated = predictions_result.scalar()
+    
+    # Active alerts (unresolved)
+    active_alerts_result = await db.execute(
+        select(func.count(Alert.id)).where(Alert.is_resolved == False)
+    )
+    active_alerts = active_alerts_result.scalar()
+    
+    # Failed login attempts (last 24 hours)
+    yesterday = datetime.utcnow() - timedelta(days=1)
+    failed_logins_result = await db.execute(
+        select(func.count(AuditLog.id)).where(
+            AuditLog.action == "login_failure",
+            AuditLog.timestamp >= yesterday
+        )
+    )
+    failed_login_attempts = failed_logins_result.scalar()
+    
+    return DashboardSummaryResponse(
+        total_users=total_users,
+        active_users=active_users,
+        inactive_users=inactive_users,
+        locked_users=locked_users,
+        password_reset_required=password_reset_required,
+        monthly_uploads=monthly_uploads,
+        predictions_generated=predictions_generated,
+        active_alerts=active_alerts,
+        failed_login_attempts=failed_login_attempts
+    )
+
 
 @router.get(
     "/system-health",

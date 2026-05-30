@@ -19,60 +19,40 @@ depends_on = None
 def upgrade():
     """Add missing indexes for query performance."""
     
-    # MalariaData - frequently queried by district + date
-    op.create_index(
-        'idx_malaria_district_year_month',
-        'malaria_data',
-        ['district_id', 'year', 'month'],
-        unique=False
-    )
+    # (idx_malaria_district_year_month is already created in 001_add_malaria_surveillance_models)
     
     # Predictions - latest prediction per district
-    op.create_index(
-        'idx_predictions_district_date',
-        'predictions',
-        ['district_id', 'prediction_date', 'created_at'],
-        unique=False
+    op.execute(
+        'CREATE INDEX IF NOT EXISTS idx_predictions_district_date '
+        'ON predictions (district_id, prediction_date, created_at)'
     )
     
     # Alerts - active alerts by district
-    op.create_index(
-        'idx_alerts_active_district',
-        'alerts',
-        ['is_active', 'district_id', 'created_at'],
-        unique=False
+    op.execute(
+        'CREATE INDEX IF NOT EXISTS idx_alerts_active_district '
+        'ON alerts (is_active, district_id, created_at)'
     )
     
     # ClimateData - zonal stats queries
-    op.create_index(
-        'idx_climate_district_date',
-        'climate_data',
-        ['district_id', 'date'],
-        unique=False
+    op.execute(
+        'CREATE INDEX IF NOT EXISTS idx_climate_district_date '
+        'ON climate_data (district_id, date)'
     )
     
     # AuditLogs - admin queries by user/action
-    op.create_index(
-        'idx_audit_user_action_timestamp',
-        'audit_logs',
-        ['user_id', 'action', 'timestamp'],
-        unique=False
+    op.execute(
+        'CREATE INDEX IF NOT EXISTS idx_audit_user_action_timestamp '
+        'ON audit_logs (actor_id, action, timestamp)'
     )
     
-    # UploadedFiles - status queries
-    op.create_index(
-        'idx_uploaded_files_status_date',
-        'uploaded_files',
-        ['status', 'uploaded_at'],
-        unique=False
-    )
+    # (idx_uploaded_files_status_date removed because status/uploaded_at columns do not exist)
 
 
 def downgrade():
     """Remove performance indexes."""
-    op.drop_index('idx_malaria_district_year_month', table_name='malaria_data')
-    op.drop_index('idx_predictions_district_date', table_name='predictions')
-    op.drop_index('idx_alerts_active_district', table_name='alerts')
-    op.drop_index('idx_climate_district_date', table_name='climate_data')
-    op.drop_index('idx_audit_user_action_timestamp', table_name='audit_logs')
-    op.drop_index('idx_uploaded_files_status_date', table_name='uploaded_files')
+    # idx_malaria_district_year_month will be dropped by 001 downgrade
+    op.execute('DROP INDEX IF EXISTS idx_predictions_district_date')
+    op.execute('DROP INDEX IF EXISTS idx_alerts_active_district')
+    op.execute('DROP INDEX IF EXISTS idx_climate_district_date')
+    op.execute('DROP INDEX IF EXISTS idx_audit_user_action_timestamp')
+    # idx_uploaded_files_status_date removed

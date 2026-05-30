@@ -16,8 +16,14 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Use the Cloud URL from settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL + "?sslmode=require")
+# Use the Sync URL for migrations
+db_url = settings.DATABASE_URL_SYNC
+if settings.ENVIRONMENT == "production":
+    if "?" in db_url:
+        db_url += "&sslmode=require"
+    else:
+        db_url += "?sslmode=require"
+config.set_main_option("sqlalchemy.url", db_url)
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")

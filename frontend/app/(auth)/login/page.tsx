@@ -223,6 +223,16 @@ function LoginForm() {
       const response = await login(email, password);
       setLoginSuccess(true);
       
+      // Check if password change is required
+      if (response.force_password_change) {
+        // Redirect to change password page
+        setTimeout(() => {
+          router.push('/change-password');
+          router.refresh();
+        }, 800);
+        return;
+      }
+      
       // Get redirect path based on role
       const nextParam = searchParams.get('next');
       const defaultRedirect = getDefaultRedirect(response.user.role);
@@ -235,10 +245,9 @@ function LoginForm() {
       }, 800);
     } catch (err: unknown) {
       const maybe = err as { response?: { data?: { detail?: string } } };
-      setError(
-        maybe?.response?.data?.detail ||
-        'Login failed. Please check your credentials.',
-      );
+      const errorDetail = maybe?.response?.data?.detail || 'Login failed. Please check your credentials.';
+      
+      setError(errorDetail);
       setLoading(false);
     }
   };

@@ -5,16 +5,23 @@ from sqlalchemy import create_engine
 from app.config import settings
 
 # 1. Async engine for FastAPI (Neon needs 'ssl')
+async_connect_args = {"ssl": True} if settings.ENVIRONMENT == "production" else {}
+async_url = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+
 async_engine = create_async_engine(
-    settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://"),
-    connect_args={"ssl": True}, 
-    echo=True
+    async_url,
+    connect_args=async_connect_args, 
+    echo=settings.DEBUG
 )
 
 # 2. Sync engine for scripts and migrations
+sync_url = settings.DATABASE_URL_SYNC
+if settings.ENVIRONMENT == "production" and "?sslmode=" not in sync_url:
+    sync_url += "?sslmode=require"
+
 sync_engine = create_engine(
-    settings.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://") + "?sslmode=require",
-    echo=True
+    sync_url,
+    echo=settings.DEBUG
 )
 
 # Async session factory

@@ -36,7 +36,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
     summary="Log in and receive a JWT bearer token",
     responses={
         401: {"description": "Incorrect email or password"},
-        403: {"description": "Account is inactive"},
+        403: {"description": "Account is inactive or locked"},
     },
 )
 @limiter.limit("5/minute")  # Rate limit: 5 attempts per minute
@@ -47,7 +47,12 @@ async def login(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Login endpoint for all users with HttpOnly cookie support.
+    Login endpoint for all users with HttpOnly cookie support and security features.
+    
+    **Security Features:**
+    - Account lockout after 5 failed attempts (15 minutes)
+    - Last login tracking (timestamp and IP)
+    - Force password change for new users
     
     **Request Body:**
     - email: User's email address
@@ -57,6 +62,7 @@ async def login(
     - access_token: JWT token for authentication
     - token_type: "bearer"
     - user: User information
+    - force_password_change: Boolean indicating if password change required
     
     **Cookies Set:**
     - session_token: HttpOnly access token (30 min)
@@ -75,14 +81,16 @@ async def login(
     result = await db.execute(select(User).where(User.email == credentials.email))
     user = result.scalar_one_or_none()
     
-    if not user or not verify_password(credentials.password, user.password_hash):
-        logger.warning(f"Failed login attempt for email: {credentials.email}")
-        # Audit log for failed login
+    # Get client IP address
+    client_ip = request.client.host if request.client else "unknown"
+    
+    if not user:
+        logger.warning(f"Failed login attempt for non-existent email: {credentials.email}")
         await AuditService.log_login_attempt(
             db=db,
             email=credentials.email,
             success=False,
-            reason="Invalid credentials",
+            reason="User not found",
             request=request
         )
         raise HTTPException(
@@ -91,9 +99,55 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Check if account is locked
+    if user.is_locked():
+        logger.warning(f"Login attempt for locked account: {credentials.email}")
+        await AuditService.log_login_attempt(
+            db=db,
+            email=credentials.email,
+            success=False,
+            reason="Account locked",
+            request=request
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Account is locked due to multiple failed login attempts. Please try again later."
+        )
+    
+    # Verify password
+    if not verify_password(credentials.password, user.password_hash):
+        logger.warning(f"Failed login attempt for email: {credentials.email}")
+        
+        # Increment failed login attempts
+        user.increment_failed_login()
+        await db.commit()
+        
+        # Audit log for failed login
+        await AuditService.log_login_attempt(
+            db=db,
+            email=credentials.email,
+            success=False,
+            reason="Invalid password",
+            request=request
+        )
+        
+        # Check if account is now locked
+        if user.is_locked():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account has been locked due to multiple failed login attempts. Please try again in 15 minutes."
+            )
+        
+        remaining_attempts = 5 - user.failed_login_attempts
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Incorrect email or password. {remaining_attempts} attempts remaining before account lockout.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Check if account is active
     if not user.is_active:
         logger.warning(f"Login attempt for inactive user: {credentials.email}")
-        # Audit log for inactive user login attempt
         await AuditService.log_login_attempt(
             db=db,
             email=credentials.email,
@@ -105,6 +159,11 @@ async def login(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive"
         )
+    
+    # Successful login - reset failed attempts and update last login
+    user.reset_failed_login()
+    user.update_last_login(client_ip)
+    await db.commit()
     
     # Create access token
     access_token = create_access_token(
@@ -159,12 +218,13 @@ async def login(
         request=request
     )
     
-    logger.info(f"Successful login for user: {user.email} (role: {user.role.value})")
+    logger.info(f"Successful login for user: {user.email} (role: {user.role.value}) from IP: {client_ip}")
     
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": user
+        "user": user,
+        "force_password_change": user.force_password_change
     }
 
 
@@ -238,7 +298,8 @@ async def create_official(
         password_hash=hashed_password,
         role=official_data.role,
         district_id=official_data.district_id,
-        is_active=True
+        is_active=True,
+        force_password_change=True  # New users must change password on first login
     )
     
     db.add(new_user)
@@ -246,7 +307,7 @@ async def create_official(
     await db.refresh(new_user)
     
     logger.info(
-        f"Admin {current_user.email} created new {official_data.role.value} account: {new_user.email}"
+        f"Admin {current_user.email} created new {official_data.role.value} account: {new_user.email} (force password change enabled)"
     )
     
     return new_user
@@ -436,3 +497,83 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
     ```
     """
     return current_user
+
+
+@router.post(
+    "/change-password",
+    status_code=status.HTTP_200_OK,
+    summary="Change user password",
+    responses={
+        400: {"description": "Invalid current password or weak new password"},
+    },
+)
+async def change_password(
+    request: Request,
+    password_data: dict,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Change password for the authenticated user.
+    
+    **Authorization:** Valid JWT token required
+    
+    **Request Body:**
+    - current_password: User's current password
+    - new_password: New password (must be strong)
+    
+    **Returns:**
+    - Success message
+    - force_password_change: Boolean (will be false after successful change)
+    
+    **Example:**
+    ```json
+    {
+        "current_password": "OldPassword123!",
+        "new_password": "NewSecurePassword456!"
+    }
+    ```
+    """
+    current_password = password_data.get("current_password")
+    new_password = password_data.get("new_password")
+    
+    if not current_password or not new_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Both current_password and new_password are required"
+        )
+    
+    # Verify current password
+    if not verify_password(current_password, current_user.password_hash):
+        logger.warning(f"Failed password change attempt for user: {current_user.email}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+    
+    # Validate new password strength
+    is_valid, error_message = validate_password_strength(new_password)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_message
+        )
+    
+    # Check if new password is same as current
+    if verify_password(new_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be different from current password"
+        )
+    
+    # Update password and clear force_password_change flag
+    current_user.password_hash = get_password_hash(new_password)
+    current_user.force_password_change = False
+    await db.commit()
+    
+    logger.info(f"Password changed successfully for user: {current_user.email}")
+    
+    return {
+        "message": "Password changed successfully",
+        "force_password_change": False
+    }

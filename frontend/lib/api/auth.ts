@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import { setSessionCookie } from './session-cookie';
-import { LoginRequest, LoginResponse, User } from '@/types/auth';
+import { LoginRequest, LoginResponse, User, ChangePasswordRequest } from '@/types/auth';
 
 export { setSessionCookie };
 
@@ -15,6 +15,11 @@ export const authApi = {
 
   getCurrentUser: async (): Promise<User> => {
     const response = await apiClient.get('/auth/me');
+    return response.data;
+  },
+
+  changePassword: async (data: ChangePasswordRequest): Promise<{ message: string; force_password_change: boolean }> => {
+    const response = await apiClient.post('/auth/change-password', data);
     return response.data;
   },
 
