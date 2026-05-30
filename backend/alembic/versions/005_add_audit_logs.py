@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column('resource_type', sa.String(), nullable=False, index=True),
         sa.Column('resource_id', sa.String(), nullable=True, index=True),
         sa.Column('description', sa.Text(), nullable=False),
-        sa.Column('metadata', postgresql.JSON(), nullable=True),
+        sa.Column('extra_info', postgresql.JSON(), nullable=True),
         sa.Column('timestamp', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False, index=True),
         sa.Column('ip_address', sa.String(), nullable=True),
         sa.Column('user_agent', sa.String(), nullable=True),

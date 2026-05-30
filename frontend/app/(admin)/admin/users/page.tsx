@@ -79,7 +79,7 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in mx-auto max-w-6xl w-full">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -95,7 +95,7 @@ export default function UsersPage() {
       </div>
 
       {/* Filters */}
-      <EditorialCard className="p-4">
+      <EditorialCard className="p-4 border-border/40 bg-background/60 backdrop-blur-md">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
@@ -125,7 +125,7 @@ export default function UsersPage() {
       </EditorialCard>
 
       {/* Users Table */}
-      <EditorialCard>
+      <EditorialCard className="border-border/40 bg-background/60 backdrop-blur-md">
         {loading ? (
           <div className="flex items-center justify-center p-12">
             <div className="text-center">
@@ -242,22 +242,26 @@ export default function UsersPage() {
       </EditorialCard>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <EditorialCard className="p-4">
-          <p className="text-sm text-muted-foreground">Total Users</p>
-          <p className="text-2xl font-bold">{users.length}</p>
+      <div className="grid gap-4 md:grid-cols-4 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+        <EditorialCard className="p-4 border-border/40 bg-background/60 backdrop-blur-md relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+          <p className="text-sm font-medium text-muted-foreground relative z-10">Total Users</p>
+          <p className="text-3xl font-display font-bold relative z-10 mt-1">{users.length}</p>
         </EditorialCard>
-        <EditorialCard className="p-4">
-          <p className="text-sm text-muted-foreground">Active Users</p>
-          <p className="text-2xl font-bold">{users.filter(u => u.is_active).length}</p>
+        <EditorialCard className="p-4 border-border/40 bg-background/60 backdrop-blur-md relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+          <p className="text-sm font-medium text-muted-foreground relative z-10">Active Users</p>
+          <p className="text-3xl font-display font-bold text-green-600 relative z-10 mt-1">{users.filter(u => u.is_active).length}</p>
         </EditorialCard>
-        <EditorialCard className="p-4">
-          <p className="text-sm text-muted-foreground">Admins</p>
-          <p className="text-2xl font-bold">{users.filter(u => u.role === UserRole.ADMIN).length}</p>
+        <EditorialCard className="p-4 border-border/40 bg-background/60 backdrop-blur-md relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+          <p className="text-sm font-medium text-muted-foreground relative z-10">Admins</p>
+          <p className="text-3xl font-display font-bold relative z-10 mt-1">{users.filter(u => u.role === UserRole.ADMIN).length}</p>
         </EditorialCard>
-        <EditorialCard className="p-4">
-          <p className="text-sm text-muted-foreground">Officers</p>
-          <p className="text-2xl font-bold">
+        <EditorialCard className="p-4 border-border/40 bg-background/60 backdrop-blur-md relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+          <p className="text-sm font-medium text-muted-foreground relative z-10">Officers</p>
+          <p className="text-3xl font-display font-bold relative z-10 mt-1">
             {users.filter(u => u.role !== UserRole.ADMIN && u.role !== UserRole.PUBLIC_USER).length}
           </p>
         </EditorialCard>

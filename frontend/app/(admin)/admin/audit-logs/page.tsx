@@ -128,7 +128,7 @@ export default function AuditLogsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in mx-auto max-w-6xl w-full">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -144,33 +144,37 @@ export default function AuditLogsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <EditorialCard className="p-4">
-          <p className="text-sm text-muted-foreground">Total Events</p>
-          <p className="text-2xl font-bold">{logs.length}</p>
+      <div className="grid gap-4 md:grid-cols-4 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+        <EditorialCard className="p-4 border-border/40 bg-background/60 backdrop-blur-md relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+          <p className="text-sm font-medium text-muted-foreground relative z-10">Total Events</p>
+          <p className="text-3xl font-display font-bold relative z-10 mt-1">{logs.length}</p>
         </EditorialCard>
-        <EditorialCard className="p-4">
-          <p className="text-sm text-muted-foreground">Successful</p>
-          <p className="text-2xl font-bold text-green-600">
+        <EditorialCard className="p-4 border-border/40 bg-background/60 backdrop-blur-md relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+          <p className="text-sm font-medium text-muted-foreground relative z-10">Successful</p>
+          <p className="text-3xl font-display font-bold text-green-600 relative z-10 mt-1">
             {logs.filter(l => l.status === 'success').length}
           </p>
         </EditorialCard>
-        <EditorialCard className="p-4">
-          <p className="text-sm text-muted-foreground">Failed</p>
-          <p className="text-2xl font-bold text-red-600">
+        <EditorialCard className="p-4 border-border/40 bg-background/60 backdrop-blur-md relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+          <p className="text-sm font-medium text-muted-foreground relative z-10">Failed</p>
+          <p className="text-3xl font-display font-bold text-red-600 relative z-10 mt-1">
             {logs.filter(l => l.status === 'failure').length}
           </p>
         </EditorialCard>
-        <EditorialCard className="p-4">
-          <p className="text-sm text-muted-foreground">Login Attempts</p>
-          <p className="text-2xl font-bold">
+        <EditorialCard className="p-4 border-border/40 bg-background/60 backdrop-blur-md relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+          <p className="text-sm font-medium text-muted-foreground relative z-10">Login Attempts</p>
+          <p className="text-3xl font-display font-bold relative z-10 mt-1">
             {logs.filter(l => l.action.includes('login')).length}
           </p>
         </EditorialCard>
       </div>
 
       {/* Filters */}
-      <EditorialCard className="p-4">
+      <EditorialCard className="p-4 border-border/40 bg-background/60 backdrop-blur-md animate-fade-in-up" style={{ animationDelay: '150ms' }}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           {/* Search */}
           <div className="relative flex-1">
@@ -216,7 +220,7 @@ export default function AuditLogsPage() {
       </EditorialCard>
 
       {/* Logs Table */}
-      <EditorialCard>
+      <EditorialCard className="border-border/40 bg-background/60 backdrop-blur-md animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         {loading ? (
           <div className="flex items-center justify-center p-12">
             <div className="text-center">
