@@ -8,7 +8,7 @@ Key entrypoints:
 - Mobile app: `mobile/`
 - Docker compose: `docker-compose.yml`, `docker-compose.prod.yml`
 
-For detailed guides and archived documentation see: `docs/README_INDEX.md` (new)
+For detailed guides and archived documentation see: `docs/README_INDEX.md` 
 
 Quick start (recommended):
 ```bash
@@ -21,7 +21,6 @@ docker compose up --build
 Access:
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8000 (API docs: `/api/docs`)
-- 
 ---
 
 ## License
