@@ -22,98 +22,38 @@ def create_test_csv(data, headers):
     return output.getvalue()
 
 
-def test_weekly_malaria_upload():
-    """Test weekly malaria data upload."""
-    print("\n" + "=" * 60)
-    print("Testing Weekly Malaria Upload")
-    print("=" * 60)
-    
-    # Get credentials
-    email = input("Enter email [admin@malasafe.gov.et]: ").strip() or "admin@malasafe.gov.et"
-    password = input("Enter password: ").strip()
-    
-    # Login
-    print("\n1. Logging in...")
-    response = requests.post(
-        f"{BASE_URL}/auth/login",
-        json={"email": email, "password": password}
-    )
-    
-    if response.status_code != 200:
-        print(f"❌ Login failed: {response.text}")
-        return
-    
-    token = response.json()["access_token"]
-    print("✅ Login successful")
-    
-    # Create test CSV
-    print("\n2. Creating test CSV...")
-    csv_data = [
-        ['AA-001', '1', '2024', '150', '5'],
-        ['OR-001', '1', '2024', '200', '8'],
-        ['AM-001', '1', '2024', '180', '6'],
-    ]
-    csv_content = create_test_csv(csv_data, ['district_code', 'week', 'year', 'cases', 'deaths'])
-    
-    # Upload
-    print("\n3. Uploading CSV...")
-    files = {'file': ('test_weekly.csv', csv_content, 'text/csv')}
-    headers = {'Authorization': f'Bearer {token}'}
-    
-    response = requests.post(
-        f"{BASE_URL}/uploads/malaria/weekly",
-        files=files,
-        headers=headers
-    )
-    
-    if response.status_code == 200:
-        result = response.json()
-        print("✅ Upload successful!")
-        print(f"   Records processed: {result['records_processed']}")
-        print(f"   Records created: {result['records_created']}")
-        print(f"   Records skipped: {result['records_skipped']}")
-        print(f"   Errors: {len(result['errors'])}")
-        
-        if result['errors']:
-            print("\n   Validation Errors:")
-            for error in result['errors']:
-                print(f"   - Row {error.get('row')}: {error.get('error')}")
-    else:
-        print(f"❌ Upload failed: {response.text}")
-
-
 def test_monthly_malaria_upload():
     """Test monthly malaria data upload."""
     print("\n" + "=" * 60)
     print("Testing Monthly Malaria Upload")
     print("=" * 60)
-    
+
     # Get credentials
     email = input("Enter email [admin@malasafe.gov.et]: ").strip() or "admin@malasafe.gov.et"
     password = input("Enter password: ").strip()
-    
+
     # Login
     print("\n1. Logging in...")
     response = requests.post(
         f"{BASE_URL}/auth/login",
         json={"email": email, "password": password}
     )
-    
+
     if response.status_code != 200:
         print(f"❌ Login failed: {response.text}")
         return
-    
+
     token = response.json()["access_token"]
     print("✅ Login successful")
-    
+
     # Create test CSV
     print("\n2. Creating test CSV...")
     csv_data = [
-        ['AA-001', '1', '2024', '600', '20'],
-        ['OR-001', '1', '2024', '800', '32'],
-        ['AM-001', '1', '2024', '720', '24'],
+        ['JgBKioqJo5h', 'Ginbot 2016', '12', '45', '210'],
+        ['jKfQ1lzqQOg', 'Hamle 2015', '3', '18', '160'],
+        ['gN2EJsiQS3J', 'Sene 2016', '7', '32', '180'],
     ]
-    csv_content = create_test_csv(csv_data, ['district_code', 'month', 'year', 'cases', 'deaths'])
+    csv_content = create_test_csv(csv_data, ['organisationunitid', 'Eth_Month_Year', 'Travel', 'Positive', 'Tests'])
     
     # Upload
     print("\n3. Uploading CSV...")
@@ -209,7 +149,6 @@ def test_template_downloads():
     print("=" * 60)
     
     templates = [
-        ("Weekly Malaria", f"{BASE_URL}/uploads/templates/malaria/weekly"),
         ("Monthly Malaria", f"{BASE_URL}/uploads/templates/malaria/monthly"),
         ("Climate Data", f"{BASE_URL}/uploads/templates/climate"),
     ]
@@ -238,26 +177,22 @@ def main():
     
     while True:
         print("\nSelect test:")
-        print("1. Test Weekly Malaria Upload")
-        print("2. Test Monthly Malaria Upload")
-        print("3. Test Climate Data Upload")
-        print("4. Test Template Downloads")
-        print("5. Run All Tests")
+        print("1. Test Monthly Malaria Upload")
+        print("2. Test Climate Data Upload")
+        print("3. Test Template Downloads")
+        print("4. Run All Tests")
         print("0. Exit")
-        
+
         choice = input("\nEnter choice: ").strip()
-        
+
         if choice == '1':
-            test_weekly_malaria_upload()
-        elif choice == '2':
             test_monthly_malaria_upload()
-        elif choice == '3':
+        elif choice == '2':
             test_climate_upload()
+        elif choice == '3':
+            test_template_downloads()
         elif choice == '4':
             test_template_downloads()
-        elif choice == '5':
-            test_template_downloads()
-            test_weekly_malaria_upload()
             test_monthly_malaria_upload()
             test_climate_upload()
         elif choice == '0':

@@ -3,15 +3,59 @@ from typing import List, Optional, Dict
 from datetime import date
 
 
+class RiskThresholds(BaseModel):
+    """Global percentile cutoffs on the model's predicted case-count
+    distribution. Districts are bucketed as low/moderate/high/very_high
+    relative to these breakpoints (with per-district overrides applied
+    server-side). Exposed on the dashboard so the UI can answer the
+    reviewer's "what does ELEVATED mean?" question without hard-coding."""
+    p50: float
+    p75: float
+    p95: float
+    notes: Optional[str] = None
+
+
 class DashboardStats(BaseModel):
     """Dashboard statistics schema."""
-    total_cases: int
-    total_deaths: int
+
+    # `model_version` collides with Pydantic v2's `model_*` protected
+    # namespace. Disabling the namespace check on this schema keeps the
+    # field name aligned with the JSON wire format used by the dashboard
+    # client (which already expects `model_version`). The example payload
+    # documents the response shape for /docs.
+    model_config = {
+        "protected_namespaces": (),
+        "json_schema_extra": {
+            "example": {
+                "total_positive": 15420,
+                "active_alerts": 12,
+                "high_risk_districts": 8,
+                "period": "2024-01",
+                "period_label": "January 2024",
+                "prediction_window_days": 30,
+                "methodology": {
+                    "total_positive": "Sum of MalariaData.positive for the period, filtered by region if provided.",
+                    "active_alerts": "Count of currently-active alerts (any age).",
+                    "high_risk_districts": "Distinct districts whose latest prediction in the last N days lands in the HIGH or VERY_HIGH bucket.",
+                    "risk_buckets": "Per-district percentile thresholds (p50/p75/p95) on the trained LightGBM model's predicted case-count distribution: low ≤ p50 < moderate ≤ p75 < high ≤ p95 < very_high.",
+                },
+                "risk_thresholds": {
+                    "p50": 38.0,
+                    "p75": 208.0,
+                    "p95": 1530.25,
+                    "notes": "Per-district thresholds override these where the model has enough history.",
+                },
+                "model_version": "v1.0.0",
+                "thresholds_version": "v1.0.0",
+            }
+        },
+    }
+
+    total_positive: int
     active_alerts: int
     high_risk_districts: int
-    case_fatality_rate: float
     period: str
-    # The next three fields exist so the UI can explain *what each KPI counts*
+    # The next fields exist so the UI can explain *what each KPI counts*
     # without hard-coding magic numbers. The reviewer's complaint on the KPI
     # strip ("what does ELEVATED mean? what window? current or predicted?")
     # is fixed at the API boundary by returning the definitions alongside
@@ -19,43 +63,27 @@ class DashboardStats(BaseModel):
     period_label: Optional[str] = None
     prediction_window_days: Optional[int] = None
     methodology: Optional[Dict[str, str]] = None
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "total_cases": 15420,
-                "total_deaths": 523,
-                "active_alerts": 12,
-                "high_risk_districts": 8,
-                "case_fatality_rate": 3.39,
-                "period": "2024-01",
-                "period_label": "January 2024",
-                "prediction_window_days": 30,
-                "methodology": {
-                    "total_cases": "Sum of MalariaData.cases for the period, filtered by region if provided.",
-                    "total_deaths": "Sum of MalariaData.deaths for the period (CSV-reported).",
-                    "active_alerts": "Count of currently-active alerts (any age).",
-                    "high_risk_districts": "Distinct districts whose latest prediction in the last N days lands in the HIGH or VERY_HIGH bucket.",
-                    "risk_buckets": "Per-district percentile thresholds (p50/p75/p95) on the trained LightGBM model's predicted case-count distribution: low ≤ p50 < moderate ≤ p75 < high ≤ p95 < very_high."
-                }
-            }
-        }
+    # Global risk-bucket cutoffs + the model/thresholds package versions that
+    # produced the predictions in this dashboard. Lets the UI render
+    # "Thresholds v1.0.0" and "p50=38, p75=208, p95=1530" footnotes so the
+    # numbers above are auditable.
+    risk_thresholds: Optional[RiskThresholds] = None
+    model_version: Optional[str] = None
+    thresholds_version: Optional[str] = None
 
 
 class RegionStats(BaseModel):
     """Region-level statistics."""
     region: str
-    total_cases: int
-    total_deaths: int
+    total_positive: int
     districts_count: int
     high_risk_count: int
-    
+
     class Config:
         json_schema_extra = {
             "example": {
                 "region": "Oromia",
-                "total_cases": 5420,
-                "total_deaths": 180,
+                "total_positive": 5420,
                 "districts_count": 15,
                 "high_risk_count": 3
             }
@@ -72,18 +100,15 @@ class DashboardResponse(BaseModel):
         json_schema_extra = {
             "example": {
                 "summary": {
-                    "total_cases": 15420,
-                    "total_deaths": 523,
+                    "total_positive": 15420,
                     "active_alerts": 12,
                     "high_risk_districts": 8,
-                    "case_fatality_rate": 3.39,
                     "period": "2024-01"
                 },
                 "by_region": [
                     {
                         "region": "Oromia",
-                        "total_cases": 5420,
-                        "total_deaths": 180,
+                        "total_positive": 5420,
                         "districts_count": 15,
                         "high_risk_count": 3
                     }
@@ -96,17 +121,13 @@ class DashboardResponse(BaseModel):
 class TrendDataPoint(BaseModel):
     """Single trend data point."""
     period: str
-    cases: int
-    deaths: int
-    case_fatality_rate: float
-    
+    positive: int
+
     class Config:
         json_schema_extra = {
             "example": {
                 "period": "2024-01",
-                "cases": 1250,
-                "deaths": 42,
-                "case_fatality_rate": 3.36
+                "positive": 1250
             }
         }
 
@@ -124,9 +145,7 @@ class TrendsResponse(BaseModel):
                 "data": [
                     {
                         "period": "2024-01",
-                        "cases": 1250,
-                        "deaths": 42,
-                        "case_fatality_rate": 3.36
+                        "positive": 1250
                     }
                 ],
                 "total_periods": 12
@@ -149,8 +168,7 @@ class RiskMapFeature(BaseModel):
                     "district_name": "Addis Ababa Bole",
                     "region": "Addis Ababa",
                     "risk_level": "high",
-                    "cases": 150,
-                    "deaths": 5,
+                    "positive": 150,
                     "prediction_score": 0.78,
                     "confidence_score": 0.85
                 },

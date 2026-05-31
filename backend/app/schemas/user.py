@@ -80,6 +80,10 @@ class UserResponse(UserBase):
     role: UserRole
     district_id: Optional[str]
     is_active: bool
+    force_password_change: bool = False
+    last_login_at: Optional[datetime] = None
+    last_login_ip: Optional[str] = None
+    status: Optional[str] = "active"
     created_at: datetime
     
     class Config:
@@ -92,6 +96,10 @@ class UserResponse(UserBase):
                 "role": "admin",
                 "district_id": None,
                 "is_active": True,
+                "force_password_change": False,
+                "last_login_at": "2024-01-15T10:30:00Z",
+                "last_login_ip": "192.168.1.1",
+                "status": "active",
                 "created_at": "2024-01-15T10:30:00Z"
             }
         }
@@ -102,12 +110,14 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+    force_password_change: bool = False
     
     class Config:
         json_schema_extra = {
             "example": {
                 "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                 "token_type": "bearer",
+                "force_password_change": False,
                 "user": {
                     "id": "123e4567-e89b-12d3-a456-426614174000",
                     "email": "admin@malasafe.gov.et",

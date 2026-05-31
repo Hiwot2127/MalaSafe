@@ -13,9 +13,8 @@ export interface DistrictRiskProperties {
   confidence_score: number;
   prediction_score: number;
   prediction_reason: string | null;
-  recent_cases: number;
-  recent_deaths: number;
-  /** "YYYY-MM" — the month the prediction is FOR (recent_cases/deaths are scoped to it). */
+  recent_positive: number;
+  /** "YYYY-MM" — the month the prediction is FOR (recent_positive is scoped to it). */
   prediction_period?: string | null;
   /** Human-readable form of `prediction_period`, e.g. "May 2026". */
   prediction_period_label?: string | null;
@@ -39,8 +38,7 @@ export interface PredictionHistoryItem {
   prediction_id?: string;
   district_id?: string;
   date: string; // ISO 8601
-  predicted_cases?: number;
-  predicted_deaths?: number;
+  predicted_positive?: number;
   risk_level?: string;
   confidence_score?: number | null;
   prediction_score?: number;
@@ -62,14 +60,14 @@ export interface PredictionRow {
   latitude: number | null;
   longitude: number | null;
   prediction_date: string | null;
-  /** "YYYY-MM" the prediction is FOR — also the period `recent_cases` covers. */
+  /** "YYYY-MM" the prediction is FOR — also the period `recent_positive` covers. */
   prediction_period?: string | null;
   prediction_period_label?: string | null;
   risk_level: 'low' | 'medium' | 'moderate' | 'high' | 'very_high';
   confidence_score: number;
   prediction_score: number;
   prediction_reason: string | null;
-  recent_cases: number;
+  recent_positive: number;
 }
 
 export interface LatestPredictionsResponse {

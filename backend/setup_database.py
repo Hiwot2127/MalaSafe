@@ -42,9 +42,9 @@ async def create_admin_user():
     if not email:
         email = "admin@malasafe.gov.et"
     
-    full_name = input("Enter admin full name [System Administrator]: ").strip()
+    full_name = input("Enter admin full name [Abebe Kebede]: ").strip()
     if not full_name:
-        full_name = "System Administrator"
+        full_name = "Abebe Kebede"
     
     while True:
         password = input("Enter admin password: ").strip()

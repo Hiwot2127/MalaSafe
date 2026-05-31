@@ -1,0 +1,216 @@
+# MalaSafe Development Docker Compose
+# Run with: docker compose up --build
+# This configuration is optimized for local development with hot reload
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: malasafe-postgres
+    environment:
+      POSTGRES_DB: malasafe
+      POSTGRES_USER: malasafe
+      POSTGRES_PASSWORD: malasafe_dev_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U malasafe"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - malasafe-network
+
+  # Redis Cache & Message Broker
+  redis:
+    image: redis:7-alpine
+    container_name: malasafe-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - malasafe-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: malasafe-backend
+    environment:
+      # Application
+      ENVIRONMENT: development
+      DEBUG: "true"
+      
+      # Database
+      DATABASE_URL: postgresql+asyncpg://malasafe:malasafe_dev_password@postgres:5432/malasafe
+      DATABASE_URL_SYNC: postgresql://malasafe:malasafe_dev_password@postgres:5432/malasafe
+      
+      # JWT
+      SECRET_KEY: dev-secret-key-change-in-production
+      ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      REFRESH_TOKEN_EXPIRE_DAYS: "7"
+      
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DB_CACHE: "2"
+      REDIS_DB_RATE_LIMIT: "0"
+      REDIS_DB_CELERY: "1"
+      
+      # Celery
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      
+      # CORS
+      CORS_ORIGINS: '["http://localhost:3000"]'
+      
+      # Features
+      RATE_LIMIT_ENABLED: "true"
+      CACHE_ENABLED: "true"
+      MONTHLY_CLOSE_ENABLED: "true"
+      
+      # Sentry (optional - leave empty for dev)
+      SENTRY_DSN: ""
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - backend_uploads:/app/uploads
+      - backend_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        sleep 5 &&
+        echo 'Running migrations...' &&
+        alembic upgrade head &&
+        echo 'Starting development server...' &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+    networks:
+      - malasafe-network
+
+  # Celery Worker
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: malasafe-celery-worker
+    environment:
+      # Application
+      ENVIRONMENT: development
+      DEBUG: "true"
+      
+      # Database
+      DATABASE_URL: postgresql+asyncpg://malasafe:malasafe_dev_password@postgres:5432/malasafe
+      DATABASE_URL_SYNC: postgresql://malasafe:malasafe_dev_password@postgres:5432/malasafe
+      
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DB_CELERY: "1"
+      
+      # Celery
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    volumes:
+      - ./backend:/app
+      - backend_uploads:/app/uploads
+      - backend_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=2
+    networks:
+      - malasafe-network
+
+  # Celery Beat (Scheduler)
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: malasafe-celery-beat
+    environment:
+      # Application
+      ENVIRONMENT: development
+      DEBUG: "true"
+      
+      # Database
+      DATABASE_URL: postgresql+asyncpg://malasafe:malasafe_dev_password@postgres:5432/malasafe
+      DATABASE_URL_SYNC: postgresql://malasafe:malasafe_dev_password@postgres:5432/malasafe
+      
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DB_CELERY: "1"
+      
+      # Celery
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    volumes:
+      - ./backend:/app
+      - backend_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.tasks.celery_app beat --loglevel=info
+    networks:
+      - malasafe-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: malasafe-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: /api/v1
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - malasafe-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_uploads:
+    driver: local
+  backend_logs:
+    driver: local
+  backend_models:
+    driver: local
+
+networks:
+  malasafe-network:
+    driver: bridge

@@ -2,7 +2,7 @@
 Upload endpoints for malaria and climate data CSV files.
 """
 
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, BackgroundTasks, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
@@ -10,6 +10,8 @@ from app.models import User
 from app.utils.dependencies import get_current_user, require_official
 from app.schemas.upload import UploadResponse, UploadError, StageResult, UploadPreviewResponse
 from app.services.upload_service import UploadService
+from app.middleware.rate_limit import limiter
+from app.cache.decorators import invalidate_cache
 from io import StringIO, BytesIO
 import csv
 from loguru import logger
@@ -38,38 +40,41 @@ async def trigger_prediction_processing(district_ids: list[str], db: AsyncSessio
     summary="Upload monthly malaria cases CSV",
     responses={400: {"description": "Bad file or validation error"}, 403: {"description": "Public users cannot upload"}},
 )
+@limiter.limit("10/hour")  # Rate limit: 10 uploads per hour
 async def upload_monthly_malaria_data(
+    request: Request,
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_official)
 ):
     """
-    Upload monthly malaria data CSV file.
-    
+    Upload monthly malaria data CSV file (DHIS2 facility-grain).
+
     **Authorization:** Officials only (not public users)
-    
+
     **CSV Format:**
-    - district_code: Ethiopian woreda code (e.g., ET140101 - see /uploads/templates/malaria/monthly)
-    - month: Month number (1-12)
-    - year: Year (2000-2100)
-    - cases: Number of malaria cases (≥0)
-    - deaths: Number of deaths (≥0, ≤cases)
+    - organisationunitid: DHIS2 organisation unit ID (e.g., `JgBKioqJo5h`)
+    - Eth_Month_Year: Ethiopian month + year label (e.g., `Ginbot 2016`)
+    - Positive: Number of positive cases (>=0)
+    - Tests: Number of tests performed (>=0)
+    - Travel: Number of travel-related cases (>=0, optional, defaults to 0)
 
     **Example CSV:**
     ```csv
-    district_code,month,year,cases,deaths
-    ET140101,1,2024,600,20
-    ET040101,1,2024,800,32
+    organisationunitid,Eth_Month_Year,Travel,Positive,Tests
+    JgBKioqJo5h,Ginbot 2016,17,89,823
+    JgBKioqJo5h,Sene 2016,5,42,510
     ```
-    
+
     **Validation:**
-    - All columns required
-    - Numeric values must be valid
-    - Deaths cannot exceed cases
-    - District codes must exist
-    - Duplicate detection (same district, month, year)
-    
+    - Required columns: organisationunitid, Eth_Month_Year, Positive, Tests
+    - Numeric values must be valid (Positive/Tests/Travel >= 0)
+    - Eth_Month_Year must be a valid Ethiopian month + EC year
+    - organisationunitid must exist in the districts catalog
+    - Duplicate detection (same DHIS2 org unit, month, year — facility rows
+      are aggregated to the woreda level before duplicate check)
+
     **Returns:**
     - Success status
     - Number of records processed/created/skipped
@@ -122,6 +127,14 @@ async def upload_monthly_malaria_data(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing upload: {str(e)}"
         )
+    finally:
+        # Invalidate analytics caches after upload (success or failure)
+        try:
+            await invalidate_cache("analytics:*")
+            await invalidate_cache("maps:*")
+            logger.info("Analytics and maps caches invalidated after upload")
+        except Exception as cache_error:
+            logger.warning(f"Failed to invalidate cache: {cache_error}")
 
 
 @router.post(
@@ -130,7 +143,9 @@ async def upload_monthly_malaria_data(
     summary="Validate a malaria CSV (dry-run, no write)",
     responses={400: {"description": "Bad file or validation error"}},
 )
+@limiter.limit("20/hour")  # Rate limit: 20 previews per hour (more lenient than actual uploads)
 async def preview_monthly_malaria_upload(
+    request: Request,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_official),
@@ -173,7 +188,9 @@ async def preview_monthly_malaria_upload(
     summary="Upload climate data CSV (rainfall, temperature, etc.)",
     responses={400: {"description": "Bad file or validation error"}, 403: {"description": "Public users cannot upload"}},
 )
+@limiter.limit("10/hour")  # Rate limit: 10 uploads per hour
 async def upload_climate_data(
+    request: Request,
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
@@ -255,6 +272,14 @@ async def upload_climate_data(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing upload: {str(e)}"
         )
+    finally:
+        # Invalidate analytics caches after climate upload
+        try:
+            await invalidate_cache("analytics:*")
+            await invalidate_cache("maps:*")
+            logger.info("Analytics and maps caches invalidated after climate upload")
+        except Exception as cache_error:
+            logger.warning(f"Failed to invalidate cache: {cache_error}")
 
 
 @router.get(
@@ -271,26 +296,22 @@ async def download_monthly_malaria_template():
     # Create CSV content
     output = StringIO()
     writer = csv.writer(output)
-    
-    # Headers - `tests` is optional. Officers who don't report exposure data
-    # can leave it blank; the predictor falls back to a cases*5 (TPR=20%) proxy.
-    writer.writerow(['district_code', 'month', 'year', 'cases', 'deaths', 'tests'])
 
-    # 4 example rows using real Ethiopian woreda codes (ETxxxxxx, CSA 2021
-    # boundaries). Last row demonstrates that `tests` may be left blank.
-    # Month is chosen so the climate fetch hits CHIRPS final-published
-    # months (≥ ~2 days after month end) and isn't a duplicate of the
-    # seeded historical malaria data; officers replace it with their
-    # actual reporting month.
-    writer.writerow(['ET140101', '4', '2026', '600', '20', '2400'])  # Akaki Kality, Addis Ababa
-    writer.writerow(['ET040101', '4', '2026', '800', '32', '3500'])  # Mana Sibu, Oromia
-    writer.writerow(['ET030101', '4', '2026', '720', '24', '3000'])  # Addi Arekay, Amhara
-    writer.writerow(['ET010101', '4', '2026', '410', '11', ''])      # Tahtay Adiyabo, Tigray
-    
+    # Headers — `Travel` is optional (defaults to 0 if blank). Required:
+    # organisationunitid, Eth_Month_Year, Positive, Tests.
+    writer.writerow(['organisationunitid', 'Eth_Month_Year', 'Travel', 'Positive', 'Tests'])
+
+    # Example rows use a real DHIS2 org unit ID drawn from the seed CSV
+    # (`JgBKioqJo5h`) with realistic EC month labels. Officers replace these
+    # with their actual reporting month and facility IDs.
+    writer.writerow(['JgBKioqJo5h', 'Ginbot 2016', '17', '89', '823'])
+    writer.writerow(['JgBKioqJo5h', 'Sene 2016', '5', '42', '510'])
+    writer.writerow(['JgBKioqJo5h', 'Hamle 2016', '', '12', '310'])  # Travel left blank -> 0
+
     # Convert to bytes
     output.seek(0)
     content = output.getvalue().encode('utf-8')
-    
+
     return StreamingResponse(
         BytesIO(content),
         media_type="text/csv",

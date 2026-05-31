@@ -401,7 +401,7 @@ function inferColumns(rows: Array<Record<string, string | number | null>>): stri
     for (const k of Object.keys(row)) cols.add(k);
   }
   // Prefer a domain-friendly order.
-  const preferred = ["district_code", "month", "week", "year", "cases", "deaths", "tests", "date", "rainfall", "temperature"];
+  const preferred = ["organisationunitid", "eth_month_year", "positive", "tests", "travel", "date", "rainfall", "temperature"];
   const ordered = preferred.filter((c) => cols.has(c));
   for (const c of cols) if (!ordered.includes(c)) ordered.push(c);
   return ordered;

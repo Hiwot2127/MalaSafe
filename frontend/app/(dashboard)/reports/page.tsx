@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
-import { Activity, FileText, HeartPulse, ShieldAlert } from 'lucide-react';
+import { Activity, FileText, ShieldAlert } from 'lucide-react';
 import { reportsApi } from '@/lib/api/reports';
 import type { ReportsOverview } from '@/types/reports';
 import { parseAsString } from '@/lib/url-state';
@@ -59,7 +59,7 @@ export default function ReportsPage() {
         <PageHeader
           eyebrow="MalaSafe · Reports"
           title="Annual surveillance report"
-          description="Caseload, mortality, and alerting posture by year and region."
+          description="Caseload and alerting posture by year and region."
         />
         <LoadingScreen caption="Compiling report" />
       </div>
@@ -71,7 +71,7 @@ export default function ReportsPage() {
       <PageHeader
         eyebrow="MalaSafe · Reports"
         title="Annual surveillance report"
-        description="Caseload, mortality, and alerting posture for the selected reporting year."
+        description="Caseload and alerting posture for the selected reporting year."
         actions={
           <EditorialSelect
             value={year}
@@ -89,20 +89,13 @@ export default function ReportsPage() {
       {data ? (
         <>
           {/* Overview */}
-          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <StatCard
               eyebrow="Total cases"
-              value={data.total_cases.toLocaleString()}
+              value={data.total_positive.toLocaleString()}
               caption={`Reporting year ${data.year}`}
               icon={FileText}
               tone="signal"
-            />
-            <StatCard
-              eyebrow="Total deaths"
-              value={data.total_deaths.toLocaleString()}
-              caption={`CFR ${data.case_fatality_rate.toFixed(2)}%`}
-              icon={HeartPulse}
-              tone={data.case_fatality_rate > 1 ? 'warn' : 'valid'}
             />
             <StatCard
               eyebrow="Active alerts"
@@ -140,8 +133,6 @@ export default function ReportsPage() {
                       <tr>
                         <Th>Period</Th>
                         <Th align="right">Cases</Th>
-                        <Th align="right">Deaths</Th>
-                        <Th align="right">CFR %</Th>
                       </tr>
                     </thead>
                     <tbody>
@@ -152,13 +143,7 @@ export default function ReportsPage() {
                         >
                           <Td className="font-mono text-xs tabular-nums">{row.period}</Td>
                           <Td align="right" className="tabular-nums">
-                            {row.cases.toLocaleString()}
-                          </Td>
-                          <Td align="right" className="tabular-nums">
-                            {row.deaths.toLocaleString()}
-                          </Td>
-                          <Td align="right" className="tabular-nums">
-                            {row.case_fatality_rate.toFixed(2)}
+                            {row.positive.toLocaleString()}
                           </Td>
                         </tr>
                       ))}
@@ -185,7 +170,6 @@ export default function ReportsPage() {
                       <Th align="right">Districts</Th>
                       <Th align="right">High-risk</Th>
                       <Th align="right">Cases</Th>
-                      <Th align="right">Deaths</Th>
                     </tr>
                   </thead>
                   <tbody>
@@ -202,10 +186,7 @@ export default function ReportsPage() {
                           {row.high_risk_count.toLocaleString()}
                         </Td>
                         <Td align="right" className="tabular-nums">
-                          {row.total_cases.toLocaleString()}
-                        </Td>
-                        <Td align="right" className="tabular-nums">
-                          {row.total_deaths.toLocaleString()}
+                          {row.total_positive.toLocaleString()}
                         </Td>
                       </tr>
                     ))}

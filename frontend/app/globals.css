@@ -70,33 +70,48 @@
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-fade-in-up: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-fade-in: fade-in 0.4s ease-out forwards;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pulse-glow: pulse-glow 2.5s ease-in-out infinite;
+  --animate-mesh: mesh 10s ease infinite;
+  --animate-marquee: marquee 35s linear infinite;
 
   @keyframes accordion-down {
-    from {
-      height: 0;
-    }
-    to {
-      height: var(--radix-accordion-content-height);
-    }
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
   }
   @keyframes accordion-up {
-    from {
-      height: var(--radix-accordion-content-height);
-    }
-    to {
-      height: 0;
-    }
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
+  @keyframes fade-in-up {
+    0% { opacity: 0; transform: translateY(16px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes fade-in {
+    0% { opacity: 0; filter: blur(4px); }
+    100% { opacity: 1; filter: blur(0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 10px 0px rgba(var(--primary-rgb), 0.4); }
+    50% { box-shadow: 0 0 25px 5px rgba(var(--primary-rgb), 0.8); }
+  }
+  @keyframes mesh {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(-100% - 2rem)); }
   }
 }
 
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
 @layer base {
   *,
   ::after,
@@ -109,118 +124,117 @@
 
 @layer base {
   :root {
-    /* Surface: cool off-white, clinical paper. */
-    --background: 210 30% 99%;
-    --foreground: 220 35% 14%;
+    /* Light Mode: Sleek, Bright Glassmorphic Base */
+    --background: 240 33% 98%;
+    --foreground: 240 40% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 35% 14%;
+    --card-foreground: 240 40% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 35% 14%;
+    --popover-foreground: 240 40% 10%;
 
-    /* Primary: brand blue - shield + map pin from the logo. */
-    --primary: 205 75% 56%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary: Vibrant Neon Indigo/Violet */
+    --primary: 250 80% 60%;
+    --primary-rgb: 124, 58, 237;
+    --primary-foreground: 210 30% 98%;
 
-    --secondary: 210 25% 95%;
-    --secondary-foreground: 220 35% 14%;
+    --secondary: 240 14% 94%;
+    --secondary-foreground: 240 20% 25%;
 
-    --muted: 210 25% 95%;
-    --muted-foreground: 220 12% 42%;
+    --muted: 240 14% 96%;
+    --muted-foreground: 240 15% 45%;
 
-    --accent: 210 30% 96%;
-    --accent-foreground: 220 35% 14%;
+    --accent: 250 80% 94%;
+    --accent-foreground: 240 40% 10%;
 
-    /* Destructive: mockup red, higher saturation than the old terracotta. */
-    --destructive: 0 75% 58%;
+    /* Destructive: Bright Rose/Neon Pink */
+    --destructive: 340 85% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 90%;
-    --input: 210 20% 90%;
-    --ring: 205 75% 56%;
+    --border: 240 13% 90%;
+    --input: 240 13% 90%;
+    --ring: 250 80% 60%;
 
-    /* Softer keylines - cards breathe, inputs/buttons stay snappy. */
-    --radius: 0.625rem;
+    --radius: 1rem;
 
-    /* Domain accents - tuned to mockup signal palette. */
-    --status-valid: 145 55% 42%;       /* mockup green - LOW risk */
-    --status-warn: 35 90% 55%;         /* mockup amber - MODERATE */
-    --status-error: 0 75% 58%;         /* mockup red - HIGH */
+    /* Status Colors - Clean and vibrant for light mode */
+    --status-valid: 150 70% 40%;
+    --status-warn: 40 95% 50%;
+    --status-error: 340 85% 55%;
 
-    /* Signal accent - aligned with primary brand blue. */
-    --accent-signal: 205 75% 56%;
+    --accent-signal: 250 80% 60%;
     --accent-signal-foreground: 0 0% 100%;
 
-    /* Chart series palette - blue-led, brand-coherent. */
-    --chart-1: 205 75% 56%;            /* brand blue - cases */
-    --chart-2: 0 75% 58%;              /* red - deaths */
-    --chart-3: 252 60% 60%;            /* violet - predictions */
-    --chart-4: 35 90% 55%;             /* amber - drift */
-    --chart-5: 175 60% 42%;            /* teal - climate */
+    /* Chart series palette */
+    --chart-1: 250 80% 60%;
+    --chart-2: 190 90% 50%;
+    --chart-3: 340 85% 55%;
+    --chart-4: 40 95% 50%;
+    --chart-5: 150 70% 40%;
 
-    /* Map sequential risk ramp - 5 stops, low → very high (mockup palette). */
-    --risk-1: 145 55% 50%;             /* green */
-    --risk-2: 80 60% 50%;              /* lime-green */
-    --risk-3: 35 90% 55%;              /* amber */
-    --risk-4: 18 85% 55%;              /* orange */
-    --risk-5: 0 75% 58%;               /* red */
-
-    /* Font stacks - wired via geist/font in the root layout. */
-    --font-display: var(--font-geist-sans), system-ui, sans-serif;
-    --font-sans: var(--font-geist-sans), system-ui, sans-serif;
-    --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Consolas, monospace;
+    /* Map risk ramp */
+    --risk-1: 150 70% 45%;
+    --risk-2: 90 60% 50%;
+    --risk-3: 40 95% 50%;
+    --risk-4: 15 90% 55%;
+    --risk-5: 340 85% 55%;
   }
 
   .dark {
-    /* Dark surface: cool deep slate, not pure black. */
-    --background: 220 25% 8%;
-    --foreground: 210 25% 95%;
+    /* Dark Mode: Premium Glassmorphic Deep Violet / Indigo Base */
+    --background: 240 40% 4%;
+    --foreground: 210 30% 96%;
 
-    --card: 220 22% 11%;
-    --card-foreground: 210 25% 95%;
+    --card: 240 30% 8%;
+    --card-foreground: 210 30% 96%;
 
-    --popover: 220 22% 11%;
-    --popover-foreground: 210 25% 95%;
+    --popover: 240 30% 8%;
+    --popover-foreground: 210 30% 96%;
 
-    /* Brand blue, brightened for dark surfaces. */
-    --primary: 205 80% 62%;
-    --primary-foreground: 220 25% 8%;
+    /* Primary: Vibrant Neon Indigo/Violet */
+    --primary: 250 100% 65%;
+    --primary-rgb: 124, 58, 237; /* Used for glows */
+    --primary-foreground: 210 30% 98%;
 
-    --secondary: 220 18% 16%;
-    --secondary-foreground: 210 25% 95%;
+    --secondary: 240 30% 12%;
+    --secondary-foreground: 210 30% 96%;
 
-    --muted: 220 18% 14%;
-    --muted-foreground: 210 12% 64%;
+    --muted: 240 30% 10%;
+    --muted-foreground: 220 20% 65%;
 
-    --accent: 220 18% 16%;
-    --accent-foreground: 210 25% 95%;
+    --accent: 250 80% 60%;
+    --accent-foreground: 210 30% 96%;
 
-    --destructive: 0 70% 62%;
+    /* Destructive: Bright Rose/Neon Pink */
+    --destructive: 340 90% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 16% 20%;
-    --input: 220 16% 20%;
-    --ring: 205 80% 62%;
+    --border: 240 30% 18%;
+    --input: 240 30% 18%;
+    --ring: 250 100% 65%;
 
-    --status-valid: 145 50% 52%;
-    --status-warn: 35 85% 62%;
-    --status-error: 0 70% 64%;
+    /* Status Colors - Bright Neon Tints for dark mode */
+    --status-valid: 150 90% 50%;   /* Neon Emerald */
+    --status-warn: 45 100% 55%;    /* Bright Amber */
+    --status-error: 340 90% 60%;   /* Neon Rose */
 
-    --accent-signal: 205 80% 62%;
-    --accent-signal-foreground: 220 25% 8%;
+    --accent-signal: 190 100% 55%; /* Neon Cyan */
+    --accent-signal-foreground: 240 40% 4%;
 
-    --chart-1: 205 80% 62%;
-    --chart-2: 0 70% 64%;
-    --chart-3: 252 65% 70%;
-    --chart-4: 35 85% 62%;
-    --chart-5: 175 55% 52%;
+    /* Chart series palette - highly saturated for dark backgrounds */
+    --chart-1: 250 100% 65%; /* Indigo */
+    --chart-2: 190 100% 55%; /* Cyan */
+    --chart-3: 340 90% 60%;  /* Rose */
+    --chart-4: 45 100% 55%;  /* Amber */
+    --chart-5: 150 90% 50%;  /* Emerald */
 
-    --risk-1: 145 50% 56%;
-    --risk-2: 80 55% 56%;
-    --risk-3: 35 85% 62%;
-    --risk-4: 18 80% 60%;
-    --risk-5: 0 70% 64%;
+    /* Map risk ramp */
+    --risk-1: 150 90% 50%;
+    --risk-2: 90 80% 55%;
+    --risk-3: 45 100% 55%;
+    --risk-4: 15 95% 60%;
+    --risk-5: 340 90% 60%;
   }
 }
 
@@ -229,54 +243,78 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
     font-family: var(--font-sans);
     font-feature-settings: 'ss01', 'ss03';
   }
 
-  /* Display text - Geist Sans at semibold weight with tightened tracking. */
-  h1, h2, h3 {
+  /* Display text */
+  h1, h2, h3, h4 {
     font-family: var(--font-display);
-    font-weight: 600;
-    letter-spacing: -0.014em;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
-  h1 { letter-spacing: -0.022em; }
-  h2 { letter-spacing: -0.018em; }
-  h3 { letter-spacing: -0.014em; }
+  h1 { letter-spacing: -0.04em; line-height: 1.1; }
+  h2 { letter-spacing: -0.03em; line-height: 1.15; }
+  h3 { letter-spacing: -0.02em; }
+  h4 { font-weight: 600; letter-spacing: -0.01em; }
 
-  /* Tabular numerals for data - counts, durations, IDs. */
+  /* Tabular numerals */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
 }
 
-/* Section labels - small monospaced eyebrow above each section, like
-   numbered footnote references in an editorial layout. */
+/* Glassmorphism Utilities */
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/60 dark:bg-white/5 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)];
+  }
+  .glass-panel-hover {
+    @apply transition-all duration-300 hover:bg-white/80 dark:hover:bg-white/10 hover:border-white/80 dark:hover:border-white/20 hover:shadow-[0_8px_32px_rgba(var(--primary-rgb),0.15)] dark:hover:shadow-[0_8px_32px_rgba(var(--primary-rgb),0.3)] hover:-translate-y-1;
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-fuchsia-500 to-cyan-400;
+  }
+  .text-gradient-subtle {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-white to-white/60;
+  }
+  .bg-gradient-mesh {
+    background: radial-gradient(at 0% 0%, rgba(var(--primary-rgb), 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(190, 100%, 55%, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, hsla(340, 90%, 60%, 0.15) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, hsla(45, 100%, 55%, 0.1) 0px, transparent 50%);
+    background-size: 200% 200%;
+    animation: mesh 15s ease infinite;
+  }
+}
+
+/* Section labels */
 .section-label {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
+  font-weight: 600;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: hsl(var(--muted-foreground));
 }
 
-/* Status pills - used by the validation modal tabs. */
+/* Status pills */
 .status-valid { color: hsl(var(--status-valid)); }
 .status-warn { color: hsl(var(--status-warn)); }
 .status-error { color: hsl(var(--status-error)); }
-.bg-status-valid-tint { background-color: hsl(var(--status-valid) / 0.18); }
-.bg-status-warn-tint { background-color: hsl(var(--status-warn) / 0.18); }
-.bg-status-error-tint { background-color: hsl(var(--status-error) / 0.18); }
+.bg-status-valid-tint { background-color: hsl(var(--status-valid) / 0.15); }
+.bg-status-warn-tint { background-color: hsl(var(--status-warn) / 0.15); }
+.bg-status-error-tint { background-color: hsl(var(--status-error) / 0.15); }
 .bg-accent-signal-tint { background-color: hsl(var(--accent-signal) / 0.10); }
 
-/* Timeline stage reveal - used by upload-timeline.tsx. */
+/* Timeline stage reveal */
 @keyframes stage-in {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .stage-reveal {
-  animation: stage-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: stage-in 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Leaflet styles */
@@ -286,7 +324,6 @@
   z-index: 0;
 }
 
-/* Custom risk-marker hover card - strip leaflet's default tooltip chrome */
 .leaflet-tooltip.risk-tooltip,
 .leaflet-tooltip-top.risk-tooltip,
 .leaflet-tooltip-bottom.risk-tooltip,
@@ -304,3 +341,4 @@
   display: none !important;
   border: 0 !important;
 }
+

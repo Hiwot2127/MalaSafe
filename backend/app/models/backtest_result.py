@@ -33,8 +33,8 @@ class BacktestResult(Base):
         nullable=False,
     )
     month = Column(Date, nullable=False)
-    actual_cases = Column(Integer, nullable=False)
-    predicted_cases = Column(Float, nullable=False)
+    actual_positive = Column(Integer, nullable=False)
+    predicted_positive = Column(Float, nullable=False)
     predicted_risk = Column(String(20), nullable=True)
     q10 = Column(Float, nullable=True)
     q90 = Column(Float, nullable=True)
@@ -55,7 +55,7 @@ class BacktestResult(Base):
     def __repr__(self):
         return (
             f"<BacktestResult(district_id={self.district_id}, month={self.month}, "
-            f"actual={self.actual_cases}, predicted={self.predicted_cases:.1f})>"
+            f"actual={self.actual_positive}, predicted={self.predicted_positive:.1f})>"
         )
 
     def to_dict(self):
@@ -65,8 +65,8 @@ class BacktestResult(Base):
             "model_version_id": str(self.model_version_id) if self.model_version_id else None,
             "district_id": str(self.district_id),
             "month": self.month.isoformat() if self.month else None,
-            "actual_cases": self.actual_cases,
-            "predicted_cases": self.predicted_cases,
+            "actual_positive": self.actual_positive,
+            "predicted_positive": self.predicted_positive,
             "predicted_risk": self.predicted_risk,
             "q10": self.q10,
             "q90": self.q90,

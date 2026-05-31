@@ -1,26 +1,33 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Cookie, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from typing import List
+from typing import List, Optional
 from app.database import get_db
 from app.models.user import User, UserRole
 from app.utils.security import decode_token
 
-# HTTP Bearer token scheme
-security = HTTPBearer()
+# HTTP Bearer token scheme (optional for backward compatibility)
+security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = Depends(get_db)
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    session_token: Optional[str] = Cookie(None, alias="session_token")
 ) -> User:
     """
     Get the current authenticated user from JWT token.
     
+    Supports both cookie-based (preferred) and Authorization header authentication.
+    Priority: Cookie > Authorization header
+    
     Args:
-        credentials: HTTP Bearer token credentials
+        request: FastAPI request object
         db: Database session
+        credentials: HTTP Bearer token credentials (optional)
+        session_token: Session token from HttpOnly cookie (optional)
         
     Returns:
         User object
@@ -34,7 +41,16 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     
-    token = credentials.credentials
+    # Try cookie first (preferred method)
+    token = session_token
+    
+    # Fall back to Authorization header for backward compatibility
+    if not token and credentials:
+        token = credentials.credentials
+    
+    if not token:
+        raise credentials_exception
+    
     payload = decode_token(token)
     
     if payload is None:

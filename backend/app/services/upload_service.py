@@ -62,6 +62,61 @@ def _jsonable(v: Any) -> Any:
     return v if isinstance(v, (str, int, float, bool)) else str(v)
 
 
+class OrgUnitMapper:
+    """Maps DHIS2 `organisationunitid` strings to internal `District.id` UUIDs.
+
+    Embedded inline (rather than in a new util file) to keep this phase's edit
+    surface to the 4 files in scope. Will graduate to `app/utils/` once the
+    Phase A schema migration adds `District.organisationunitid`.
+    """
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+        self._loaded = False
+        self._by_orgunit: Dict[str, Any] = {}
+        self._has_orgunit_column = hasattr(District, "organisationunitid")
+
+    async def load(self) -> None:
+        """Load all districts and index by organisationunitid.
+
+        # TODO(phase-a): switch from district_name fallback to
+        # districts.organisationunitid once Phase A adds the column.
+        """
+        if self._loaded:
+            return
+        result = await self.db.execute(select(District))
+        rows = result.scalars().all()
+        if self._has_orgunit_column:
+            for d in rows:
+                ou = getattr(d, "organisationunitid", None)
+                if ou:
+                    self._by_orgunit[str(ou).strip()] = d.id
+        else:
+            logger.warning(
+                "OrgUnitMapper: District model has no organisationunitid column — "
+                "all rows will fail validation until Phase A migration lands."
+            )
+        self._loaded = True
+
+    async def validate(self, orgunitid: str) -> Tuple[bool, Optional[Any], Optional[str]]:
+        """Resolve an orgunitid to (is_valid, district_id, error_msg).
+
+        # TODO(phase-a): fallback path always fails until District.organisationunitid exists.
+        """
+        await self.load()
+        key = (orgunitid or "").strip()
+        if not key:
+            return False, None, "organisationunitid is empty"
+        if not self._has_orgunit_column:
+            return False, None, (
+                "organisationunitid mapping unavailable: districts table has no "
+                "organisationunitid column. Phase A migration required."
+            )
+        if key in self._by_orgunit:
+            return True, self._by_orgunit[key], None
+        return False, None, f"Unknown organisationunitid: {key}"
+
+
 class UploadService:
     """Service for processing CSV uploads."""
     
@@ -75,52 +130,79 @@ class UploadService:
         """
         self.db = db
         self.user_id = user_id
+        # Climate uploads still use the legacy code-based DistrictMapper.
         self.district_mapper = DistrictMapper(db)
+        # Malaria monthly uploads use the new DHIS2 org-unit mapper.
+        self.orgunit_mapper = OrgUnitMapper(db)
     
     async def _validate_monthly_rows(
         self,
         df: pd.DataFrame,
         row_errors: List[Dict],
     ) -> Tuple[List[Dict], List[Dict], List[Dict], int]:
-        """Walk monthly rows, run district + dup checks, return validation results.
+        """Aggregate monthly rows to woreda-month, run org-unit + dup checks.
 
         Shared between the real upload path and the dry-run preview path so both
-        produce identical row-by-row outcomes.
+        produce identical outcomes.
 
         Returns:
             (records_to_create, validation_errors_excluding_dups, duplicate_errors,
              skipped_count)
         """
-        await self.district_mapper.load_districts()
-        has_tests = 'tests' in df.columns
+        await self.orgunit_mapper.load()
 
         bad_rows: Set[int] = {int(e["row"]) for e in row_errors if "row" in e}
         validation_errors: List[Dict] = list(row_errors)
         duplicate_errors: List[Dict] = []
         records_to_create: List[Dict] = []
+        # Each bad parser row contributes one skipped record (pre-aggregation count).
         skipped_count = len(bad_rows)
 
-        for idx, row in df.iterrows():
-            row_num = idx + 2
-            if row_num in bad_rows:
-                continue
-            district_code = str(row['district_code']).strip()
+        # Drop bad rows (NaN month/year) before aggregating so they don't
+        # contaminate the (orgunitid, year, month) groups.
+        if bad_rows:
+            keep_mask = ~df.index.to_series().add(2).isin(bad_rows)
+            clean_df = df.loc[keep_mask]
+        else:
+            clean_df = df
+        clean_df = clean_df.dropna(subset=['organisationunitid', 'month', 'year'])
 
-            is_valid, district_id, error_msg = await self.district_mapper.validate_district_code(district_code)
+        if clean_df.empty:
+            return records_to_create, validation_errors, duplicate_errors, skipped_count
+
+        # Aggregate facility rows to woreda-month grain (mirrors
+        # scripts/seed_malaria_history.py's rollup behaviour).
+        agg = (
+            clean_df
+            .assign(
+                organisationunitid=clean_df['organisationunitid'].astype(str).str.strip(),
+                month=clean_df['month'].astype(int),
+                year=clean_df['year'].astype(int),
+            )
+            .groupby(['organisationunitid', 'year', 'month'], as_index=False)
+            .agg(positive=('positive', 'sum'),
+                 tests=('tests', 'sum'),
+                 travel=('travel', 'sum'))
+        )
+
+        for _, row in agg.iterrows():
+            orgunitid = str(row['organisationunitid']).strip()
+            month = int(row['month'])
+            year = int(row['year'])
+
+            is_valid, district_id, error_msg = await self.orgunit_mapper.validate(orgunitid)
             if not is_valid:
                 validation_errors.append({
-                    "row": row_num, "column": "district_code",
-                    "value": district_code, "error": error_msg,
-                    "row_data": {k: _jsonable(v) for k, v in row.items()},
+                    "row": 0,  # aggregated row — original row index no longer applies
+                    "column": "organisationunitid",
+                    "value": orgunitid,
+                    "error": error_msg,
+                    "row_data": {
+                        "organisationunitid": orgunitid,
+                        "month": month,
+                        "year": year,
+                    },
                 })
-                skipped_count += 1
-                continue
-
-            try:
-                month = int(row['month'])
-                year = int(row['year'])
-            except (ValueError, TypeError):
-                # Already caught upstream as a numeric error, but defend anyway.
                 skipped_count += 1
                 continue
 
@@ -134,22 +216,18 @@ class UploadService:
             )
             if existing.scalar_one_or_none():
                 duplicate_errors.append({
-                    "row": row_num, "column": "duplicate",
-                    "value": f"{district_code}, {month}/{year}",
+                    "row": 0,
+                    "column": "duplicate",
+                    "value": f"{orgunitid}, {month}/{year}",
                     "error": "Duplicate record already exists",
-                    "row_data": {k: _jsonable(v) for k, v in row.items()},
+                    "row_data": {
+                        "organisationunitid": orgunitid,
+                        "month": month,
+                        "year": year,
+                    },
                 })
                 skipped_count += 1
                 continue
-
-            tests_value: Optional[int] = None
-            if has_tests:
-                raw_tests = row.get('tests')
-                if pd.notna(raw_tests):
-                    try:
-                        tests_value = int(float(raw_tests))
-                    except (ValueError, TypeError):
-                        tests_value = None
 
             records_to_create.append({
                 "district_id": district_id,
@@ -157,9 +235,9 @@ class UploadService:
                 "week": None,
                 "month": month,
                 "year": year,
-                "cases": int(row['cases']),
-                "deaths": int(row['deaths']),
-                "tests": tests_value,
+                "positive": int(row['positive']),
+                "tests": int(row['tests']),
+                "travel": int(row['travel']),
                 "uploaded_by": self.user_id,
             })
 
@@ -201,29 +279,43 @@ class UploadService:
             detail=f"{len(records_to_create)} valid, {skipped_count} skipped"
         ))
 
-        # Save records
+        # Save records with transaction rollback on failure
         t_insert = _now_ms()
         created_count = 0
         if records_to_create:
-            for record_data in records_to_create:
-                record = MalariaData(**record_data)
-                self.db.add(record)
-                created_count += 1
-            await self.db.commit()
+            try:
+                # Use explicit transaction for atomic insert
+                async with self.db.begin_nested():
+                    for record_data in records_to_create:
+                        record = MalariaData(**record_data)
+                        self.db.add(record)
+                        created_count += 1
+                    # Commit the nested transaction
+                    await self.db.flush()
+                # Commit the outer transaction
+                await self.db.commit()
+            except Exception as e:
+                # Rollback on any error
+                await self.db.rollback()
+                logger.error(f"Failed to insert malaria records: {e}")
+                stages.append(_stage("insert", "failed", t_insert, detail=str(e)))
+                return False, f"Database insert failed: {str(e)}", len(df), 0, skipped_count, validation_errors, None, None, None, stages
         stages.append(_stage("insert", "ok", t_insert, count=created_count))
 
         # Branch hints for downstream orchestration: distinct (year, month) pairs.
+        # Drop rows the parser couldn't resolve (NaN month/year) before deriving spans.
+        df_resolved = df.dropna(subset=['month', 'year'])
         distinct_months: List[Tuple[int, int]] = sorted(
-            {(int(r['year']), int(r['month'])) for _, r in df.iterrows()}
+            {(int(r['year']), int(r['month'])) for _, r in df_resolved.iterrows()}
         )
         month_span = len(distinct_months)
-        # Distinct districts in the upload — used to gate whether this
+        # Distinct DHIS2 org units in the upload — used to gate whether this
         # upload counts as an "official monthly close batch" worth running
         # the country-wide forecast refresh against.
         distinct_districts = {
-            str(r['district_code']).strip()
-            for _, r in df.iterrows()
-            if r.get('district_code') is not None
+            str(r['organisationunitid']).strip()
+            for _, r in df_resolved.iterrows()
+            if r.get('organisationunitid') is not None
         }
         district_span = len(distinct_districts)
 
@@ -315,8 +407,10 @@ class UploadService:
         records_to_create, validation_errors, duplicate_errors, skipped_count = \
             await self._validate_monthly_rows(df, row_errors)
 
+        # Drop unresolved rows before deriving distinct months (parser NaN-fills bad rows).
+        df_resolved = df.dropna(subset=['month', 'year'])
         distinct_months: List[Tuple[int, int]] = sorted(
-            {(int(r['year']), int(r['month'])) for _, r in df.iterrows()}
+            {(int(r['year']), int(r['month'])) for _, r in df_resolved.iterrows()}
         )
         month_strs = [f"{y:04d}-{m:02d}" for (y, m) in distinct_months]
         predicted_mode = "close" if len(distinct_months) <= settings.MONTHLY_CLOSE_MAX_MONTHS else "backfill"
@@ -330,9 +424,9 @@ class UploadService:
                 data={
                     "month": rec["month"],
                     "year": rec["year"],
-                    "cases": rec["cases"],
-                    "deaths": rec["deaths"],
+                    "positive": rec["positive"],
                     "tests": rec["tests"],
+                    "travel": rec["travel"],
                 },
             ))
 

@@ -9,7 +9,7 @@ from app.database import Base
 
 class DriftMetric(str, enum.Enum):
     """The variables drift detection runs against."""
-    CASES = "cases"
+    POSITIVE = "positive"
     RAINFALL = "rainfall"
     TEMP = "temp"
     HUMIDITY = "humidity"
@@ -50,7 +50,7 @@ class DriftFinding(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "metric IN ('cases', 'rainfall', 'temp', 'humidity')",
+            "metric IN ('positive', 'rainfall', 'temp', 'humidity')",
             name='check_drift_metric',
         ),
         CheckConstraint(

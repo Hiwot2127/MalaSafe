@@ -3,24 +3,19 @@
 
 export interface RegionTotals {
   region: string;
-  total_cases: number;
-  total_deaths: number;
+  total_positive: number;
   districts_count: number;
   high_risk_count: number;
 }
 
 export interface ReportsOverview {
   year: string;
-  total_cases: number;
-  total_deaths: number;
-  case_fatality_rate: number;
+  total_positive: number;
   active_alerts: number;
   high_risk_districts: number;
   by_region: RegionTotals[];
   monthly_trend: {
     period: string;
-    cases: number;
-    deaths: number;
-    case_fatality_rate: number;
+    positive: number;
   }[];
 }

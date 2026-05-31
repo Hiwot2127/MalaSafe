@@ -1,8 +1,9 @@
-from sqlalchemy import Column, String, Boolean, DateTime, Enum as SQLEnum
+from sqlalchemy import Column, String, Boolean, DateTime, Enum as SQLEnum, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 import uuid
 import enum
+from datetime import datetime, timedelta
 from app.database import Base
 
 
@@ -24,9 +25,22 @@ class User(Base):
     full_name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
-    role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.PUBLIC_USER)
+    role = Column(
+        SQLEnum(UserRole, values_callable=lambda enum_cls: [member.value for member in enum_cls]),
+        nullable=False,
+        default=UserRole.PUBLIC_USER,
+    )
     district_id = Column(String, nullable=True)  # For regional/district officers
     is_active = Column(Boolean, default=True)
+    
+    # Security fields
+    force_password_change = Column(Boolean, default=False)
+    failed_login_attempts = Column(Integer, default=0)
+    account_locked_until = Column(DateTime(timezone=True), nullable=True)
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
+    last_login_ip = Column(String, nullable=True)
+    
+    # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
@@ -49,3 +63,46 @@ class User(Base):
             UserRole.EPHI_OFFICER,
             UserRole.REGIONAL_OFFICER
         ]
+    
+    def is_locked(self) -> bool:
+        """Check if account is currently locked."""
+        if self.account_locked_until is None:
+            return False
+        return datetime.utcnow() < self.account_locked_until
+    
+    def lock_account(self, minutes: int = 15):
+        """Lock account for specified minutes."""
+        self.account_locked_until = datetime.utcnow() + timedelta(minutes=minutes)
+        self.failed_login_attempts = 0
+    
+    def unlock_account(self):
+        """Unlock account."""
+        self.account_locked_until = None
+        self.failed_login_attempts = 0
+    
+    def increment_failed_login(self):
+        """Increment failed login attempts and lock if threshold reached."""
+        self.failed_login_attempts += 1
+        if self.failed_login_attempts >= 5:
+            self.lock_account(15)
+    
+    def reset_failed_login(self):
+        """Reset failed login attempts on successful login."""
+        self.failed_login_attempts = 0
+        self.account_locked_until = None
+    
+    def update_last_login(self, ip_address: str):
+        """Update last login timestamp and IP."""
+        self.last_login_at = datetime.utcnow()
+        self.last_login_ip = ip_address
+    
+    @property
+    def status(self) -> str:
+        """Get user status."""
+        if not self.is_active:
+            return "inactive"
+        if self.is_locked():
+            return "locked"
+        if self.force_password_change:
+            return "password_reset_required"
+        return "active"

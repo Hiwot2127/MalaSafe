@@ -1,75 +1,211 @@
-# 🦟 MalaSafe - Malaria Surveillance & Prediction System
+# MalaSafe: Malaria Surveillance & Prediction
 
-A comprehensive malaria surveillance system for Ethiopia with **AI-powered predictions**, real-time monitoring, and public awareness tools for health officials and citizens.
+MalaSafe is a production-oriented malaria surveillance and forecasting platform built for Ethiopia's public health ecosystem. This repository contains the backend (FastAPI), frontend (Next.js), and mobile application sources, plus Docker orchestration for local development and production deployment.
+
+Key entrypoints:
+- Frontend: `frontend/`
+- Backend: `backend/`
+- Mobile app: `mobile/`
+- Docker compose: `docker-compose.yml`, `docker-compose.prod.yml`
+
+For detailed guides and archived documentation see: `docs/README_INDEX.md` 
+
+Quick start (recommended):
+```bash
+git clone <repo>
+cd MalaSafe
+cp .env.example .env
+docker compose up --build
+```
+
+Access:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000 (API docs: `/api/docs`)
+---
+
+## License
+
+MIT — see `LICENSE`
+
+# 1. Set up production environment variables
+cp .env.example .env
+# Edit .env with production values
+
+# 2. Build production images
+docker compose -f docker-compose.prod.yml build
+
+# 3. Start production services
+docker compose -f docker-compose.prod.yml up -d
+
+# 4. Run migrations
+docker compose -f docker-compose.prod.yml exec backend alembic upgrade head
+
+# 5. Create admin user
+docker compose -f docker-compose.prod.yml exec backend python create_admin.py
+
+# 6. Verify deployment
+docker compose -f docker-compose.prod.yml ps
+curl http://localhost:8000/api/v1/health
+```
+
+### Environment Variables
+
+#### Backend (.env)
+```env
+# Application
+ENVIRONMENT=production
+DEBUG=false
+SECRET_KEY=<generate-with-secrets.token_urlsafe(64)>
+
+# Database
+DATABASE_URL=postgresql+asyncpg://user:pass@postgres:5432/malasafe
+DATABASE_URL_SYNC=postgresql://user:pass@postgres:5432/malasafe
+
+# Redis
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=<secure-password>
+
+# Celery
+CELERY_BROKER_URL=redis://:password@redis:6379/1
+CELERY_RESULT_BACKEND=redis://:password@redis:6379/1
+
+# Sentry (optional)
+SENTRY_DSN=<your-sentry-dsn>
+
+# CORS
+CORS_ORIGINS=["https://yourdomain.com"]
+```
+
+#### Frontend (.env.local)
+```env
+NEXT_PUBLIC_API_URL=https://api.yourdomain.com/api/v1
+NODE_ENV=production
+```
+
+### Production Checklist
+
+- [ ] Change `SECRET_KEY` to secure random value
+- [ ] Set `ENVIRONMENT=production`
+- [ ] Configure production database
+- [ ] Set `REDIS_PASSWORD`
+- [ ] Configure `SENTRY_DSN`
+- [ ] Update `CORS_ORIGINS`
+- [ ] Enable HTTPS
+- [ ] Set up database backups
+- [ ] Configure log rotation
+- [ ] Set up monitoring alerts
+- [ ] Change default admin password
+- [ ] Test complete workflow
 
 ---
 
-## 🎯 Overview
+## 🧪 Testing
 
-### 🌐 Web Application — Malaria Surveillance & Analytics Platform
-A secure AI-powered malaria surveillance web platform designed for **EPHI, MOH, and regional health officials** to monitor, analyze, and predict malaria outbreaks across districts in Ethiopia. The system supports malaria and climate data uploads, district-level GIS heatmaps, outbreak risk prediction with explainable AI insights, analytics dashboards, and alert management to support data-driven public health decision-making.
+### Backend Tests
 
-### 📱 Mobile Application — Public Malaria Awareness App
-A mobile application built for the **general public** to access real-time malaria risk information, outbreak alerts, prevention guidance, and travel risk assessments. The app provides district-level malaria risk visualization, push notifications, trend monitoring, and offline access to recently fetched risk data to improve public awareness and preventive action.
+```bash
+cd backend
 
----
+# Run all tests
+pytest tests/ -v
 
-## 🚀 Quick Start
+# Run with coverage
+pytest tests/ --cov=app --cov-report=html
 
-**Prerequisites:** Python 3.9+, Node.js 18+, PostgreSQL 14+
+# Run specific test file
+pytest tests/test_auth.py -v
 
-**Backend:** `cd backend && python -m venv venv && venv\Scripts\activate && pip install -r requirements.txt && alembic upgrade head && uvicorn app.main:app --reload`
+# Run specific test
+pytest tests/test_auth.py::test_login_success -v
+```
 
-**Frontend:** `cd frontend && npm install && npm run dev`
+**Test Coverage:**
+- Authentication & Authorization
+- User Management
+- Upload Processing
+- Prediction Generation
+- Caching Layer
+- Analytics Endpoints
+- Operations Dashboard
 
-**Mobile:** `cd mobile && npm install && npx expo start`
+### Frontend E2E Tests
 
-**Login:** admin@malasafe.gov.et / admin123
+```bash
+cd frontend
 
-📖 [Full Setup Guide](QUICKSTART_FULL_STACK.md)
+# Run E2E tests
+npm run test:e2e
 
----
+# Run in UI mode
+npm run test:e2e:ui
 
-## � Technical Details
+# View test report
+npm run test:e2e:report
+```
 
-**Stack:** FastAPI, PostgreSQL, Next.js 14, React Native, LightGBM  
-**Database:** 8 tables (users, districts, malaria_data, climate_data, predictions, alerts, uploaded_files, district_environment)  
-**API:** 17 endpoints (Auth, Data Upload, Analytics, Predictions, Alerts, Maps)  
-**Security:** JWT authentication, bcrypt hashing, role-based access, CORS, input validation
+**E2E Test Coverage:**
+- Login/Logout flows
+- Dashboard display
+- Data upload
+- Map interactions
+- Prediction generation
+- Recommendation display
 
-📖 [API Documentation](http://localhost:8000/docs)
+### Manual Testing
 
----
-
-## 🎯 Status
-
-**Version 1.0.0** 
-
-✅ Backend (17 endpoints) • ✅ Web (7 pages) • ✅ Mobile (6 screens) • ✅ AI/ML (98.2% accuracy) • ✅ Database (1,082 districts)  
-
----
-
-## 📞 Support
-
-- 📖 [Setup Guide](QUICKSTART_FULL_STACK.md)
-- 📖 [API Docs](http://localhost:8000/docs)
-
----
-
-## 📝 License
-
-MIT License - See [LICENSE](LICENSE) file
-
----
-
-**MalaSafe - Protecting Ethiopia from Malaria** 🦟🛡️
-
-**Version 1.0.0** 
+See the documentation index `docs/README_INDEX.md` for the manual testing checklist and archived testing notes.
 
 ---
 
-**Access Points:**
-- 🖥️ Web: http://localhost:3000
-- ⚙️ API: http://localhost:8000
-- 📖 Docs: http://localhost:8000/docs
-- 📱 Mobile: Scan QR with Expo Go
+### Development Guidelines
+
+1. **Code Style**
+   - Backend: Follow PEP 8, use type hints
+   - Frontend: Follow Airbnb style guide, use TypeScript
+   - Write descriptive commit messages
+
+2. **Testing**
+   - Write tests for new features
+   - Maintain >80% code coverage
+   - Run tests before committing
+
+3. **Documentation**
+   - Update README for new features
+   - Add docstrings to functions
+   - Update API documentation
+
+4. **Pull Requests**
+   - Create feature branch from `main`
+   - Write clear PR description
+   - Link related issues
+   - Ensure CI passes
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 📊 Project Statistics
+
+- **Lines of Code:** ~50,000+
+- **Backend Tests:** 52+
+- **E2E Tests:** 20+
+- **API Endpoints:** 40+
+- **Database Tables:** 15+
+- **Docker Services:** 6
+- **Supported Districts:** 1,082
+- **Supported Languages:** 4 (English, Amharic, Oromo, Tigrinya)
+
+---
+
+<div align="center">
+
+**Built with ❤️ for Ethiopia's Public Health**
+
+[⬆ Back to Top](#malasafe---malaria-surveillance--prediction-system)
+
+</div>

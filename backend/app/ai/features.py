@@ -147,15 +147,19 @@ def build_features(
             target_row = {col: by_date[col][d] for col in CLIMATE_COLS}
 
     # --- Malaria history series ---------------------------------------------
-    pos_by, tests_by, rate_by = {}, {}, {}
+    pos_by, tests_by, travel_by, rate_by = {}, {}, {}, {}
     for m in malaria_history:
         d = date(m.year, m.month, 1)
-        pos_by[d] = float(m.cases or 0)
-        # MalariaData doesn't carry Tests in this schema; treat absent as same as cases path.
-        # Use tests_hint for current row; lag/roll will be NaN unless model has access to a Tests-style series.
-        # For seeded historic data, we'll populate a richer history (see scripts/seed_malaria_history.py if added later).
-        tests_by[d] = float(getattr(m, "tests", 0) or 0) or tests_hint
-        rate_by[d]  = (pos_by[d] / tests_by[d] * 100.0) if tests_by[d] > 0 else 0.0
+        pos_by[d] = float(m.positive or 0)
+        # Tests is nullable in the DB; only use values present on the row -
+        # do not synthesise a default at read-time. Downstream consumers
+        # (predictor / lag features) fall back to tests_hint when the lag
+        # lookup is missing.
+        t = getattr(m, "tests", None)
+        if t is not None:
+            tests_by[d] = float(t)
+        travel_by[d] = float(getattr(m, "travel", 0) or 0)
+        rate_by[d]  = (pos_by[d] / tests_by[d] * 100.0) if tests_by.get(d, 0) > 0 else 0.0
 
     f: dict[str, float] = {}
 
@@ -219,9 +223,19 @@ def build_features(
     f["ec_month"]    = EC_MONTHS.get(ec_month_name) if ec_month_name else np.nan
     f["month_index"] = month_index(target_month)
 
-    # --- Travel: not available at inference time (would require a feed).
-    #     The model trained on Travel; we pass 0 (median is 0 anyway, 58.8% zeros).
-    f["Travel"] = 0.0
+    # --- Travel: pull from MalariaData history if we have a row at the target
+    #     month; otherwise fall back to the most recent prior month's value.
+    #     If no history at all, pass 0 (median is 0, 58.8% zeros at training).
+    if target_month in travel_by:
+        f["Travel"] = travel_by[target_month]
+    else:
+        prev_travel = None
+        for k in (1, 2, 3):
+            v = travel_by.get(month_offset(target_month, k))
+            if v is not None:
+                prev_travel = v
+                break
+        f["Travel"] = float(prev_travel) if prev_travel is not None else 0.0
 
     # --- Categoricals (raw) -------------------------------------------------
     f["Zone"]               = district.zone

@@ -2,7 +2,7 @@
 Analytics endpoints for malaria surveillance data.
 """
 
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi import APIRouter, Depends, Query, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models import User
@@ -15,6 +15,7 @@ from app.schemas.analytics import (
     TrendDataPoint
 )
 from app.services.analytics_service import AnalyticsService
+from app.cache.decorators import cached
 from typing import Optional
 from datetime import datetime
 
@@ -26,7 +27,9 @@ router = APIRouter(prefix="/analytics", tags=["Analytics"])
     response_model=DashboardResponse,
     summary="Get dashboard summary + per-region breakdown",
 )
+@cached(ttl=300, prefix="analytics:dashboard")  # Cache for 5 minutes
 async def get_dashboard(
+    request: Request,
     year: Optional[int] = Query(None, description="Filter by year (default: current year)"),
     month: Optional[int] = Query(None, ge=1, le=12, description="Filter by month (1-12)"),
     region: Optional[str] = Query(None, description="Filter by region"),
@@ -44,26 +47,23 @@ async def get_dashboard(
     - region: Filter by region name (optional)
     
     **Returns:**
-    - Summary statistics (cases, deaths, alerts, CFR)
+    - Summary statistics (positive cases, alerts, high-risk districts)
     - Statistics by region
     - Recent trends
-    
+
     **Example Response:**
     ```json
     {
       "summary": {
-        "total_cases": 15420,
-        "total_deaths": 523,
+        "total_positive": 15420,
         "active_alerts": 12,
         "high_risk_districts": 8,
-        "case_fatality_rate": 3.39,
         "period": "2024-01"
       },
       "by_region": [
         {
           "region": "Oromia",
-          "total_cases": 5420,
-          "total_deaths": 180,
+          "total_positive": 5420,
           "districts_count": 15,
           "high_risk_count": 3
         }
@@ -103,7 +103,9 @@ async def get_dashboard(
     response_model=TrendsResponse,
     summary="Get weekly or monthly trend series",
 )
+@cached(ttl=600, prefix="analytics:trends")  # Cache for 10 minutes
 async def get_trends(
+    request: Request,
     period_type: str = Query("monthly", regex="^(weekly|monthly)$", description="Period type: weekly or monthly"),
     year: Optional[int] = Query(None, description="Filter by year (default: current year)"),
     limit: int = Query(12, ge=1, le=52, description="Number of periods to return"),
@@ -124,9 +126,9 @@ async def get_trends(
     
     **Returns:**
     - Period type
-    - Trend data points (period, cases, deaths, CFR)
+    - Trend data points (period, positive)
     - Total periods
-    
+
     **Example Response:**
     ```json
     {
@@ -134,15 +136,11 @@ async def get_trends(
       "data": [
         {
           "period": "2024-01",
-          "cases": 1250,
-          "deaths": 42,
-          "case_fatality_rate": 3.36
+          "positive": 1250
         },
         {
           "period": "2024-02",
-          "cases": 1380,
-          "deaths": 48,
-          "case_fatality_rate": 3.48
+          "positive": 1380
         }
       ],
       "total_periods": 12

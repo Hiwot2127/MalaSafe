@@ -33,6 +33,7 @@ class Prediction(Base):
     
     # Relationships
     district = relationship("District", back_populates="predictions")
+    recommendations = relationship("ResponseRecommendation", back_populates="prediction", cascade="all, delete-orphan")
     
     # Constraints
     __table_args__ = (

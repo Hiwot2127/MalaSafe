@@ -1,7 +1,15 @@
+export interface RiskThresholds {
+  /** low <= p50 < moderate */
+  p50: number;
+  /** moderate <= p75 < high */
+  p75: number;
+  /** high <= p95 < very_high */
+  p95: number;
+  notes?: string;
+}
+
 export interface DashboardSummary {
-  total_cases: number;
-  total_deaths: number;
-  case_fatality_rate: number;
+  total_positive: number;
   active_alerts: number;
   high_risk_districts: number;
   period: string;
@@ -13,12 +21,21 @@ export interface DashboardSummary {
   /** Per-KPI plain-English definitions so the UI can render a tooltip without
    *  hard-coding the methodology. */
   methodology?: Record<string, string>;
+  /** Global percentile cutoffs that drive the risk-bucket classification.
+   *  Per-district thresholds override these server-side but the global set is
+   *  what the dashboard shows as the user-visible reference. */
+  risk_thresholds?: RiskThresholds | null;
+  /** Trained LightGBM artifact version (from `model_card.json`). */
+  model_version?: string | null;
+  /** Thresholds package version (from `risk_thresholds.json` _meta.version).
+   *  Diverges from `model_version` if the thresholds file was hand-edited
+   *  separately from the model retrain. */
+  thresholds_version?: string | null;
 }
 
 export interface TrendDataPoint {
   period: string;
-  cases: number;
-  deaths: number;
+  positive: number;
   week?: number;
   month?: number;
   year: number;

@@ -27,9 +27,9 @@ const RISK_LABELS: Record<RiskLevel, string> = {
 const ETHIOPIA_CENTER: [number, number] = [9.145, 40.4897];
 const ETHIOPIA_ZOOM = 6;
 
-function radiusFor(cases: number, maxCases: number): number {
-  if (maxCases <= 0) return 6;
-  const scaled = Math.sqrt(cases / maxCases) * 22;
+function radiusFor(positive: number, maxPositive: number): number {
+  if (maxPositive <= 0) return 6;
+  const scaled = Math.sqrt(positive / maxPositive) * 22;
   return Math.max(5, Math.min(28, scaled));
 }
 
@@ -40,8 +40,7 @@ type Point = {
   name: string;
   region: string;
   risk: RiskLevel;
-  cases: number;
-  deaths: number;
+  positive: number;
   confidence?: number;
 };
 
@@ -104,11 +103,7 @@ function HoverCard({ p, color }: { p: Point; color: string }) {
         >
           <span>
             <span style={{ color: '#6b7280' }}>Cases </span>
-            <strong>{p.cases.toLocaleString()}</strong>
-          </span>
-          <span>
-            <span style={{ color: '#6b7280' }}>Deaths </span>
-            <strong>{p.deaths.toLocaleString()}</strong>
+            <strong>{p.positive.toLocaleString()}</strong>
           </span>
         </div>
       </div>
@@ -132,8 +127,7 @@ export default function RiskMap({ data }: { data: RiskMapResponse }) {
             name: p.district_name,
             region: p.region,
             risk: (p.risk_level ?? 'low') as RiskLevel,
-            cases: p.recent_cases ?? 0,
-            deaths: p.recent_deaths ?? 0,
+            positive: p.recent_positive ?? 0,
             confidence: p.confidence_score,
           };
         })
@@ -141,8 +135,8 @@ export default function RiskMap({ data }: { data: RiskMapResponse }) {
     [data]
   );
 
-  const maxCases = useMemo(
-    () => points.reduce((m, p) => Math.max(m, p.cases), 0),
+  const maxPositive = useMemo(
+    () => points.reduce((m, p) => Math.max(m, p.positive), 0),
     [points]
   );
 
@@ -165,7 +159,7 @@ export default function RiskMap({ data }: { data: RiskMapResponse }) {
               <CircleMarker
                 key={p.key}
                 center={[p.lat, p.lng]}
-                radius={radiusFor(p.cases, maxCases)}
+                radius={radiusFor(p.positive, maxPositive)}
                 pathOptions={{
                   color,
                   fillColor: color,

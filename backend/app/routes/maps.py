@@ -2,13 +2,14 @@
 GIS and mapping endpoints for malaria surveillance.
 """
 
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi import APIRouter, Depends, Query, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models import User
 from app.utils.dependencies import get_current_user
 from app.schemas.analytics import RiskMapResponse, RiskMapFeature
 from app.services.analytics_service import AnalyticsService
+from app.cache.decorators import cached
 from typing import Optional
 from datetime import date, datetime
 
@@ -20,7 +21,9 @@ router = APIRouter(prefix="/maps", tags=["GIS Maps"])
     response_model=RiskMapResponse,
     summary="Get risk heatmap (GeoJSON FeatureCollection)",
 )
+@cached(ttl=600, prefix="maps:risk")  # Cache for 10 minutes
 async def get_risk_map(
+    request: Request,
     date_filter: Optional[date] = Query(None, description="Filter by prediction date (default: today)"),
     region: Optional[str] = Query(None, description="Filter to a single region by exact name"),
     db: AsyncSession = Depends(get_db),
@@ -54,8 +57,7 @@ async def get_risk_map(
     - risk_level: low, moderate, high, very_high
     - confidence_score: Prediction confidence (0-1)
     - prediction_score: Model prediction score
-    - recent_cases: Cases in current month
-    - recent_deaths: Deaths in current month
+    - recent_positive: Positive cases scoped to the prediction's target month
     
     **Usage with Leaflet:**
     ```javascript
@@ -102,8 +104,7 @@ async def get_risk_map(
             "risk_level": "high",
             "confidence_score": 0.85,
             "prediction_score": 0.78,
-            "recent_cases": 150,
-            "recent_deaths": 5
+            "recent_positive": 150
           },
           "geometry": null
         }
