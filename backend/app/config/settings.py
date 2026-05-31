@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from typing import List, Optional
 from functools import lru_cache
+from pydantic import field_validator, ValidationError
 
 
 class Settings(BaseSettings):
@@ -25,6 +26,47 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    
+    # Validators for critical settings
+    @field_validator('SECRET_KEY')
+    @classmethod
+    def validate_secret_key(cls, v: str, info) -> str:
+        """Validate SECRET_KEY is secure and appropriate for environment."""
+        if not v:
+            raise ValueError('SECRET_KEY must be set')
+        
+        # Get environment from values dict
+        environment = info.data.get('ENVIRONMENT', 'production')
+        
+        # In production, ensure it's not the default dev key
+        if environment == 'production':
+            if v == 'dev-secret-key-change-in-production':
+                raise ValueError(
+                    'SECRET_KEY must be changed from default value in production. '
+                    'Generate a secure key with: python -c "import secrets; print(secrets.token_urlsafe(64))"'
+                )
+            if len(v) < 32:
+                raise ValueError(
+                    'SECRET_KEY must be at least 32 characters in production. '
+                    'Current length: {}'.format(len(v))
+                )
+        
+        return v
+    
+    @field_validator('DATABASE_URL', 'DATABASE_URL_SYNC')
+    @classmethod
+    def validate_database_url(cls, v: str) -> str:
+        """Validate DATABASE_URL is properly formatted."""
+        if not v:
+            raise ValueError('DATABASE_URL must be set')
+        
+        if not v.startswith(('postgresql://', 'postgresql+asyncpg://')):
+            raise ValueError(
+                'DATABASE_URL must start with postgresql:// or postgresql+asyncpg://. '
+                'Got: {}'.format(v[:20] + '...')
+            )
+        
+        return v
     
     # Redis
     REDIS_HOST: str = "localhost"
@@ -112,8 +154,22 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings() -> Settings:
-    """Get cached settings instance."""
-    return Settings()
+    """Get cached settings instance with validation."""
+    try:
+        return Settings()
+    except ValidationError as e:
+        # Print validation errors clearly for debugging
+        print("\n" + "="*80)
+        print("CONFIGURATION ERROR: Invalid environment variables detected")
+        print("="*80)
+        for error in e.errors():
+            field = " -> ".join(str(loc) for loc in error['loc'])
+            print(f"\n❌ {field}:")
+            print(f"   {error['msg']}")
+        print("\n" + "="*80)
+        print("Please check your .env file and ensure all required variables are set correctly.")
+        print("="*80 + "\n")
+        raise
 
 
 settings = get_settings()

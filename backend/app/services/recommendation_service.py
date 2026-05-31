@@ -371,82 +371,97 @@ class RecommendationEngine:
         district_id: str,
         prediction_date: datetime
     ) -> Dict[str, Any]:
-        """Get historical context for the district"""
+        """Get historical context for the district with defensive error handling"""
         
-        # Get last 3 months of data
-        three_months_ago = prediction_date - timedelta(days=90)
-        six_months_ago = prediction_date - timedelta(days=180)
+        # Default safe values if data is unavailable
+        default_context = {
+            "trend": "stable",
+            "trend_percentage": 0,
+            "recent_cases": 0,
+            "previous_cases": 0,
+            "had_recent_outbreak": False,
+            "months_since_outbreak": 999
+        }
         
-        # Recent cases (last 3 months)
-        recent_result = await db.execute(
-            select(func.sum(MalariaData.positive_cases))
-            .where(
-                and_(
-                    MalariaData.district_id == district_id,
-                    MalariaData.date >= three_months_ago,
-                    MalariaData.date < prediction_date
+        try:
+            # Get last 3 months of data
+            three_months_ago = prediction_date - timedelta(days=90)
+            six_months_ago = prediction_date - timedelta(days=180)
+            
+            # Recent cases (last 3 months)
+            recent_result = await db.execute(
+                select(func.sum(MalariaData.positive_cases))
+                .where(
+                    and_(
+                        MalariaData.district_id == district_id,
+                        MalariaData.date >= three_months_ago,
+                        MalariaData.date < prediction_date
+                    )
                 )
             )
-        )
-        recent_cases = recent_result.scalar() or 0
-        
-        # Previous period cases (3-6 months ago)
-        previous_result = await db.execute(
-            select(func.sum(MalariaData.positive_cases))
-            .where(
-                and_(
-                    MalariaData.district_id == district_id,
-                    MalariaData.date >= six_months_ago,
-                    MalariaData.date < three_months_ago
+            recent_cases = int(recent_result.scalar() or 0)
+            
+            # Previous period cases (3-6 months ago)
+            previous_result = await db.execute(
+                select(func.sum(MalariaData.positive_cases))
+                .where(
+                    and_(
+                        MalariaData.district_id == district_id,
+                        MalariaData.date >= six_months_ago,
+                        MalariaData.date < three_months_ago
+                    )
                 )
             )
-        )
-        previous_cases = previous_result.scalar() or 0
-        
-        # Calculate trend
-        if previous_cases > 0:
-            trend_percentage = ((recent_cases - previous_cases) / previous_cases) * 100
-            if trend_percentage > 10:
-                trend = "rising"
-            elif trend_percentage < -10:
-                trend = "declining"
-            else:
-                trend = "stable"
-        else:
+            previous_cases = int(previous_result.scalar() or 0)
+            
+            # Calculate trend with safe division
             trend = "stable"
             trend_percentage = 0
-        
-        # Check for recent outbreak (>200 cases in a month in last 6 months)
-        outbreak_result = await db.execute(
-            select(
-                func.max(MalariaData.positive_cases),
-                func.max(MalariaData.date)
-            )
-            .where(
-                and_(
-                    MalariaData.district_id == district_id,
-                    MalariaData.date >= six_months_ago,
-                    MalariaData.date < prediction_date
+            if previous_cases > 0:
+                trend_percentage = ((recent_cases - previous_cases) / previous_cases) * 100
+                if trend_percentage > 10:
+                    trend = "rising"
+                elif trend_percentage < -10:
+                    trend = "declining"
+            
+            # Check for recent outbreak (>200 cases in a month in last 6 months)
+            outbreak_result = await db.execute(
+                select(
+                    func.max(MalariaData.positive_cases),
+                    func.max(MalariaData.date)
+                )
+                .where(
+                    and_(
+                        MalariaData.district_id == district_id,
+                        MalariaData.date >= six_months_ago,
+                        MalariaData.date < prediction_date
+                    )
                 )
             )
-        )
-        outbreak_data = outbreak_result.first()
-        max_cases = outbreak_data[0] if outbreak_data else 0
-        max_date = outbreak_data[1] if outbreak_data else None
-        
-        had_recent_outbreak = max_cases > 200
-        months_since_outbreak = 999
-        if had_recent_outbreak and max_date:
-            months_since_outbreak = (prediction_date - max_date).days // 30
-        
-        return {
-            "trend": trend,
-            "trend_percentage": trend_percentage,
-            "recent_cases": recent_cases,
-            "previous_cases": previous_cases,
-            "had_recent_outbreak": had_recent_outbreak,
-            "months_since_outbreak": months_since_outbreak
-        }
+            outbreak_data = outbreak_result.first()
+            max_cases = int(outbreak_data[0]) if outbreak_data and outbreak_data[0] else 0
+            max_date = outbreak_data[1] if outbreak_data and len(outbreak_data) > 1 else None
+            
+            had_recent_outbreak = max_cases > 200
+            months_since_outbreak = 999
+            if had_recent_outbreak and max_date:
+                months_since_outbreak = max((prediction_date - max_date).days // 30, 0)
+            
+            return {
+                "trend": trend,
+                "trend_percentage": trend_percentage,
+                "recent_cases": recent_cases,
+                "previous_cases": previous_cases,
+                "had_recent_outbreak": had_recent_outbreak,
+                "months_since_outbreak": months_since_outbreak
+            }
+            
+        except Exception as e:
+            import logging
+            logging.getLogger("recommendation_service").error(
+                f"Failed to fetch historical context for district {district_id}: {e}"
+            )
+            return default_context
     
     @staticmethod
     async def _get_climate_context(
@@ -454,40 +469,68 @@ class RecommendationEngine:
         district_id: str,
         prediction_date: datetime
     ) -> Dict[str, Any]:
-        """Get climate context for the district"""
+        """Get climate context for the district with defensive error handling"""
         
-        # Get recent climate data (last month)
-        one_month_ago = prediction_date - timedelta(days=30)
+        # Default safe values if data is unavailable
+        default_context = {
+            "rainfall_anomaly": 0,
+            "temperature_anomaly": 0,
+            "recent_rainfall": 0,
+            "recent_temperature": 0
+        }
         
-        recent_climate_result = await db.execute(
-            select(
-                func.avg(ClimateData.rainfall),
-                func.avg(ClimateData.temperature)
-            )
-            .where(
-                and_(
-                    ClimateData.district_id == district_id,
-                    ClimateData.date >= one_month_ago,
-                    ClimateData.date < prediction_date
+        try:
+            # Get recent climate data (last month)
+            one_month_ago = prediction_date - timedelta(days=30)
+            
+            recent_climate_result = await db.execute(
+                select(
+                    func.avg(ClimateData.rainfall),
+                    func.avg(ClimateData.temperature)
+                )
+                .where(
+                    and_(
+                        ClimateData.district_id == district_id,
+                        ClimateData.date >= one_month_ago,
+                        ClimateData.date < prediction_date
+                    )
                 )
             )
-        )
-        recent_climate = recent_climate_result.first()
-        recent_rainfall = recent_climate[0] if recent_climate and recent_climate[0] else 0
-        recent_temp = recent_climate[1] if recent_climate and recent_climate[1] else 0
-        
-        # Get historical baseline (same month, previous years)
-        # Simplified: use fixed baselines for demo
-        baseline_rainfall = 100  # mm
-        baseline_temp = 25  # °C
-        
-        # Calculate anomalies
-        rainfall_anomaly = ((recent_rainfall - baseline_rainfall) / baseline_rainfall * 100) if baseline_rainfall > 0 else 0
-        temperature_anomaly = recent_temp - baseline_temp
-        
-        return {
-            "rainfall_anomaly": rainfall_anomaly,
-            "temperature_anomaly": temperature_anomaly,
-            "recent_rainfall": recent_rainfall,
-            "recent_temperature": recent_temp
-        }
+            recent_climate = recent_climate_result.first()
+            
+            # Validate data exists and is not None
+            if not recent_climate or (recent_climate[0] is None and recent_climate[1] is None):
+                import logging
+                logging.getLogger("recommendation_service").warning(
+                    f"No climate data found for district {district_id} - using defaults"
+                )
+                return default_context
+            
+            recent_rainfall = float(recent_climate[0]) if recent_climate[0] is not None else 0
+            recent_temp = float(recent_climate[1]) if recent_climate[1] is not None else 0
+            
+            # Get historical baseline (same month, previous years)
+            # Simplified: use fixed baselines for demo
+            baseline_rainfall = 100  # mm
+            baseline_temp = 25  # °C
+            
+            # Calculate anomalies with safe division
+            rainfall_anomaly = 0
+            if baseline_rainfall > 0 and recent_rainfall > 0:
+                rainfall_anomaly = ((recent_rainfall - baseline_rainfall) / baseline_rainfall * 100)
+            
+            temperature_anomaly = recent_temp - baseline_temp
+            
+            return {
+                "rainfall_anomaly": rainfall_anomaly,
+                "temperature_anomaly": temperature_anomaly,
+                "recent_rainfall": recent_rainfall,
+                "recent_temperature": recent_temp
+            }
+            
+        except Exception as e:
+            import logging
+            logging.getLogger("recommendation_service").error(
+                f"Failed to fetch climate context for district {district_id}: {e}"
+            )
+            return default_context

@@ -35,6 +35,25 @@ class PredictionService:
     # ----- one-shot ---------------------------------------------------------
     async def generate_one(self, district_id: UUID, target_month: date,
                             force: bool = False) -> Prediction:
+        """Generate prediction for a single district with input validation."""
+        # Validate inputs
+        if not district_id:
+            raise ValueError("district_id cannot be None or empty")
+        
+        if not target_month:
+            raise ValueError("target_month cannot be None")
+        
+        # Validate target_month is not too far in the past or future
+        from datetime import datetime
+        current_date = datetime.now().date()
+        months_diff = (target_month.year - current_date.year) * 12 + (target_month.month - current_date.month)
+        
+        if months_diff < -12:
+            raise ValueError(f"target_month {target_month} is more than 12 months in the past")
+        
+        if months_diff > 12:
+            raise ValueError(f"target_month {target_month} is more than 12 months in the future")
+        
         district = await self._load_district(district_id)
         history = await self._load_malaria_history(district_id, target_month)
         climate = await self._load_climate_history(district_id, target_month)
@@ -125,18 +144,29 @@ class PredictionService:
         return list(rows)
 
     def _compute_tests_hint(self, history: list[MalariaData]) -> float:
-        """Median of last 3 months' Tests, falling back to default."""
+        """Median of last 3 months' Tests, falling back to default.
+        
+        Returns a validated positive value clamped to reasonable bounds.
+        """
         if not history:
             return float(DEFAULT_TESTS_HINT)
+        
         recent = history[-3:]
         vals = [float(getattr(m, "tests", 0) or 0) for m in recent]
         vals = [v for v in vals if v > 0]
+        
         if vals:
-            return float(sorted(vals)[len(vals) // 2])
+            result = float(sorted(vals)[len(vals) // 2])
+            # Clamp to reasonable bounds: minimum 1, maximum 100,000
+            return max(min(result, 100000.0), 1.0)
+        
         # malaria_data has no Tests column in current schema -> use cases as a hint
         cases = [float(m.positive) for m in recent if m.positive]
         if cases:
-            return max(sum(cases) / len(cases) * 5.0, 50.0)  # rough TPR=20% proxy
+            result = max(sum(cases) / len(cases) * 5.0, 50.0)  # rough TPR=20% proxy
+            # Clamp to reasonable bounds
+            return max(min(result, 100000.0), 1.0)
+        
         return float(DEFAULT_TESTS_HINT)
 
     async def _existing_prediction(self, district_id: UUID, target_month: date) -> Optional[Prediction]:

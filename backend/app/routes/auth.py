@@ -505,8 +505,10 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
     summary="Change user password",
     responses={
         400: {"description": "Invalid current password or weak new password"},
+        429: {"description": "Too many password change attempts"},
     },
 )
+@limiter.limit("5/hour")  # Prevent brute-force attacks on current password
 async def change_password(
     request: Request,
     password_data: dict,

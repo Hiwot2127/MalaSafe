@@ -279,15 +279,27 @@ class UploadService:
             detail=f"{len(records_to_create)} valid, {skipped_count} skipped"
         ))
 
-        # Save records
+        # Save records with transaction rollback on failure
         t_insert = _now_ms()
         created_count = 0
         if records_to_create:
-            for record_data in records_to_create:
-                record = MalariaData(**record_data)
-                self.db.add(record)
-                created_count += 1
-            await self.db.commit()
+            try:
+                # Use explicit transaction for atomic insert
+                async with self.db.begin_nested():
+                    for record_data in records_to_create:
+                        record = MalariaData(**record_data)
+                        self.db.add(record)
+                        created_count += 1
+                    # Commit the nested transaction
+                    await self.db.flush()
+                # Commit the outer transaction
+                await self.db.commit()
+            except Exception as e:
+                # Rollback on any error
+                await self.db.rollback()
+                logger.error(f"Failed to insert malaria records: {e}")
+                stages.append(_stage("insert", "failed", t_insert, detail=str(e)))
+                return False, f"Database insert failed: {str(e)}", len(df), 0, skipped_count, validation_errors, None, None, None, stages
         stages.append(_stage("insert", "ok", t_insert, count=created_count))
 
         # Branch hints for downstream orchestration: distinct (year, month) pairs.
