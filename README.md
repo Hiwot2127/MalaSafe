@@ -161,15 +161,6 @@ See the documentation index `docs/README_INDEX.md` for the manual testing checkl
 
 ---
 
-## 🤝 Contributing
-
-This is a final year capstone project. Contributions are welcome for:
-- Bug fixes
-- Documentation improvements
-- Test coverage
-- Performance optimizations
-- New features (after discussion)
-
 ### Development Guidelines
 
 1. **Code Style**
@@ -201,60 +192,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 👥 Team
-
-**MalaSafe Development Team**
-- Final Year Software Engineering Students
-- Addis Ababa University (or your university)
-- Academic Year 2025/2026
-
----
-
-## 🙏 Acknowledgments
-
-- **Ethiopian Ministry of Health** - Domain expertise and requirements
-- **EPHI (Ethiopian Public Health Institute)** - Data and validation
-- **Supervisors** - Academic guidance and support
-- **Open Source Community** - Tools and libraries
-
----
-
-## 📞 Support
-
-For questions, issues, or feedback:
-- **Email:** malasafe@example.com
-- **GitHub Issues:** [Create an issue](https://github.com/yourusername/malasafe/issues)
-- **Documentation:** See [docs/](docs/) folder
-
----
-
-## 🗺️ Roadmap
-
-### Completed ✅
-- Core prediction engine with LightGBM
-- Web dashboard with Next.js
-- Docker containerization
-- Security hardening
-- Response recommendation system
-- PDF export functionality
-- E2E testing suite
-
-### In Progress 🚧
-- Mobile app (React Native)
-- Email notifications
-- Advanced analytics
-
-### Planned 📋
-- SMS alerts for health workers
-- Offline mode for mobile app
-- Multi-language support expansion
-- Integration with DHIS2
-- Automated model retraining pipeline
-
-Refer to `docs/README_INDEX.md` for the consolidated roadmap and archived TODOs.
-
----
-
 ## 📊 Project Statistics
 
 - **Lines of Code:** ~50,000+
@@ -265,23 +202,6 @@ Refer to `docs/README_INDEX.md` for the consolidated roadmap and archived TODOs.
 - **Docker Services:** 6
 - **Supported Districts:** 1,082
 - **Supported Languages:** 4 (English, Amharic, Oromo, Tigrinya)
-
----
-
-## 🎓 Academic Context
-
-This project was developed as a final year capstone project for the Software Engineering program. It demonstrates:
-
-- **Software Architecture** - Clean architecture, separation of concerns
-- **Database Design** - Normalization, indexing, migrations
-- **Security** - Authentication, authorization, input validation
-- **Testing** - Unit tests, integration tests, E2E tests
-- **DevOps** - Docker, CI/CD, monitoring
-- **ML Integration** - Model deployment, explainability
-- **Documentation** - Comprehensive technical documentation
-- **Real-World Application** - Solving actual public health challenges
-
-**Grade Expectation:** A/A+ (90-95%)
 
 ---
 
