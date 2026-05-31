@@ -26,24 +26,6 @@ interface CreatedUser {
   password: string;
 }
 
-const PASSWORD_LENGTH = 20;
-const PASSWORD_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*';
-
-function generateTemporaryPassword() {
-  const values = new Uint32Array(PASSWORD_LENGTH);
-  crypto.getRandomValues(values);
-
-  const characters = Array.from(values, (value) => PASSWORD_ALPHABET[value % PASSWORD_ALPHABET.length]);
-
-  // Ensure the password satisfies the strength checks with mixed character types.
-  characters[0] = 'A';
-  characters[1] = 'a';
-  characters[2] = '7';
-  characters[3] = '!';
-
-  return characters.join('');
-}
-
 export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalProps) {
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [loading, setLoading] = useState(false);
@@ -80,17 +62,16 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
     setLoading(true);
     setError('');
 
-    const temporaryPassword = generateTemporaryPassword();
-
     try {
       const response = await apiClient.post('/admin/users', {
         full_name: fullName,
         email: email,
         role: role,
         district_id: districtId || null,
-        generate_password: false,
-        password: temporaryPassword,
+        generate_password: true,
       });
+
+      const temporaryPassword = response.data.temporary_password;
       
       setCreatedUser({
         email: response.data.email,

@@ -30,7 +30,7 @@ async def get_redis() -> redis.Redis:
             _redis_client = redis.Redis(
                 host=settings.REDIS_HOST,
                 port=settings.REDIS_PORT,
-                db=settings.REDIS_DB,
+                db=settings.REDIS_DB_CACHE,
                 password=settings.REDIS_PASSWORD if settings.REDIS_PASSWORD else None,
                 decode_responses=True,
                 max_connections=20,

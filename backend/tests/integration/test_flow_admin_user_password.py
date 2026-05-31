@@ -16,11 +16,11 @@ class TestAdminUserPasswordFlow:
             "/api/v1/admin/users",
             headers=admin_headers,
             json={
-                "email": "new.officer@test.com",
-                "full_name": "New Officer",
+                "email": "abebe.kebede@moh.gov.et",
+                "full_name": "QA Official",
                 "role": "moh_officer",
                 "generate_password": False,
-                "password": "TempOfficer123!",
+                "password": "Official2026!",
             },
         )
         assert create.status_code == 201
@@ -38,7 +38,7 @@ class TestAdminUserPasswordFlow:
 
         login = await client.post(
             "/api/v1/auth/login",
-            json={"email": "new.officer@test.com", "password": "ResetOfficer123!"},
+            json={"email": "abebe.kebede@moh.gov.et", "password": "ResetOfficer123!"},
         )
         assert login.status_code == 200
         assert login.json()["user"]["role"] == "moh_officer"
@@ -48,4 +48,30 @@ class TestAdminUserPasswordFlow:
             headers={"Authorization": f"Bearer {login.json()['access_token']}"},
         )
         assert me.status_code == 200
-        assert me.json()["email"] == "new.officer@test.com"
+        assert me.json()["email"] == "abebe.kebede@moh.gov.et"
+
+    async def test_create_with_temporary_password_and_login(self, client: AsyncClient, admin_headers: dict):
+        create = await client.post(
+            "/api/v1/admin/users",
+            headers=admin_headers,
+            json={
+                "email": "temp.official@moh.gov.et",
+                "full_name": "Temp Official",
+                "role": "moh_officer",
+                "generate_password": True,
+            },
+        )
+
+        assert create.status_code == 201
+        data = create.json()
+        assert data["temporary_password"]
+        assert data["force_password_change"] is True
+
+        login = await client.post(
+            "/api/v1/auth/login",
+            json={"email": "temp.official@moh.gov.et", "password": data["temporary_password"]},
+        )
+
+        assert login.status_code == 200
+        assert login.json()["force_password_change"] is True
+        assert login.json()["user"]["email"] == "temp.official@moh.gov.et"

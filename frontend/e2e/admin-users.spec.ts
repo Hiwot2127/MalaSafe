@@ -18,8 +18,8 @@ test.describe('Admin User Management', () => {
 
   test('lists users from API', async ({ page }) => {
     await page.goto('/admin/users');
-    await expect(page.getByText('Test Officer')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('officer@test.com')).toBeVisible();
+    await expect(page.getByText('QA Official')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('abebe.kebede@moh.gov.et')).toBeVisible();
   });
 
   test('opens create user modal', async ({ page }) => {

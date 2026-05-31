@@ -8,9 +8,9 @@ This guide explains how to run MalaSafe using Docker for both development and pr
 - **Docker Compose**: Version 2.0 or higher
 - **Git**: For cloning the repository
 - **Minimum System Requirements**:
-  - 4GB RAM
-  - 10GB free disk space
-  - 2 CPU cores
+	- 4GB RAM
+	- 10GB free disk space
+	- 2 CPU cores
 
 ## 🏗️ Architecture Overview
 
@@ -306,7 +306,7 @@ netstat -ano | findstr :8000
 
 # Change ports in docker-compose.yml
 ports:
-  - "3001:3000"  # Use 3001 instead of 3000
+	- "3001:3000"  # Use 3001 instead of 3000
 ```
 
 ### Database Connection Failed
@@ -398,88 +398,4 @@ docker stats malasafe-backend
 
 ```bash
 # Follow all logs
-docker compose logs -f
 
-# Filter by service
-docker compose logs -f backend celery-worker
-
-# Last 100 lines
-docker compose logs --tail=100 backend
-```
-
-## 🔄 Updates and Maintenance
-
-### Update Dependencies
-
-```bash
-# Backend
-docker compose exec backend pip install -r requirements.txt
-
-# Frontend
-docker compose exec frontend npm install
-```
-
-### Rebuild After Code Changes
-
-```bash
-# Rebuild specific service
-docker compose up -d --build backend
-
-# Rebuild all services
-docker compose up -d --build
-```
-
-### Database Migrations
-
-```bash
-# Create migration
-docker compose exec backend alembic revision --autogenerate -m "add new table"
-
-# Apply migration
-docker compose exec backend alembic upgrade head
-
-# Rollback migration
-docker compose exec backend alembic downgrade -1
-```
-
-## 🎓 For Examiners/Supervisors
-
-To quickly demo the project:
-
-```bash
-# 1. Clone repository
-git clone <repository-url>
-cd MalaSafe
-
-# 2. Start everything
-docker compose up --build
-
-# 3. Wait 30-60 seconds for services to start
-
-# 4. Open browser
-# - Frontend: http://localhost:3000
-# - API Docs: http://localhost:8000/api/docs
-```
-
-That's it! No manual installation of Python, Node.js, PostgreSQL, or Redis required.
-
-## 📚 Additional Resources
-
-- [Docker Documentation](https://docs.docker.com/)
-- [Docker Compose Documentation](https://docs.docker.com/compose/)
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [Next.js Documentation](https://nextjs.org/docs)
-
-## 🆘 Getting Help
-
-If you encounter issues:
-
-1. Check the logs: `docker compose logs -f`
-2. Verify environment variables are set correctly
-3. Ensure Docker and Docker Compose are up to date
-4. Try a clean rebuild: `docker compose down -v && docker compose up --build`
-
----
-
-**Last Updated**: May 2026  
-**MalaSafe Version**: 1.0.0

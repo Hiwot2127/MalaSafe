@@ -55,8 +55,8 @@ export async function mockAdminUsersApi(page: Page) {
         body: JSON.stringify([
           {
             id: '00000000-0000-0000-0000-000000000002',
-            email: 'officer@test.com',
-            full_name: 'Test Officer',
+            email: 'abebe.kebede@moh.gov.et',
+            full_name: 'QA Official',
             role: 'moh_officer',
             is_active: true,
             created_at: new Date().toISOString(),
@@ -77,6 +77,7 @@ export async function mockAdminUsersApi(page: Page) {
           full_name: payload.full_name,
           role: payload.role,
           is_active: true,
+          temporary_password: 'Admin2026!Aa7',
           created_at: new Date().toISOString(),
         }),
       });

@@ -45,7 +45,10 @@ export function LogoMark({
         width={size}
         height={size}
         priority={priority}
-        className="select-none mix-blend-multiply dark:invert"
+        // keep image intrinsic sizing but force the rendered height to match `size`
+        // to avoid Next/Image warnings when CSS changes only one axis
+        style={{ width: 'auto', height: size }}
+        className="select-none dark:mix-blend-multiply dark:invert"
       />
     </span>
   );

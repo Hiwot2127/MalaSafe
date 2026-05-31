@@ -4,8 +4,8 @@ import Image from 'next/image';
 import { HeartPulse } from 'lucide-react';
 
 const partners = [
-  { name: 'MOH - Ministry of Health - Ethiopia', image: '/moh-logo.png' },
-  { name: 'EPHI - Ethiopian Public Health Institute', image: '/ephi-logo.png' },
+  { name: 'MOH - Ministry of Health - Ethiopia', image: '/logo.png' },
+  { name: 'EPHI - Ethiopian Public Health Institute', image: '/logo.png' },
   { name: 'Regional Health Bureaus', icon: HeartPulse },
 ];
 

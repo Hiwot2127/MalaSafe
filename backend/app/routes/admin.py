@@ -6,6 +6,9 @@ from sqlalchemy import select, func, desc
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
+import random
+import secrets
+import string
 
 from app.database import get_db
 from app.models.user import User, UserRole
@@ -80,6 +83,11 @@ class UserListResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class CreateUserResponse(UserListResponse):
+    """Response schema for creating a user with an optional temporary password."""
+    temporary_password: Optional[str] = None
 
 
 class UploadMetadataResponse(BaseModel):
@@ -165,7 +173,7 @@ async def list_users(
 
 @router.post(
     "/users",
-    response_model=UserListResponse,
+    response_model=CreateUserResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new user",
     dependencies=[Depends(require_admin)]
@@ -197,15 +205,22 @@ async def create_user(
             detail="User with this email already exists"
         )
     
+    def generate_temporary_password() -> str:
+        alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+        characters = [
+            secrets.choice(string.ascii_uppercase),
+            secrets.choice(string.ascii_lowercase),
+            secrets.choice(string.digits),
+            secrets.choice("!@#$%^&*"),
+        ]
+        characters.extend(secrets.choice(alphabet) for _ in range(16))
+        random.SystemRandom().shuffle(characters)
+        return "".join(characters)
+
     # Generate or validate password
     if user_data.generate_password:
-        import secrets
-        import string
-        # Generate secure random password
-        alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
-        password = ''.join(secrets.choice(alphabet) for _ in range(16))
-        # Ensure it meets requirements
-        password = "Admin" + password + "123!"
+        password = generate_temporary_password()
+        temporary_password = password
     else:
         password = user_data.password
         is_valid, error_msg = validate_password_strength(password)
@@ -214,6 +229,7 @@ async def create_user(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=error_msg
             )
+        temporary_password = None
     
     # Create user
     new_user = User(
@@ -222,7 +238,8 @@ async def create_user(
         password_hash=get_password_hash(password),
         role=user_data.role,
         district_id=user_data.district_id,
-        is_active=True
+        is_active=True,
+        force_password_change=True
     )
     
     db.add(new_user)
@@ -236,7 +253,22 @@ async def create_user(
     
     # TODO: Send email with temporary password
     
-    return new_user
+    return {
+        "id": new_user.id,
+        "email": new_user.email,
+        "full_name": new_user.full_name,
+        "role": new_user.role,
+        "district_id": new_user.district_id,
+        "is_active": new_user.is_active,
+        "force_password_change": new_user.force_password_change,
+        "failed_login_attempts": new_user.failed_login_attempts,
+        "account_locked_until": new_user.account_locked_until,
+        "last_login_at": new_user.last_login_at,
+        "last_login_ip": new_user.last_login_ip,
+        "status": new_user.status,
+        "created_at": new_user.created_at,
+        "temporary_password": temporary_password,
+    }
 
 
 @router.get(
@@ -463,7 +495,7 @@ async def list_upload_metadata(
     
     **Authorization:** Admin only
     """
-    query = select(UploadedFile).order_by(desc(UploadedFile.uploaded_at)).limit(limit)
+    query = select(UploadedFile).order_by(desc(UploadedFile.created_at)).limit(limit)
     
     if upload_type:
         query = query.where(UploadedFile.upload_type == upload_type)
@@ -475,14 +507,14 @@ async def list_upload_metadata(
     return [
         UploadMetadataResponse(
             id=upload.id,
-            filename=upload.filename,
+            filename=upload.file_name,
             upload_type=upload.upload_type,
-            uploaded_by_email=upload.uploaded_by.email if upload.uploaded_by else "Unknown",
-            uploaded_at=upload.uploaded_at,
-            status=upload.status,
-            record_count=upload.record_count,
-            error_count=upload.error_count,
-            file_size_bytes=upload.file_size_bytes,
+            uploaded_by_email=upload.uploader.email if upload.uploader else "Unknown",
+            uploaded_at=upload.created_at,
+            status="completed",
+            record_count=upload.row_count,
+            error_count=None,
+            file_size_bytes=None,
         )
         for upload in uploads
     ]

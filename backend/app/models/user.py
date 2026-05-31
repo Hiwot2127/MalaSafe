@@ -25,7 +25,11 @@ class User(Base):
     full_name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
-    role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.PUBLIC_USER)
+    role = Column(
+        SQLEnum(UserRole, values_callable=lambda enum_cls: [member.value for member in enum_cls]),
+        nullable=False,
+        default=UserRole.PUBLIC_USER,
+    )
     district_id = Column(String, nullable=True)  # For regional/district officers
     is_active = Column(Boolean, default=True)
     

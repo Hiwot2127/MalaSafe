@@ -2,8 +2,6 @@
 # Run with: docker compose up --build
 # This configuration is optimized for local development with hot reload
 
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:
@@ -188,7 +186,7 @@ services:
       target: development
     container_name: malasafe-frontend
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+      NEXT_PUBLIC_API_URL: /api/v1
       NODE_ENV: development
     ports:
       - "3000:3000"

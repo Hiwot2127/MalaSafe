@@ -382,7 +382,6 @@ function LoginForm() {
                   name="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="admin@malasafe.gov.et"
                   value={email}
                   onChange={handleEmailChange}
                   disabled={loading || loginSuccess}

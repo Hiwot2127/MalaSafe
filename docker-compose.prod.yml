@@ -2,8 +2,6 @@
 # Run with: docker compose -f docker-compose.prod.yml up -d
 # This configuration is optimized for production deployment
 
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:

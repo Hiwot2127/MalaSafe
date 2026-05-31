@@ -221,16 +221,16 @@ class TestCreateOfficial:
             "/api/v1/auth/create-official",
             headers=admin_headers,
             json={
-                "email": "officer@test.com",
-                "full_name": "Test Officer",
-                "password": "SecurePassword123!",
+                "email": "abebe.kebede@moh.gov.et",
+                "full_name": "QA Official",
+                "password": "Official2026!",
                 "role": "moh_officer"
             }
         )
         
         assert response.status_code == 201
         data = response.json()
-        assert data["email"] == "officer@test.com"
+        assert data["email"] == "abebe.kebede@moh.gov.et"
         assert data["role"] == "moh_officer"
         assert "password" not in data
     
@@ -241,8 +241,8 @@ class TestCreateOfficial:
             "/api/v1/auth/create-official",
             headers=admin_headers,
             json={
-                "email": "officer@test.com",
-                "full_name": "Test Officer",
+                "email": "abebe.kebede@moh.gov.et",
+                "full_name": "QA Official",
                 "password": "weak",
                 "role": "moh_officer"
             }
@@ -276,9 +276,9 @@ class TestCreateOfficial:
             "/api/v1/auth/create-official",
             headers=moh_headers,
             json={
-                "email": "officer@test.com",
-                "full_name": "Test Officer",
-                "password": "SecurePassword123!",
+                "email": "abebe.kebede@moh.gov.et",
+                "full_name": "QA Official",
+                "password": "Official2026!",
                 "role": "moh_officer"
             }
         )

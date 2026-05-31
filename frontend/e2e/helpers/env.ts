@@ -13,8 +13,8 @@ export const E2E_FULL_STACK = process.env.E2E_FULL_STACK === '1';
 
 export const testUsers = {
   admin: {
-    email: process.env.E2E_ADMIN_EMAIL ?? 'admin@test.com',
-    password: process.env.E2E_ADMIN_PASSWORD ?? 'Admin123!',
+    email: process.env.E2E_ADMIN_EMAIL ?? 'admin_malasafe@gmail.com',
+    password: process.env.E2E_ADMIN_PASSWORD ?? 'admin1234#',
   },
   moh: {
     email: process.env.E2E_MOH_EMAIL ?? 'moh@test.com',

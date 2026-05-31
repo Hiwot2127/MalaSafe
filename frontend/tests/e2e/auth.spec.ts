@@ -21,8 +21,8 @@ test.describe('Authentication', () => {
     await page.goto('/login');
     
     // Fill login form
-    await page.fill('input[name="email"]', 'admin@malasafe.et');
-    await page.fill('input[name="password"]', 'Admin123!');
+      await page.fill('input[name="email"]', 'admin_malasafe@gmail.com');
+      await page.fill('input[name="password"]', 'admin1234#');
     
     // Submit form
     await page.click('button[type="submit"]');
@@ -49,8 +49,8 @@ test.describe('Authentication', () => {
   test('should logout successfully', async ({ page }) => {
     // Login first
     await page.goto('/login');
-    await page.fill('input[name="email"]', 'admin@malasafe.et');
-    await page.fill('input[name="password"]', 'Admin123!');
+    await page.fill('input[name="email"]', 'admin_malasafe@gmail.com');
+    await page.fill('input[name="password"]', 'admin1234#');
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL('/dashboard');
     
@@ -69,8 +69,8 @@ test.describe('Authentication', () => {
   test('should persist session across page reloads', async ({ page }) => {
     // Login
     await page.goto('/login');
-    await page.fill('input[name="email"]', 'admin@malasafe.et');
-    await page.fill('input[name="password"]', 'Admin123!');
+    await page.fill('input[name="email"]', 'admin_malasafe@gmail.com');
+    await page.fill('input[name="password"]', 'admin1234#');
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL('/dashboard');
     
