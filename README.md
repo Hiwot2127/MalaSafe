@@ -21,9 +21,7 @@ docker compose up --build
 Access:
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8000 (API docs: `/api/docs`)
-
-If you want me to finalize the cleanup by archiving or deleting duplicate README files across the repo (e.g. many DOCKER_*.md, FINAL_*.md), confirm and I'll move them into `docs/archived/` and keep `docs/README_INDEX.md` as the single index.
-
+- 
 ---
 
 ## License
