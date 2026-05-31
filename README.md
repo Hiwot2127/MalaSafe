@@ -1,4 +1,4 @@
-# MalaSafe — Malaria Surveillance & Prediction (Concise)
+# MalaSafe: Malaria Surveillance & Prediction
 
 MalaSafe is a production-oriented malaria surveillance and forecasting platform built for Ethiopia's public health ecosystem. This repository contains the backend (FastAPI), frontend (Next.js), and mobile application sources, plus Docker orchestration for local development and production deployment.
 
