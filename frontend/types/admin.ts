@@ -1,4 +1,4 @@
-import { User, UserStatus } from './auth';
+import { User, UserStatus } from "./auth";
 
 export interface DashboardSummary {
   total_users: number;
@@ -15,8 +15,8 @@ export interface DashboardSummary {
 export interface AdminUser extends User {
   failed_login_attempts: number;
   account_locked_until: string | null;
-  last_login_at: string | null;
-  last_login_ip: string | null;
+  last_login_at?: string;
+  last_login_ip?: string;
   status: UserStatus;
 }
 

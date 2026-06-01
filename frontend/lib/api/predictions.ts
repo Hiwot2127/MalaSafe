@@ -1,9 +1,9 @@
-import { apiClient } from './client';
+import { apiClient } from "./client";
 import type {
   DistrictRiskCollection,
   LatestPredictionsResponse,
   PredictionHistoryResponse,
-} from '@/types/predictions';
+} from "@/types/predictions";
 
 export const predictionsApi = {
   /**
@@ -16,7 +16,7 @@ export const predictionsApi = {
   async getRiskCollection(
     options: { signal?: AbortSignal } = {},
   ): Promise<DistrictRiskCollection> {
-    const response = await apiClient.get<DistrictRiskCollection>('/maps/risk', {
+    const response = await apiClient.get<DistrictRiskCollection>("/maps/risk", {
       signal: options.signal,
     });
     return response.data;
@@ -38,7 +38,7 @@ export const predictionsApi = {
     options: { signal?: AbortSignal } = {},
   ): Promise<LatestPredictionsResponse> {
     const response = await apiClient.get<LatestPredictionsResponse>(
-      '/predictions/latest',
+      "/predictions/latest",
       {
         params: {
           skip: params.skip ?? 0,
@@ -60,7 +60,12 @@ export const predictionsApi = {
    */
   async getHistory(
     districtId: string,
-    params: { skip?: number; limit?: number; start_date?: string; end_date?: string } = {},
+    params: {
+      skip?: number;
+      limit?: number;
+      start_date?: string;
+      end_date?: string;
+    } = {},
     options: { signal?: AbortSignal } = {},
   ): Promise<PredictionHistoryResponse> {
     const response = await apiClient.get(`/predictions/history/${districtId}`, {
@@ -81,5 +86,13 @@ export const predictionsApi = {
       predictions: data?.predictions ?? [],
       total: data?.total,
     };
+  },
+
+  async generate(params: {
+    district_id: string;
+    target_month: string;
+  }): Promise<any> {
+    const response = await apiClient.post("/predictions/generate", params);
+    return response.data;
   },
 };
