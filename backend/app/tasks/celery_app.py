@@ -61,13 +61,10 @@ celery_app.conf.update(
     task_send_sent_event=True,
     
     # Beat schedule (for periodic tasks)
-    beat_schedule={
-        # Example: Daily cleanup of old results
-        "cleanup-old-results": {
-            "task": "app.tasks.maintenance_tasks.cleanup_old_results",
-            "schedule": 86400.0,  # Every 24 hours
-        },
-    },
+    # No periodic tasks defined yet. The previous "cleanup-old-results" entry pointed at
+    # app.tasks.maintenance_tasks.cleanup_old_results, which does not exist and made
+    # celery-beat error on fire. Add real entries here when maintenance tasks are added.
+    beat_schedule={},
 )
 
 

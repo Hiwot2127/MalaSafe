@@ -1,0 +1,140 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Repository layout
+
+Three independent applications in one repo, no monorepo tooling:
+
+- `backend/` - FastAPI + PostgreSQL malaria surveillance API
+- `frontend/` - Next.js 16 App Router dashboard
+- `mobile/` - React Native (Expo) public-awareness app
+
+All three talk to the same `/api/v1` over HTTP. Default dev wiring: frontend at `localhost:3000` calls backend at `http://localhost:8000/api/v1` via `NEXT_PUBLIC_API_URL`; mobile points at the same backend via `services/api.js` (use the host machine's LAN IP from a physical device).
+
+## Common commands
+
+### Backend (run from `backend/`)
+
+```bash
+# First-time setup
+python -m venv venv && source venv/bin/activate      # or venv\Scripts\activate on Windows
+pip install -r requirements.txt
+cp .env.example .env                                   # edit DATABASE_URL + SECRET_KEY
+alembic upgrade head
+python create_admin.py                                 # interactive - enforces strong password
+
+# Dev server (auto-reload)
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Production
+gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+
+# Migrations
+alembic revision --autogenerate -m "description"
+alembic upgrade head
+alembic downgrade -1
+
+# Tests - these are standalone scripts that hit a running server, NOT pytest suites
+python test_auth.py
+python test_uploads.py
+
+# Background work (monthly close, monthly predictions, heavy uploads) runs IN-PROCESS via
+# asyncio.create_task — this is the active dispatch path. Trigger the monthly batch with:
+curl -X POST http://localhost:8000/api/v1/monthly-close/predict-monthly \
+  -H "Authorization: Bearer $ADMIN_JWT"
+# Production schedules the same call from external cron (Render Cron Jobs, GitHub Actions).
+# A Celery + Redis stack is scaffolded (see tasks/celery_app.py and the worker/beat
+# services in docker-compose) but is NOT yet wired into any route — there are no .delay()
+# /.apply_async() call sites. Redis IS used at runtime, but for response caching
+# (app/cache/) and slowapi rate limiting (app/middleware/rate_limit.py), not as a broker.
+```
+
+API docs (when server is running): `/api/docs` (Swagger), `/api/redoc`, `/api/openapi.json`.
+
+### Frontend (run from `frontend/`)
+
+```bash
+npm install
+# .env.local must set NEXT_PUBLIC_API_URL (default: http://localhost:8000/api/v1)
+npm run dev        # localhost:3000
+npm run build
+npm start
+npm run lint       # next lint
+```
+
+There is no test runner configured on the frontend.
+
+### Docker (run from repo root)
+
+The full dev stack runs in containers — Postgres, Redis, backend, Celery worker, Celery beat, and the frontend (6 services) — wired together in [docker-compose.yml](docker-compose.yml):
+
+```bash
+docker compose up --build        # build + start all 6 services
+docker compose up -d --build     # detached
+docker compose logs -f backend   # follow one service
+docker compose down              # stop (add -v to also wipe the db/redis volumes)
+```
+
+The dev compose is self-contained: it injects all env inline and runs its own Postgres (`malasafe` / `malasafe_dev_password`) and Redis, so **no `.env` file is needed**. The backend container runs `alembic upgrade head` on boot; the frontend runs `next dev` with hot reload. The frontend's `next.config.js` rewrites `/api/v1/*` to the `backend` service and `NEXT_PUBLIC_API_URL` is the relative `/api/v1`, so the browser talks to the backend through the frontend origin. Free host ports `3000/8000/5432/6379` before starting (a local `next dev` on 3000 will block the frontend container).
+
+Images build on both arm64 (Apple Silicon) and x64. [docker-compose.prod.yml](docker-compose.prod.yml) is a separate production config that needs `backend/.env.production` and is **not** self-contained.
+
+## Backend architecture
+
+**Entry point:** [backend/app/main.py](backend/app/main.py) builds the FastAPI app, registers loguru, wires CORS via [backend/app/middleware](backend/app/middleware/), and mounts every router under the `/api/v1` prefix.
+
+**Layered structure under `backend/app/`:**
+
+- `config/settings.py` - Pydantic `BaseSettings` cached via `@lru_cache`; reads `.env`. All env keys are `case_sensitive = True`.
+- `database/base.py` - defines **two SQLAlchemy engines**: an async engine (`asyncpg`) for the app and a sync engine (`psycopg2`) for Alembic. `get_db` is the async FastAPI dependency; `get_db_sync` exists for migrations only. The async `get_db` auto-commits on success and rolls back on exception - routes should not call `db.commit()` for the success path.
+- `models/` - SQLAlchemy ORM. 12 tables: `users`, `districts`, `malaria_data`, `climate_data`, `district_environment`, `predictions`, `alerts`, `uploaded_files`, `model_versions`, `monthly_close`, `backtest_results`, `drift_findings`. Primary keys are `UUID(as_uuid=True)`. `users.role` is currently stored as `VARCHAR` (see `TODO.md` — migration to a Postgres enum is pending). See [backend/DATABASE_MODELS.md](backend/DATABASE_MODELS.md) for FKs and indexes.
+- `schemas/` - Pydantic v2 request/response models.
+- `routes/` - one module per resource: `health`, `auth`, `mobile`, `uploads`, `analytics`, `maps`, `predictions`, `alerts`, `monthly_close`, `protected_examples`. Each exports `router` and is re-exported from `routes/__init__.py` as `<name>_router`.
+- `services/` - business logic; routes are thin and delegate here (e.g. `upload_service.py`, `analytics_service.py`, `prediction_service.py`).
+- `cache/` - Redis-backed response caching (`redis_client.py` opens the connection at startup; `decorators.py` wraps cacheable handlers). Gated by `CACHE_ENABLED`.
+- `middleware/` - CORS, slowapi rate limiting (`rate_limit.py`, Redis-backed, gated by `RATE_LIMIT_ENABLED`), request tracing, security headers.
+- `utils/security.py` - JWT (HS256) encode/decode, bcrypt hashing, `validate_password_strength` (8+ chars, upper, lower, digit, special). Token payload uses `user_id`, `email`, `role`, `exp`, `iat`, `type`.
+- `utils/dependencies.py` - `get_current_user` (HTTPBearer) and `require_roles(*allowed_roles)` factory. Always protect endpoints via `Depends(require_roles(UserRole.X, ...))` rather than checking roles inline.
+- `ai/` - ML inference module. `predictor.py` loads the active `ModelVersion` and runs LightGBM inference; `features.py` is shared between training and inference; `phrasebook.py` produces `prediction_reason` text templates. Artifacts live in `MODEL_PATH` (default `./models`). NOTE: `app/ai/__init__.py` imports `predictor.py` (and thus `lightgbm`) at import time, and `routes/predictions.py` imports `app.ai` — so lightgbm loads during app startup. In Docker this requires `libgomp1` in the image (see Gotchas).
+- `tasks/` - background jobs. `monthly_close.py` orchestrates a close (backtest → drift → predict) and `predict_monthly.py` generates next-month predictions for every mapped district — both dispatched in-process via `asyncio.create_task`. `celery_app.py` plus `upload_tasks.py` / `prediction_tasks.py` / `climate_tasks.py` are a Celery scaffold (run as the `celery-worker` / `celery-beat` compose services) that is **not yet invoked by any route**.
+- `alembic/` - migration scripts; uses `DATABASE_URL_SYNC` (not the async URL).
+
+**Required env vars** (`backend/.env`, see `.env.example`): `DATABASE_URL` (async, `postgresql+asyncpg://...`), `DATABASE_URL_SYNC` (sync, `postgresql://...`), `SECRET_KEY` (generate with `openssl rand -hex 32`), `CORS_ORIGINS`. Optional: `MAX_UPLOAD_SIZE` (default 10 MB), `SMTP_*`, `LOG_FILE`, `MODEL_PATH`, `REDIS_*` (host/port/db indexes for cache + rate limiting), `CACHE_ENABLED`, `RATE_LIMIT_ENABLED`, `CELERY_BROKER_URL` / `CELERY_RESULT_BACKEND` (only needed if/when the Celery scaffold is wired in), `SENTRY_DSN`. The dev `docker-compose.yml` sets all of these inline.
+
+**Auth flow:** client sends `Authorization: Bearer <jwt>`; `get_current_user` decodes the token, fetches the user from DB, and rejects inactive users with 403. Roles: `ADMIN`, `MOH_OFFICER`, `EPHI_OFFICER`, `REGIONAL_OFFICER`, `PUBLIC_USER` (see [backend/app/models/user.py](backend/app/models/user.py)).
+
+## Frontend architecture
+
+**Next.js 16 App Router** with route groups (React 19):
+
+- `app/(auth)/login/` - public login page
+- `app/(dashboard)/{dashboard,analytics,maps,upload,alerts,settings}/` - authenticated pages, share `(dashboard)/layout.tsx`
+- `app/layout.tsx` - root layout, mounts the theme provider (`next-themes`)
+- `app/page.tsx` - landing/redirect
+
+**API layer:** [frontend/lib/api/client.ts](frontend/lib/api/client.ts) is the single axios instance. It reads the base URL from `lib/constants.ts` (which exports `API_URL` from `NEXT_PUBLIC_API_URL`), injects the JWT from `localStorage.token` on every request, and on 401 clears storage and hard-redirects to `/login`. Resource modules (`auth.ts`, `analytics.ts`, `maps.ts`, `uploads.ts`, `alerts.ts`) wrap `apiClient`; do not call `axios` directly elsewhere.
+
+**Token storage** is `localStorage` (`token`, `user`). All auth state lives there, including across reloads - there is no React context provider for auth.
+
+**Styling:** Tailwind CSS (v4) + `class-variance-authority` + `tailwind-merge` (typical shadcn-style `cn()` helper in `lib/utils.ts`). Icons from `lucide-react`. Maps use `leaflet` + `react-leaflet`. Charts use `recharts`.
+
+**Path alias:** `@/*` → repo `frontend/` root (see `tsconfig.json`).
+
+## Conventions to follow
+
+- **Don't add a new route without registering it** in [backend/app/routes/__init__.py](backend/app/routes/__init__.py) and including it in `main.py` with the `/api/v1` prefix.
+- **Don't open raw DB sessions.** Inject via `Depends(get_db)` (async) - the dependency handles commit/rollback.
+- **Don't check roles inline.** Use `Depends(require_roles(...))` so unauthorized access returns a consistent 403.
+- **Schema changes go through Alembic.** Edit the model, then `alembic revision --autogenerate -m "..."`; review the generated script before applying.
+- **Frontend API calls go through `lib/api/*.ts` modules,** not direct axios/fetch - this keeps interceptors, base URL, and 401 redirect behavior consistent.
+- **Two database URLs are intentional** (async for the app, sync for Alembic). When adding env handling, update both.
+
+## Gotchas
+
+- There is no default admin credential. [backend/create_admin.py](backend/create_admin.py) is interactive and enforces password strength (8+ chars, upper, lower, digit, special). Older copies of the README cited `admin@malasafe.gov.et / admin123` — those values were never accepted by the validator.
+- **Docker / lightgbm:** the backend image must install `libgomp1`. `lightgbm` is imported during app startup (via `app/ai`), and `python:3.11-slim` lacks `libgomp1`, so without it the backend, celery-worker, and celery-beat containers crash on boot with `libgomp.so.1: cannot open shared object file`.
+- **Docker / frontend on Apple Silicon:** do **not** add a platform-specific Tailwind oxide binary (e.g. `@tailwindcss/oxide-linux-x64-musl`) as a direct dependency in `frontend/package.json`. Tailwind v4 ships every platform's binary as an optional dependency and npm auto-selects the right one; pinning one platform breaks `npm install` on other arches (`EBADPLATFORM` on arm64).
+- `backend/venv.py314.broken/` exists alongside `backend/venv/`; the active virtualenv is `venv/`. Ignore the `.broken` directory.
+- There are many `*_COMPLETE.md` and `*_SUMMARY.md` files at the repo root - these are historical implementation reports from the initial build, not active specs. Source of truth is the code; treat these docs as background context only.
+- Ethiopian domain vocabulary: 12 regions (Addis Ababa, Afar, Amhara, Benishangul-Gumuz, Dire Dawa, Gambela, Harari, Oromia, Sidama, SNNPR, Somali, Tigray) and 3 seasons (Bega Oct–Jan, Belg Feb–May, Kiremt Jun–Sep). The `mobile` backend router handles public-user self-registration (`POST /mobile/register`) and the risk dashboard read endpoints consumed by the Expo app under `mobile/`.

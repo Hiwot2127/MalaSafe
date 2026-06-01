@@ -11,11 +11,13 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Install system dependencies
+# libgomp1 is required at runtime by lightgbm (imported at app startup via app.ai)
 RUN apt-get update && apt-get install -y \
     gcc \
     postgresql-client \
     pkg-config \
     libcairo2-dev \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory

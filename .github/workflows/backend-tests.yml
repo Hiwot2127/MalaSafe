@@ -34,8 +34,8 @@ jobs:
       DATABASE_URL_SYNC: postgresql://postgres:postgres@localhost:5432/malasafe_test
       SECRET_KEY: ci-test-secret-key-change-me
       RATE_LIMIT_ENABLED: false
+      CACHE_ENABLED: false
       MONTHLY_CLOSE_ENABLED: false
-      REDIS_ENABLED: false
 
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +45,12 @@ jobs:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: backend/requirements.txt
+
+      # reportlab -> rlPyCairo -> pycairo compiles from C source and needs the cairo
+      # dev headers; lightgbm needs libgomp1 at import time. These mirror the apt
+      # packages installed in backend/Dockerfile.
+      - name: Install system libraries
+        run: sudo apt-get update && sudo apt-get install -y libcairo2-dev pkg-config libgomp1
 
       - name: Install dependencies
         working-directory: backend
