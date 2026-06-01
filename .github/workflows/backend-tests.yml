@@ -32,7 +32,8 @@ jobs:
     env:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/malasafe_test
       DATABASE_URL_SYNC: postgresql://postgres:postgres@localhost:5432/malasafe_test
-      SECRET_KEY: ci-test-secret-key-change-me
+      ENVIRONMENT: development
+      SECRET_KEY: ci-test-secret-key-0123456789-abcdef-32plus
       RATE_LIMIT_ENABLED: false
       CACHE_ENABLED: false
       MONTHLY_CLOSE_ENABLED: false
