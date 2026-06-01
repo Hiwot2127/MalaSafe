@@ -1,0 +1,19 @@
+Region,Zone,Woreda,Period,Latitude,Longitude,Elevation_m,MaxTemp_C,MinTemp_C,AvgTemp_C,Rainfall_mm,Humidity_pct
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2022 Aug,9.03,38.73,2350,25,16,20.5,180,65
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2022 Dec,9.03,38.73,2350,23,14,18.5,30,85
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2022 Nov,9.03,38.73,2350,23.5,14.5,19,50,80
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2022 Oct,9.03,38.73,2350,24,15,19.5,80,75
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2022 Sept,9.03,38.73,2350,24.5,15.5,20,120,70
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2023 Apr,9.03,38.73,2350,24,15,19.5,5,70
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2023 Aug,9.03,38.73,2350,24.5,15.5,20,180,65
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2023 Dec,9.03,38.73,2350,22.5,13.5,18,30,85
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2023 Feb,9.03,38.73,2350,23.2,14.2,18.7,15,80
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2023 Jan,9.03,38.73,2350,22.8,13.8,18.3,20,85
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2023 Jul,9.03,38.73,2350,25,16,20.5,140,60
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2023 Jun,9.03,38.73,2350,24.8,15.8,20.3,5,60
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2023 Mar,9.03,38.73,2350,23.6,14.6,19.1,10,75
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2023 May,9.03,38.73,2350,24.4,15.4,19.9,5,65
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2023 Nov,9.03,38.73,2350,23,14,18.5,50,80
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2023 Oct,9.03,38.73,2350,23.5,14.5,19,80,75
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2023 Sept,9.03,38.73,2350,24,15,19.5,120,70
+Addis Ababa,Addis Ketema Sub,Addis Ketema,2024 Apr,9.03,38.73,2350,23.5,14.5,19,5,70

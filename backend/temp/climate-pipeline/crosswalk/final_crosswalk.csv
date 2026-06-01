@@ -1,0 +1,1043 @@
+organisationunitname,region_malaria,zone_malaria,match_type,confidence,ADM3_PCODE,ADM3_EN_ref,ADM2_EN_ref,ADM1_EN_ref
+Addis Ketema Sub City,Addis Ababa City Administration,Addis Ketema Sub City,exact_in_cohort,100,ET140108,Addis Ketema,Region 14,Addis Ababa
+Akaki Kality Sub City,Addis Ababa City Administration,Akaki Kality Sub City,exact_in_cohort,100,ET140101,Akaki Kality,Region 14,Addis Ababa
+Arada Sub City,Addis Ababa City Administration,Arada Sub City,exact_in_cohort,100,ET140109,Arada,Region 14,Addis Ababa
+Bole Sub City,Addis Ababa City Administration,Bole Sub City,exact_in_cohort,100,ET140104,Bole,Region 14,Addis Ababa
+Gulele Sub City,Addis Ababa City Administration,Gulele Sub City,exact_in_cohort,100,ET140110,Gulele,Region 14,Addis Ababa
+Kirkos Sub City,Addis Ababa City Administration,Kirkos Sub City,exact_in_cohort,100,ET140106,Kirkos,Region 14,Addis Ababa
+Kolfe Subcity,Addis Ababa City Administration,Kolfe Subcity,fuzzy_in_cohort,90,ET140103,Kolfe Keraniyo,Region 14,Addis Ababa
+Lemi Kura Sub City,Addis Ababa City Administration,Lemi Kura Sub City,exact_in_cohort,100,ET140111,Lemi Kura,Region 14,Addis Ababa
+Lideta Sub City,Addis Ababa City Administration,Lideta Sub City,exact_in_cohort,100,ET140105,Lideta,Region 14,Addis Ababa
+Nifas Silk Lafto Sub City,Addis Ababa City Administration,Nifas Silk Lafto Sub City,exact_in_cohort,100,ET140102,Nifas Silk Lafto,Region 14,Addis Ababa
+Yeka Sub City,Addis Ababa City Administration,Yeka Sub City,exact_in_cohort,100,ET140107,Yeka,Region 14,Addis Ababa
+Adaar Woreda,Afar Region,Zone 1 Zone,fuzzy_in_cohort,88,ET020109,Adar,Awsi /Zone 1,Afar
+Afambo Woreda,Afar Region,Zone 1 Zone,exact_in_cohort,100,ET020104,Afambo,Awsi /Zone 1,Afar
+Chifra City Administration,Afar Region,Zone 1 Zone,exact_in_cohort,100,ET020106,Chifra,Awsi /Zone 1,Afar
+Chifra Woreda,Afar Region,Zone 1 Zone,exact_in_cohort,100,ET020106,Chifra,Awsi /Zone 1,Afar
+Dubti City Administration,Afar Region,Zone 1 Zone,exact_in_cohort,100,ET020101,Dubti,Awsi /Zone 1,Afar
+Dubti Woreda,Afar Region,Zone 1 Zone,exact_in_cohort,100,ET020101,Dubti,Awsi /Zone 1,Afar
+Elidar Woreda,Afar Region,Zone 1 Zone,exact_in_cohort,100,ET020102,Elidar,Awsi /Zone 1,Afar
+Kori Woreda,Afar Region,Zone 1 Zone,exact_in_cohort,100,ET020108,Kori,Awsi /Zone 1,Afar
+Mille City Administration,Afar Region,Zone 1 Zone,fuzzy_in_cohort,88,ET020105,Mile,Awsi /Zone 1,Afar
+Mille Woreda,Afar Region,Zone 1 Zone,fuzzy_in_cohort,88,ET020105,Mile,Awsi /Zone 1,Afar
+Semera-Logia Kentiba,Afar Region,Zone 1 Zone,fuzzy_in_cohort,88,ET020198,Samera Logiya town,Awsi /Zone 1,Afar
+Abala City Administration,Afar Region,Zone 2 Zone,fuzzy_in_cohort,90,ET020203,Abaala,Kilbati /Zone2,Afar
+Abala Woreda,Afar Region,Zone 2 Zone,fuzzy_in_cohort,90,ET020203,Abaala,Kilbati /Zone2,Afar
+Afdera Woreda,Afar Region,Zone 2 Zone,exact_in_cohort,100,ET020207,Afdera,Kilbati /Zone2,Afar
+Berahle Woreda,Afar Region,Zone 2 Zone,fuzzy_in_cohort,93,ET020205,Berahile,Kilbati /Zone2,Afar
+Bidu Woreda,Afar Region,Zone 2 Zone,exact_in_cohort,100,ET020208,Bidu,Kilbati /Zone2,Afar
+Dalol Woreda,Afar Region,Zone 2 Zone,exact_in_cohort,100,ET020206,Dalol,Kilbati /Zone2,Afar
+Amibara Woreda,Afar Region,Zone 3 Zone,exact_in_cohort,100,ET020301,Amibara,Gabi /Zone 3,Afar
+Argoba Special Woreda,Afar Region,Zone 3 Zone,exact_global,95,ET030401,Argoba,South Wello,Amhara
+Awash Fenteale Woreda,Afar Region,Zone 3 Zone,fuzzy_in_cohort,90,ET020302,Awash,Gabi /Zone 3,Afar
+Awash Town,Afar Region,Zone 3 Zone,exact_in_cohort,100,ET020302,Awash,Gabi /Zone 3,Afar
+Dulecha Woreda,Afar Region,Zone 3 Zone,exact_in_cohort,100,ET020304,Dulecha,Gabi /Zone 3,Afar
+Gewane Woreda,Afar Region,Zone 3 Zone,exact_in_cohort,100,ET020303,Gewane,Gabi /Zone 3,Afar
+Hanruka Woreda,Afar Region,Zone 3 Zone,exact_in_cohort,100,ET020307,Hanruka,Gabi /Zone 3,Afar
+Awura Woreda,Afar Region,Zone 4 Zone,fuzzy_in_cohort,88,ET020401,Awra (AF),Fanti /Zone 4,Afar
+Ewa Woreda,Afar Region,Zone 4 Zone,fuzzy_in_cohort,90,ET020303,Gewane,Gabi /Zone 3,Afar
+Gulina Woreda,Afar Region,Zone 4 Zone,exact_in_cohort,100,ET020405,Gulina,Fanti /Zone 4,Afar
+Teru Woreda,Afar Region,Zone 4 Zone,exact_in_cohort,100,ET020403,Teru,Fanti /Zone 4,Afar
+Yallo Woreda,Afar Region,Zone 4 Zone,fuzzy_in_cohort,88,ET020404,Yalo,Fanti /Zone 4,Afar
+Hadeleala Woreda,Afar Region,Zone 5 Zone,fuzzy_in_cohort,94,ET020505,Hadelela,Hari /Zone 5,Afar
+Ankasha Guagusa Woreda,Amhara Region,Awi Zone,fuzzy_in_cohort,90,ET030903,Ankasha,Awi,Amhara
+Ayehu Guagusa Woreda,Amhara Region,Awi Zone,fuzzy_in_cohort,96,ET030908,Ayehu Guwagusa,Awi,Amhara
+Banja Woreda,Amhara Region,Awi Zone,exact_in_cohort,100,ET030902,Banja,Awi,Amhara
+Chagni Town,Amhara Region,Awi Zone,exact_in_cohort,100,ET030999,Chagni town,Awi,Amhara
+Dangla Town,Amhara Region,Awi Zone,fuzzy_in_cohort,92,ET030901,Dangila,Awi,Amhara
+Guagusa Shikuda Woreda,Amhara Region,Awi Zone,fuzzy_in_cohort,96,ET030907,Guagusa Shikudad,Awi,Amhara
+Guangua Woreda,Amhara Region,Awi Zone,exact_in_cohort,100,ET030904,Guangua,Awi,Amhara
+Injibara Town,Amhara Region,Awi Zone,exact_in_cohort,100,ET030996,Injibara town,Awi,Amhara
+Jawi Woreda,Amhara Region,Awi Zone,exact_in_cohort,100,ET030906,Jawi,Awi,Amhara
+Zigem Woreda,Amhara Region,Awi Zone,exact_in_cohort,100,ET030997,Zigem,Awi,Amhara
+Alefa Woreda,Amhara Region,Central Gondar Zone,exact_in_cohort,100,ET031115,Alefa,Central Gondar,Amhara
+Chilga Woreda,Amhara Region,Central Gondar Zone,fuzzy_in_cohort,95,ET031106,Chilga 1,Central Gondar,Amhara
+East Belesa Woreda,Amhara Region,Central Gondar Zone,exact_in_cohort,100,ET031117,East Belesa,Central Gondar,Amhara
+East Dembia Woreda,Amhara Region,Central Gondar Zone,exact_in_cohort,100,ET031111,East Dembia,Central Gondar,Amhara
+Gondar Zuriya Woreda,Amhara Region,Central Gondar Zone,fuzzy_in_cohort,90,ET031118,Gondar town,Central Gondar,Amhara
+Kinfaze Begela,Amhara Region,Central Gondar Zone,fuzzy_in_cohort,96,ET031122,Kinfaz Begela,Central Gondar,Amhara
+Lay Armacho Woreda,Amhara Region,Central Gondar Zone,exact_in_cohort,100,ET031108,Lay Armacho,Central Gondar,Amhara
+Tach Armacho Woreda,Amhara Region,Central Gondar Zone,exact_in_cohort,100,ET031120,Tach Armacho,Central Gondar,Amhara
+Takusa Woreda,Amhara Region,Central Gondar Zone,exact_in_cohort,100,ET031121,Takusa,Central Gondar,Amhara
+Tegede Woreda,Amhara Region,Central Gondar Zone,exact_in_cohort,100,ET031107,Tegede,Central Gondar,Amhara
+West Belesa Woreda,Amhara Region,Central Gondar Zone,exact_in_cohort,100,ET031116,West Belesa,Central Gondar,Amhara
+West Dembia Woreda,Amhara Region,Central Gondar Zone,fuzzy_in_cohort,95,ET031125,West Dembiya,Central Gondar,Amhara
+Aneded Woreda,Amhara Region,East Gojjam Zone,exact_in_cohort,100,ET030617,Aneded,East Gojam,Amhara
+Awabel Woreda,Amhara Region,East Gojjam Zone,exact_in_cohort,100,ET030612,Awabel,East Gojam,Amhara
+Basoliben Woreda,Amhara Region,East Gojjam Zone,fuzzy_in_cohort,94,ET030611,Baso Liben,East Gojam,Amhara
+Bibugne Woreda,Amhara Region,East Gojjam Zone,fuzzy_in_cohort,92,ET030601,Bibugn,East Gojam,Amhara
+Debre Elias Worda,Amhara Region,East Gojjam Zone,exact_in_cohort,100,ET030608,Debre Elias,East Gojam,Amhara
+Dejen Woreda,Amhara Region,East Gojjam Zone,exact_in_cohort,100,ET030613,Dejen,East Gojam,Amhara
+Enarje Enawga Woreda,Amhara Region,East Gojjam Zone,fuzzy_in_cohort,96,ET030605,Enarj Enawga,East Gojam,Amhara
+Enebse Sar Mider Woreda,Amhara Region,East Gojjam Zone,fuzzy_in_cohort,93,ET030604,Enebse Sarmder,East Gojam,Amhara
+Enemay Woreda,Amhara Region,East Gojjam Zone,exact_in_cohort,100,ET030606,Enemay,East Gojam,Amhara
+Goncha WorHO,Amhara Region,East Gojjam Zone,fuzzy_in_cohort,90,ET030603,Goncha Siso Enebse,East Gojam,Amhara
+Hulet Eju Nese WorHO,Amhara Region,East Gojjam Zone,fuzzy_in_cohort,92,ET030602,Hulet Ej Enese,East Gojam,Amhara
+Motta town,Amhara Region,East Gojjam Zone,fuzzy_in_cohort,88,ET030694,Mota Town,East Gojam,Amhara
+Shebel Berenta Woreda,Amhara Region,East Gojjam Zone,fuzzy_in_cohort,96,ET030614,Shebel Bernta,East Gojam,Amhara
+Bahir Dar Zuria Woreda,Amhara Region,North Gojjam zone,fuzzy_in_cohort,96,ET030702,Bahirdar Zuria,West Gojam,Amhara
+North Mecha Woreda,Amhara Region,North Gojjam zone,fuzzy_in_cohort,90,ET030704,Mecha,West Gojam,Amhara
+South Mecha Woreda,Amhara Region,North Gojjam zone,fuzzy_in_cohort,90,ET030704,Mecha,West Gojam,Amhara
+Yilmana Densa Woreda Health Office,Amhara Region,North Gojjam zone,exact_in_cohort,100,ET030703,Yilmana Densa,West Gojam,Amhara
+Adi Arkay Woreda,Amhara Region,North Gondar Zone,fuzzy_in_cohort,90,ET030101,Addi Arekay,North Gondar,Amhara
+Beyeda Woreda,Amhara Region,North Gondar Zone,exact_in_cohort,100,ET030102,Beyeda,North Gondar,Amhara
+Dabat Woreda,Amhara Region,North Gondar Zone,exact_in_cohort,100,ET030105,Dabat,North Gondar,Amhara
+Debark Town Woreda,Amhara Region,North Gondar Zone,exact_in_cohort,100,ET030104,Debark,North Gondar,Amhara
+Debark Zuria Woreda,Amhara Region,North Gondar Zone,fuzzy_in_cohort,90,ET030104,Debark,North Gondar,Amhara
+Janamora Woreda,Amhara Region,North Gondar Zone,exact_in_cohort,100,ET030103,Janamora,North Gondar,Amhara
+Telemt Woreda,Amhara Region,North Gondar Zone,exact_in_cohort,100,ET030119,Telemt,North Gondar,Amhara
+Ankober Woreda,Amhara Region,North Shewa Zone,exact_in_cohort,100,ET030515,Ankober,North Shewa (AM),Amhara
+Asagirt Woreda,Amhara Region,North Shewa Zone,fuzzy_in_cohort,93,ET030514,Assagirt,North Shewa (AM),Amhara
+Bassona Worana,Amhara Region,North Shewa Zone,fuzzy_in_cohort,88,ET030519,Basona Worena,North Shewa (AM),Amhara
+Berehet Woreda,Amhara Region,North Shewa Zone,exact_in_cohort,100,ET030517,Berehet,North Shewa (AM),Amhara
+Efratana Gidim Woreda,Amhara Region,North Shewa Zone,fuzzy_in_cohort,89,ET030508,Eferatana Gidem,North Shewa (AM),Amhara
+Ensaro Woreda,Amhara Region,North Shewa Zone,exact_in_cohort,100,ET030503,Ensaro,North Shewa (AM),Amhara
+Gishe Woreda,Amhara Region,North Shewa Zone,fuzzy_in_cohort,90,ET030506,Gishe Rabel,North Shewa (AM),Amhara
+Hagere Mariam Woreda,Amhara Region,North Shewa Zone,exact_in_cohort,100,ET030516,Hagere Mariam,North Shewa (AM),Amhara
+Menz Gera Midir Woreda,Amhara Region,North Shewa Zone,fuzzy_in_cohort,96,ET030505,Menze Gera Midir,North Shewa (AM),Amhara
+Menz Lalo Midir Woreda,Amhara Region,North Shewa Zone,fuzzy_in_cohort,96,ET030522,Menze Lalo Midir,North Shewa (AM),Amhara
+Menz Mama Midir Woreda,Amhara Region,North Shewa Zone,fuzzy_in_cohort,96,ET030509,Menze Mama Midir,North Shewa (AM),Amhara
+Merhabete Woreda,Amhara Region,North Shewa Zone,exact_in_cohort,100,ET030502,Merhabete,North Shewa (AM),Amhara
+Mida Woremo Woreda,Amhara Region,North Shewa Zone,exact_in_cohort,100,ET030501,Mida Woremo,North Shewa (AM),Amhara
+Minjar Shenkora Woreda,Amhara Region,North Shewa Zone,exact_in_cohort,100,ET030518,Minjar Shenkora,North Shewa (AM),Amhara
+Mojana Wodera Woreda,Amhara Region,North Shewa Zone,fuzzy_in_cohort,90,ET030209,Dera (AM),South Gondar,Amhara
+Mortena Jiru Woreda,Amhara Region,North Shewa Zone,fuzzy_in_cohort,91,ET030504,Moretna Jiru,North Shewa (AM),Amhara
+Saya Deberna Wayu Woreda,Amhara Region,North Shewa Zone,fuzzy_in_cohort,88,ET030523,Siya Debirna Wayu,North Shewa (AM),Amhara
+Shoarobit Town,Amhara Region,North Shewa Zone,fuzzy_in_cohort,94,ET030595,Shoa Robit,North Shewa (AM),Amhara
+Tarmaber Woreda,Amhara Region,North Shewa Zone,fuzzy_in_cohort,88,ET030510,Tarema Ber,North Shewa (AM),Amhara
+Angot Woreda,Amhara Region,North Wollo Zone,exact_in_cohort,100,ET030313,Angot,North Wello,Amhara
+Bugina Woreda,Amhara Region,North Wollo Zone,fuzzy_in_cohort,90,ET030301,Bugna,North Wello,Amhara
+Dawunt Woreda,Amhara Region,North Wollo Zone,exact_in_cohort,100,ET030311,Dawunt,North Wello,Amhara
+Gazo Woreda,Amhara Region,North Wollo Zone,exact_in_cohort,100,ET030312,Gazo,North Wello,Amhara
+Gidan Woreda,Amhara Region,North Wollo Zone,exact_in_cohort,100,ET030303,Gidan,North Wello,Amhara
+Guba Lafto Woreda,Amhara Region,North Wollo Zone,exact_in_cohort,100,ET030307,Guba Lafto,North Wello,Amhara
+Habru Woreda,Amhara Region,North Wollo Zone,exact_in_cohort,100,ET030308,Habru,North Wello,Amhara
+Kobo Town Woreda,Amhara Region,North Wollo Zone,exact_in_cohort,100,ET030399,Kobo town,North Wello,Amhara
+Lalibela Town,Amhara Region,North Wollo Zone,exact_in_cohort,100,ET030398,Lalibela town,North Wello,Amhara
+Lasta Woreda,Amhara Region,North Wollo Zone,exact_in_cohort,100,ET030310,Lasta,North Wello,Amhara
+Meket Woreda,Amhara Region,North Wollo Zone,exact_in_cohort,100,ET030304,Meket,North Wello,Amhara
+Raya Kobo Woreda,Amhara Region,North Wollo Zone,exact_in_cohort,100,ET030302,Raya Kobo,North Wello,Amhara
+Wadila Woreda,Amhara Region,North Wollo Zone,fuzzy_in_cohort,90,ET030305,Wadla,North Wello,Amhara
+Artuma Fursi Woreda,Amhara Region,Oromia Special Zone,exact_in_cohort,100,ET031004,Artuma Fursi,Oromia,Amhara
+Bati Town Woreda,Amhara Region,Oromia Special Zone,exact_in_cohort,100,ET031002,Bati,Oromia,Amhara
+Bati Woreda,Amhara Region,Oromia Special Zone,exact_in_cohort,100,ET031002,Bati,Oromia,Amhara
+Dawa Harewa Woreda,Amhara Region,Oromia Special Zone,fuzzy_in_cohort,90,ET031005,Dewa Harewa,Oromia,Amhara
+Kemisie Town,Amhara Region,Oromia Special Zone,exact_in_cohort,100,ET031006,Kemisie town,Oromia,Amhara
+Andabet Woreda,Amhara Region,South Gondar Zone,fuzzy_in_cohort,90,ET030211,Andabet/ West Esite,South Gondar,Amhara
+Dera Woreda,Amhara Region,South Gondar Zone,exact_in_cohort,100,ET030209,Dera (AM),South Gondar,Amhara
+Farta Woreda,Amhara Region,South Gondar Zone,exact_in_cohort,100,ET030204,Farta,South Gondar,Amhara
+Fogera Woreda,Amhara Region,South Gondar Zone,exact_in_cohort,100,ET030203,Fogera,South Gondar,Amhara
+Guna Begemidir Woreda,Amhara Region,South Gondar Zone,fuzzy_in_cohort,92,ET030212,Guna Begemider,South Gondar,Amhara
+Lay Gayint Woreda,Amhara Region,South Gondar Zone,exact_in_cohort,100,ET030205,Lay Gayint,South Gondar,Amhara
+Libokemkem Woreda,Amhara Region,South Gondar Zone,fuzzy_in_cohort,95,ET030202,Libokemekem,South Gondar,Amhara
+Mena Meketewa Woreda,Amhara Region,South Gondar Zone,exact_in_cohort,100,ET030213,Mena Meketewa,South Gondar,Amhara
+Sedie Muja Woreda,Amhara Region,South Gondar Zone,fuzzy_in_cohort,94,ET030214,Sede Muja,South Gondar,Amhara
+Tach Gayint Woreda,Amhara Region,South Gondar Zone,exact_in_cohort,100,ET030206,Tach Gayint,South Gondar,Amhara
+Woreta Town,Amhara Region,South Gondar Zone,exact_in_cohort,100,ET030293,Woreta town,South Gondar,Amhara
+Albuko Woreda,Amhara Region,South Wollo Zone,exact_in_cohort,100,ET030408,Albuko,South Wello,Amhara
+Ambasel Woreda,Amhara Region,South Wollo Zone,exact_in_cohort,100,ET030404,Ambasel,South Wello,Amhara
+Amhara Saint Woreda,Amhara Region,South Wollo Zone,fuzzy_in_cohort,90,ET030306,Hara town,North Wello,Amhara
+Argoba Woreda,Amhara Region,South Wollo Zone,exact_in_cohort,100,ET030401,Argoba,South Wello,Amhara
+Borena Woreda,Amhara Region,South Wollo Zone,fuzzy_in_cohort,90,ET030412,Borena /Debresina,South Wello,Amhara
+Delanta Woreda,Amhara Region,South Wollo Zone,exact_in_cohort,100,ET030406,Delanta,South Wello,Amhara
+Dessie Zuria Woreda,Amhara Region,South Wollo Zone,exact_in_cohort,100,ET030409,Dessie Zuria,South Wello,Amhara
+Jama,Amhara Region,South Wollo Zone,exact_in_cohort,100,ET030414,Jama,South Wello,Amhara
+Kallu Woreda,Amhara Region,South Wollo Zone,fuzzy_in_cohort,88,ET030407,Kalu,South Wello,Amhara
+Kelala Woreda,Amhara Region,South Wollo Zone,exact_in_cohort,100,ET030426,Kelala town,South Wello,Amhara
+Kutaber Woreda,Amhara Region,South Wollo Zone,exact_in_cohort,100,ET030403,Kutaber,South Wello,Amhara
+Legambo Woreda,Amhara Region,South Wollo Zone,exact_in_cohort,100,ET030410,Legambo,South Wello,Amhara
+Legehida Woreda,Amhara Region,South Wollo Zone,exact_in_cohort,100,ET030420,Legehida,South Wello,Amhara
+Mehal Saint Woreda,Amhara Region,South Wollo Zone,fuzzy_in_cohort,95,ET030419,Mehal Sayint,South Wello,Amhara
+Mekdela Woreda,Amhara Region,South Wollo Zone,exact_in_cohort,100,ET030421,Mekdela,South Wello,Amhara
+Tenta Woreda,Amhara Region,South Wollo Zone,exact_in_cohort,100,ET030402,Tenta,South Wello,Amhara
+Abergele Woreda,Amhara Region,Waghimera Zone,exact_in_cohort,100,ET030805,Abergele (AM),Wag Hamra,Amhara
+Dehana Woreda,Amhara Region,Waghimera Zone,exact_in_cohort,100,ET030803,Dehana,Wag Hamra,Amhara
+Gazgibla Woreda,Amhara Region,Waghimera Zone,fuzzy_in_cohort,94,ET030804,Gaz Gibla,Wag Hamra,Amhara
+Sekota Town,Amhara Region,Waghimera Zone,exact_in_cohort,100,ET030802,Sekota,Wag Hamra,Amhara
+Sekota Zuria Woreda,Amhara Region,Waghimera Zone,fuzzy_in_cohort,90,ET030802,Sekota,Wag Hamra,Amhara
+Bure Town,Amhara Region,West Gojjam Zone,exact_in_cohort,100,ET030710,Bure (AM),West Gojam,Amhara
+Bure Zuria Woreda,Amhara Region,West Gojjam Zone,fuzzy_in_cohort,90,ET030710,Bure (AM),West Gojam,Amhara
+Dega Damot Woreda,Amhara Region,West Gojjam Zone,exact_in_cohort,100,ET030707,Dega Damot,West Gojam,Amhara
+Dembecha Woreda,Amhara Region,West Gojjam Zone,exact_in_cohort,100,ET030708,Dembecha,West Gojam,Amhara
+Finote Selam Town,Amhara Region,West Gojjam Zone,exact_in_cohort,100,ET030714,Finote Selam town,West Gojam,Amhara
+Jabi Tehnan Woreda,Amhara Region,West Gojjam Zone,exact_in_cohort,100,ET030709,Jabi Tehnan,West Gojam,Amhara
+Quarit Woreda,Amhara Region,West Gojjam Zone,exact_in_cohort,100,ET030706,Quarit,West Gojam,Amhara
+Sekela Woreda,Amhara Region,West Gojjam Zone,exact_in_cohort,100,ET030705,Sekela,West Gojam,Amhara
+Adagnager Chako Woreda,Amhara Region,West Gondar Zone,fuzzy_in_cohort,90,ET031205,Adagn Ager Chaqo,West Gondar,Amhara
+Gendawuha,Amhara Region,West Gondar Zone,exact_in_cohort,100,ET031292,Gendawuha town,West Gondar,Amhara
+Metema Woreda,Amhara Region,West Gondar Zone,exact_in_cohort,100,ET031213,Metema,West Gondar,Amhara
+Quara Woreda,Amhara Region,West Gondar Zone,exact_in_cohort,100,ET031214,Quara,West Gondar,Amhara
+Bambasi Woreda,Benishangul Gumuz Region,Assosa Zone,exact_in_cohort,100,ET060305,Bambasi,Assosa,Benishangul Gumz
+Homosha Woreda,Benishangul Gumuz Region,Assosa Zone,exact_in_cohort,100,ET060307,Homosha,Assosa,Benishangul Gumz
+Kurmuk Woreda,Benishangul Gumuz Region,Assosa Zone,exact_in_cohort,100,ET060302,Kurmuk,Assosa,Benishangul Gumz
+Menge Woreda,Benishangul Gumuz Region,Assosa Zone,exact_in_cohort,100,ET060301,Menge,Assosa,Benishangul Gumz
+Sherkole Woreda,Benishangul Gumuz Region,Assosa Zone,exact_in_cohort,100,ET060304,Sherkole,Assosa,Benishangul Gumz
+Undulu Woreda,Benishangul Gumuz Region,Assosa Zone,exact_in_cohort,100,ET060308,Undulu,Assosa,Benishangul Gumz
+Ura Woreda,Benishangul Gumuz Region,Assosa Zone,fuzzy_in_cohort,90,ET060204,Mandura,Metekel,Benishangul Gumz
+Gilgelbeles Town,Benishangul Gumuz Region,Gilgelbeles Town,fuzzy_in_cohort,95,ET060200,Gilgel Beles town,Metekel,Benishangul Gumz
+Kamashi Town,Benishangul Gumuz Region,Kamashi Town,exact_in_cohort,100,ET060400,Kamashi town,Kamashi,Benishangul Gumz
+Kamashi Woreda,Benishangul Gumuz Region,Kamashi Zone,exact_in_cohort,100,ET060400,Kamashi town,Kamashi,Benishangul Gumz
+Sedal Woreda,Benishangul Gumuz Region,Kamashi Zone,exact_in_cohort,100,ET060402,Sedal,Kamashi,Benishangul Gumz
+Bulen Woreda,Benishangul Gumuz Region,Metekel Zone,exact_in_cohort,100,ET060207,Bulen,Metekel,Benishangul Gumz
+Dangur Woreda,Benishangul Gumuz Region,Metekel Zone,exact_in_cohort,100,ET060201,Dangur,Metekel,Benishangul Gumz
+Dibate Woreda,Benishangul Gumuz Region,Metekel Zone,exact_in_cohort,100,ET060205,Dibate,Metekel,Benishangul Gumz
+Guba Woreda,Benishangul Gumuz Region,Metekel Zone,exact_in_cohort,100,ET060202,Guba,Metekel,Benishangul Gumz
+Mandura Woreda,Benishangul Gumuz Region,Metekel Zone,exact_in_cohort,100,ET060204,Mandura,Metekel,Benishangul Gumz
+Wembera Woreda,Benishangul Gumuz Region,Metekel Zone,exact_in_cohort,100,ET060203,Wembera,Metekel,Benishangul Gumz
+Butajira Town,Central Ethiopian Region,East Gurage Zone,exact_in_cohort,100,ET070115,Butajira town,Guraghe,Central Ethiopia
+East Meskan Woreda,Central Ethiopian Region,East Gurage Zone,fuzzy_in_cohort,90,ET070106,Meskan,Guraghe,Central Ethiopia
+Meskan Woreda,Central Ethiopian Region,East Gurage Zone,exact_in_cohort,100,ET070106,Meskan,Guraghe,Central Ethiopia
+Sodo Woreda,Central Ethiopian Region,East Gurage Zone,exact_in_cohort,100,ET070105,Sodo,Guraghe,Central Ethiopia
+South Sodo Woreda,Central Ethiopian Region,East Gurage Zone,fuzzy_in_cohort,90,ET070105,Sodo,Guraghe,Central Ethiopia
+Abeshge Woreda,Central Ethiopian Region,Gurage Zone,fuzzy_in_cohort,93,ET070102,Abeshege,Guraghe,Central Ethiopia
+Cheha Woreda,Central Ethiopian Region,Gurage Zone,exact_in_cohort,100,ET070110,Cheha,Guraghe,Central Ethiopia
+Enor Ener Meger Woreda,Central Ethiopian Region,Gurage Zone,fuzzy_in_cohort,90,ET070120,Enor Ener,Guraghe,Central Ethiopia
+Enor Woreda,Central Ethiopian Region,Gurage Zone,fuzzy_in_cohort,90,ET070120,Enor Ener,Guraghe,Central Ethiopia
+Ezha Woreda,Central Ethiopian Region,Gurage Zone,exact_in_cohort,100,ET070103,Ezha,Guraghe,Central Ethiopia
+Gedebano Gutazer Welene Woreda,Central Ethiopian Region,Gurage Zone,exact_in_cohort,100,ET070104,Gedebano Gutazer Welene,Guraghe,Central Ethiopia
+Geta Woreda,Central Ethiopian Region,Gurage Zone,exact_in_cohort,100,ET070113,Geta,Guraghe,Central Ethiopia
+Gumer Woreda,Central Ethiopian Region,Gurage Zone,exact_in_cohort,100,ET070109,Gumer,Guraghe,Central Ethiopia
+Mihurna Aklil Woreda,Central Ethiopian Region,Gurage Zone,fuzzy_in_cohort,88,ET070112,Muhur Na Aklil,Guraghe,Central Ethiopia
+Ameka Woreda,Central Ethiopian Region,Hadiya Zone,exact_in_cohort,100,ET070215,Ameka,Hadiya,Central Ethiopia
+Duna Woreda,Central Ethiopian Region,Hadiya Zone,exact_in_cohort,100,ET070207,Duna,Hadiya,Central Ethiopia
+Gibe Woreda,Central Ethiopian Region,Hadiya Zone,exact_in_cohort,100,ET070210,Gibe,Hadiya,Central Ethiopia
+Gimbichau Town Administration,Central Ethiopian Region,Hadiya Zone,fuzzy_in_cohort,94,ET070213,Gimbichu town,Hadiya,Central Ethiopia
+Gombora Woreda,Central Ethiopian Region,Hadiya Zone,exact_in_cohort,100,ET070202,Gombora,Hadiya,Central Ethiopia
+Hosaena Town Administration,Central Ethiopian Region,Hadiya Zone,exact_in_cohort,100,ET070211,Hosaena town,Hadiya,Central Ethiopia
+Jajura Town Administration,Central Ethiopian Region,Hadiya Zone,exact_in_cohort,100,ET070214,Jajura town,Hadiya,Central Ethiopia
+Lemo Woreda,Central Ethiopian Region,Hadiya Zone,fuzzy_in_cohort,88,ET070203,Lemmo,Hadiya,Central Ethiopia
+Mirab Soro Woreda,Central Ethiopian Region,Hadiya Zone,exact_in_cohort,100,ET070217,Mirab Soro,Hadiya,Central Ethiopia
+Misha Woreda,Central Ethiopian Region,Hadiya Zone,exact_in_cohort,100,ET070201,Misha,Hadiya,Central Ethiopia
+Shashogo Woreda,Central Ethiopian Region,Hadiya Zone,exact_in_cohort,100,ET070204,Shashogo,Hadiya,Central Ethiopia
+Shone Town Administration,Central Ethiopian Region,Hadiya Zone,exact_in_cohort,100,ET070212,Shone Town,Hadiya,Central Ethiopia
+Siraro Badewacho Woreda,Central Ethiopian Region,Hadiya Zone,fuzzy_in_cohort,93,ET070216,Siraro Badawacho,Hadiya,Central Ethiopia
+Soro Woreda,Central Ethiopian Region,Hadiya Zone,exact_in_cohort,100,ET070206,Soro,Hadiya,Central Ethiopia
+Atoti Ulo Woreda,Central Ethiopian Region,Halaba Zone,fuzzy_in_cohort,88,ET071403,Atote Ulo,Halaba,Central Ethiopia
+Halaba Kulito Town Administration,Central Ethiopian Region,Halaba Zone,fuzzy_in_cohort,90,ET071401,Kulito town,Halaba,Central Ethiopia
+Wera Dijo Woreda,Central Ethiopian Region,Halaba Zone,fuzzy_in_cohort,94,ET071404,Wera Djo,Halaba,Central Ethiopia
+Wera Woreda,Central Ethiopian Region,Halaba Zone,exact_in_cohort,100,ET071402,Wera,Halaba,Central Ethiopia
+Kebena Special Woreda,Central Ethiopian Region,Kebena Special Woreda,exact_in_cohort,100,ET070101,Kebena,Guraghe,Central Ethiopia
+Adilo Zuria Woreda,Central Ethiopian Region,Kembata Zone,fuzzy_in_cohort,90,ET070309,Adilo,Kembata Tembaro,Central Ethiopia
+Angacha Town,Central Ethiopian Region,Kembata Zone,exact_in_cohort,100,ET070302,Angacha,Kembata Tembaro,Central Ethiopia
+Angacha Woreda,Central Ethiopian Region,Kembata Zone,exact_in_cohort,100,ET070302,Angacha,Kembata Tembaro,Central Ethiopia
+Doyo Gena Woreda,Central Ethiopian Region,Kembata Zone,fuzzy_in_cohort,94,ET070306,Doyogena,Kembata Tembaro,Central Ethiopia
+Doyogena Town,Central Ethiopian Region,Kembata Zone,exact_in_cohort,100,ET070306,Doyogena,Kembata Tembaro,Central Ethiopia
+Durame Town,Central Ethiopian Region,Kembata Zone,exact_in_cohort,100,ET070308,Durame town,Kembata Tembaro,Central Ethiopia
+Hadero Town,Central Ethiopian Region,Kembata Zone,exact_in_cohort,100,ET070312,Hadero town,Kembata Tembaro,Central Ethiopia
+Hadero Tunto Zuriya Woreda,Central Ethiopian Region,Kembata Zone,fuzzy_in_cohort,90,ET070305,Hadero Tunto,Kembata Tembaro,Central Ethiopia
+Kacha Birra Woreda,Central Ethiopian Region,Kembata Zone,fuzzy_in_cohort,95,ET070304,Kacha Bira,Kembata Tembaro,Central Ethiopia
+Kedida Gamela Woreda,Central Ethiopian Region,Kembata Zone,fuzzy_in_cohort,92,ET070303,Kediada Gambela,Kembata Tembaro,Central Ethiopia
+Shinshicho Town,Central Ethiopian Region,Kembata Zone,fuzzy_in_cohort,95,ET070310,Shinshincho town,Kembata Tembaro,Central Ethiopia
+Alicho Wiriro Woreda,Central Ethiopian Region,Silte Zone,fuzzy_in_cohort,92,ET072001,Alicho Woriro,Siltie,Central Ethiopia
+Dalocha Town Administration Woreda,Central Ethiopian Region,Silte Zone,exact_in_cohort,100,ET072005,Dalocha,Siltie,Central Ethiopia
+Dalocha Woreda,Central Ethiopian Region,Silte Zone,exact_in_cohort,100,ET072005,Dalocha,Siltie,Central Ethiopia
+Kibet Town,Central Ethiopian Region,Silte Zone,exact_in_cohort,100,ET072011,Kibet town,Siltie,Central Ethiopia
+Mitto Woreda,Central Ethiopian Region,Silte Zone,fuzzy_in_cohort,88,ET072012,Mito,Siltie,Central Ethiopia
+Sankura Woreda,Central Ethiopian Region,Silte Zone,exact_in_cohort,100,ET072006,Sankura,Siltie,Central Ethiopia
+Silti Woreda,Central Ethiopian Region,Silte Zone,fuzzy_in_cohort,90,ET072002,Siltie,Siltie,Central Ethiopia
+Tora Town,Central Ethiopian Region,Silte Zone,exact_in_cohort,100,ET072009,Tora town,Siltie,Central Ethiopia
+Worabe Town,Central Ethiopian Region,Silte Zone,exact_in_cohort,100,ET072010,Worabe town,Siltie,Central Ethiopia
+Tembaro Special Woreda,Central Ethiopian Region,Tembaro Special Woreda,exact_in_cohort,100,ET070301,Tembaro,Kembata Tembaro,Central Ethiopia
+Tembaro woreda,Central Ethiopian Region,Tembaro Special Woreda,exact_in_cohort,100,ET070301,Tembaro,Kembata Tembaro,Central Ethiopia
+Biyoawale Operational Woreda,Dire Dawa City Administration,Biyoawale Operational Woreda,fuzzy_in_cohort,90,ET150208,Biyoawale,Dire Dawa rural,Dire Dawa
+Jeldessa Operational Woreda,Dire Dawa City Administration,Jeldessa Operational Woreda,fuzzy_in_cohort,90,ET150206,Jeldessa,Dire Dawa rural,Dire Dawa
+Legehare Operational Woreda,Dire Dawa City Administration,Legehare Operational Woreda,fuzzy_in_cohort,90,ET150105,Legehare,Dire Dawa urban,Dire Dawa
+Wahil Operational Woreda,Dire Dawa City Administration,Wahil Operational Woreda,fuzzy_in_cohort,90,ET150207,Wahil,Dire Dawa rural,Dire Dawa
+Abobo Woreda,Gambella Region,Agniwa Zone,exact_in_cohort,100,ET120201,Abobo,Agnewak,Gambela
+Gambella Zuria Woreda,Gambella Region,Agniwa Zone,fuzzy_in_cohort,96,ET120202,Gambela Zuria,Agnewak,Gambela
+Gog Woreda,Gambella Region,Agniwa Zone,exact_in_cohort,100,ET120203,Gog,Agnewak,Gambela
+Gambella Town,Gambella Region,Gambella Town,fuzzy_in_cohort,93,ET120206,Gambela town,Agnewak,Gambela
+Itang Special Woreda,Gambella Region,Itang Special Woreda,exact_in_cohort,100,ET120407,Itang,Itang Special woreda,Gambela
+Godere Woreda,Gambella Region,Majang Zone,exact_in_cohort,100,ET120301,Godere,Majang,Gambela
+Mengeshi Woreda,Gambella Region,Majang Zone,fuzzy_in_cohort,93,ET120308,Mengesh,Majang,Gambela
+Akobo Woreda,Gambella Region,Nuer Zone,exact_in_cohort,100,ET120101,Akobo,Nuwer,Gambela
+Jikawo Woreda,Gambella Region,Nuer Zone,exact_in_cohort,100,ET120103,Jikawo,Nuwer,Gambela
+Lare Woreda,Gambella Region,Nuer Zone,exact_in_cohort,100,ET120102,Lare,Nuwer,Gambela
+Makuey Woreda,Gambella Region,Nuer Zone,exact_in_cohort,100,ET120105,Makuey,Nuwer,Gambela
+Abadir Woreda,Harari Region,Abadir Woreda,exact_in_cohort,100,ET130109,Abadir,Harari,Harari
+Aboker Woreda,Harari Region,Aboker Woreda,exact_in_cohort,100,ET130108,Aboker,Harari,Harari
+Amir Nur Woreda,Harari Region,Amir Nur Woreda,exact_in_cohort,100,ET130107,Amir Nur,Harari,Harari
+Dire Teyara Woreda,Harari Region,Dire Teyara Woreda,exact_in_cohort,100,ET130106,Dire Teyara,Harari,Harari
+Erer Woreda,Harari Region,Erer Woreda,fuzzy_in_cohort,90,ET130105,Erer (HR),Harari,Harari
+Hakim Woreda,Harari Region,Hakim Woreda,exact_in_cohort,100,ET130104,Hakim,Harari,Harari
+Jinela Woreda,Harari Region,Jinela Woreda,exact_in_cohort,100,ET130103,Jinela,Harari,Harari
+Shenkor Woreda,Harari Region,Shenkor Woreda,exact_in_cohort,100,ET130102,Shenkor,Harari,Harari
+Sofi Woreda,Harari Region,Sofi Woreda,exact_in_cohort,100,ET130101,Sofi,Harari,Harari
+Ambo2 Town,Oromia Region,AmboTown,fuzzy_in_cohort,88,ET040515,Ambo town,West Shewa,Oromia
+Amigna Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040810,Amigna,Arsi,Oromia
+Aseko Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040802,Aseko,Arsi,Oromia
+Bale Gesgar Woreda,Oromia Region,Arsi Zone,fuzzy_in_cohort,90,ET040823,Bele Gesgar,Arsi,Oromia
+Chole Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040809,Chole,Arsi,Oromia
+Dera Town,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040602,Dera (OR),North Shewa (OR),Oromia
+Digeluna Tijo Woreda,Oromia Region,Arsi Zone,fuzzy_in_cohort,92,ET040815,Degeluna Tijo,Arsi,Oromia
+Diksis woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040822,Diksis,Arsi,Oromia
+Dodota Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040805,Dodota,Arsi,Oromia
+Gololcha Woreda,Oromia Region,Arsi Zone,fuzzy_in_cohort,93,ET040803,Golocha,Arsi,Oromia
+Guna Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040819,Guna,Arsi,Oromia
+Hitosa Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040807,Hitosa,Arsi,Oromia
+Jeju Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040804,Jeju,Arsi,Oromia
+Limu Bilbilo Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040818,Limu Bilbilo,Arsi,Oromia
+Merti Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040801,Merti,Arsi,Oromia
+Munesa Woreda,Oromia Region,Arsi Zone,fuzzy_in_cohort,92,ET040817,Munessa,Arsi,Oromia
+Robe Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040812,Robe,Arsi,Oromia
+Seru Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040811,Seru,Arsi,Oromia
+Shanan Kolu Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040893,Shanan Kolu,Arsi,Oromia
+Sire Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040820,Sire,Arsi,Oromia
+Sirka Woreda,Oromia Region,Arsi Zone,fuzzy_in_cohort,90,ET040814,Shirka,Arsi,Oromia
+Sude Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040808,Sude,Arsi,Oromia
+Tiyo Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040816,Tiyo,Arsi,Oromia
+Ziway Dugda Woreda,Oromia Region,Arsi Zone,exact_in_cohort,100,ET040806,Ziway Dugda,Arsi,Oromia
+Agarfa Woreda,Oromia Region,Bale Zone,exact_in_cohort,100,ET041104,Agarfa,Bale,Oromia
+Berbere Woreda,Oromia Region,Bale Zone,exact_in_cohort,100,ET041114,Berbere,Bale,Oromia
+Dinsho Woreda,Oromia Region,Bale Zone,exact_in_cohort,100,ET041122,Dinsho,Bale,Oromia
+Gasera Woreda,Oromia Region,Bale Zone,exact_in_cohort,100,ET041106,Gasera,Bale,Oromia
+Goba Woreda,Oromia Region,Bale Zone,exact_in_cohort,100,ET041110,Goba (OR),Bale,Oromia
+Goro Woreda,Oromia Region,Bale Zone,fuzzy_in_cohort,90,ET041010,Goro Gutu,East Hararge,Oromia
+Guradamole Woreda,Oromia Region,Bale Zone,exact_global,95,ET050904,Guradamole,Liban,Somali
+Harena Buluk Woreda,Oromia Region,Bale Zone,exact_in_cohort,100,ET041111,Harena Buluk,Bale,Oromia
+Sinana Woreda,Oromia Region,Bale Zone,exact_in_cohort,100,ET041109,Sinana,Bale,Oromia
+Bishoftu Town,Oromia Region,Bishoftu Town,exact_in_cohort,100,ET040709,Bishoftu town,East Shewa,Oromia
+Dukem Subcity,Oromia Region,Bishoftu Town,exact_in_cohort,100,ET042008,Dukem,Finfine Special,Oromia
+Dilo Woreda,Oromia Region,Borena Zone,exact_in_cohort,100,ET041219,Dilo,Borena,Oromia
+Dire Woreda,Oromia Region,Borena Zone,exact_in_cohort,100,ET041211,Dire,Borena,Oromia
+Dubuluk Woreda,Oromia Region,Borena Zone,fuzzy_in_cohort,92,ET041291,Dubluk,Borena,Oromia
+Elwaye Woreda,Oromia Region,Borena Zone,fuzzy_global,92,ET051002,Elwayne,Nogob,Somali
+Gomole Woreda,Oromia Region,Borena Zone,exact_in_cohort,100,ET041223,Gomole,Borena,Oromia
+Guchi Woreda,Oromia Region,Borena Zone,exact_in_cohort,100,ET041290,Guchi,Borena,Oromia
+Miyo Woreda,Oromia Region,Borena Zone,exact_in_cohort,100,ET041216,Miyo,Borena,Oromia
+Moyale Woreda,Oromia Region,Borena Zone,exact_in_cohort,100,ET041210,Moyale (OR),Borena,Oromia
+Taltale Woreda,Oromia Region,Borena Zone,fuzzy_in_cohort,90,ET040311,Ale,Ilu Aba Bora,Oromia
+Yabelo Town,Oromia Region,Borena Zone,exact_in_cohort,100,ET041207,Yabelo,Borena,Oromia
+Yabelo Woreda,Oromia Region,Borena Zone,exact_in_cohort,100,ET041207,Yabelo,Borena,Oromia
+Bedele Town Woreda,Oromia Region,Buno Bedele Zone,exact_in_cohort,100,ET041621,Bedele town,Buno Bedele,Oromia
+Bedele Woreda,Oromia Region,Buno Bedele Zone,exact_in_cohort,100,ET041621,Bedele town,Buno Bedele,Oromia
+Borecha Woreda,Oromia Region,Buno Bedele Zone,exact_in_cohort,100,ET041607,Borecha,Buno Bedele,Oromia
+Chewaka Woreda,Oromia Region,Buno Bedele Zone,fuzzy_in_cohort,92,ET041623,Chwaka,Buno Bedele,Oromia
+Chora Woreda,Oromia Region,Buno Bedele Zone,fuzzy_in_cohort,90,ET040415,Chora (Jimma),Jimma,Oromia
+Dabo Hana Woreda,Oromia Region,Buno Bedele Zone,exact_in_cohort,100,ET041605,Dabo Hana,Buno Bedele,Oromia
+Dedesa Woreda,Oromia Region,Buno Bedele Zone,exact_in_cohort,100,ET041608,Dedesa,Buno Bedele,Oromia
+Dega Woreda,Oromia Region,Buno Bedele Zone,exact_in_cohort,100,ET041604,Dega,Buno Bedele,Oromia
+Gechi Woreda,Oromia Region,Buno Bedele Zone,exact_in_cohort,100,ET041606,Gechi,Buno Bedele,Oromia
+Meko Woreda,Oromia Region,Buno Bedele Zone,exact_in_cohort,100,ET041618,Meko,Buno Bedele,Oromia
+Dodola Town,Oromia Region,Dodola Town,exact_in_cohort,100,ET041700,Dodola town,West Arsi,Oromia
+Ginnir Town,Oromia Region,East Bale Zone,fuzzy_in_cohort,90,ET042103,Ginir,East Bale,Oromia
+Ginnir Woreda,Oromia Region,East Bale Zone,fuzzy_in_cohort,90,ET042103,Ginir,East Bale,Oromia
+Gololcha Woreda,Oromia Region,East Bale Zone,fuzzy_in_cohort,93,ET040803,Golocha,Arsi,Oromia
+Rayitu Woreda,Oromia Region,East Bale Zone,exact_in_cohort,100,ET042104,Rayitu,East Bale,Oromia
+Sewena Woreda,Oromia Region,East Bale Zone,fuzzy_in_cohort,92,ET042105,Seweyna,East Bale,Oromia
+Arero Woreda,Oromia Region,East Borena Zone,exact_in_cohort,100,ET041208,Arero,Borena,Oromia
+Goro Dola Woreda,Oromia Region,East Borena Zone,fuzzy_in_cohort,88,ET041413,Gora Dola,Guji,Oromia
+Liben Woreda,Oromia Region,East Borena Zone,exact_in_cohort,100,ET041407,Liben,Guji,Oromia
+Negele Borena Town,Oromia Region,East Borena Zone,fuzzy_in_cohort,90,ET041402,Bore,Guji,Oromia
+Wachile Woreda,Oromia Region,East Borena Zone,exact_in_cohort,100,ET041298,Wachile,Borena,Oromia
+Babile Town,Oromia Region,East Hararge Zone,exact_in_cohort,100,ET041000,Babile town,East Hararge,Oromia
+Babile Woreda,Oromia Region,East Hararge Zone,exact_in_cohort,100,ET041000,Babile town,East Hararge,Oromia
+Bedeno Woreda,Oromia Region,East Hararge Zone,exact_in_cohort,100,ET041013,Bedeno,East Hararge,Oromia
+Chinaksen Woreda,Oromia Region,East Hararge Zone,exact_in_cohort,100,ET041015,Chinaksen,East Hararge,Oromia
+Deder Town,Oromia Region,East Hararge Zone,exact_in_cohort,100,ET041011,Deder,East Hararge,Oromia
+Deder Woreda,Oromia Region,East Hararge Zone,exact_in_cohort,100,ET041011,Deder,East Hararge,Oromia
+Fedis Woreda,Oromia Region,East Hararge Zone,exact_in_cohort,100,ET041005,Fedis,East Hararge,Oromia
+Girawa Woreda,Oromia Region,East Hararge Zone,exact_in_cohort,100,ET041016,Girawa,East Hararge,Oromia
+Goro Gutu Woreda,Oromia Region,East Hararge Zone,exact_in_cohort,100,ET041010,Goro Gutu,East Hararge,Oromia
+Goro Muti Woreda,Oromia Region,East Hararge Zone,exact_in_cohort,100,ET041089,Goro Muti,East Hararge,Oromia
+Gursum Woreda,Oromia Region,East Hararge Zone,exact_in_cohort,100,ET041003,Gursum (OR),East Hararge,Oromia
+Haromaya Woreda,Oromia Region,East Hararge Zone,exact_in_cohort,100,ET041019,Haromaya town,East Hararge,Oromia
+Jarso Woreda,Oromia Region,East Hararge Zone,fuzzy_in_cohort,90,ET040108,Jarso (West Wellega),West Wellega,Oromia
+Kersa Woreda,Oromia Region,East Hararge Zone,fuzzy_in_cohort,90,ET040405,Kersa (Jimma),Jimma,Oromia
+Kombolcha Woreda,Oromia Region,East Hararge Zone,exact_in_cohort,100,ET041001,Kombolcha,East Hararge,Oromia
+Kumbi Woreda,Oromia Region,East Hararge Zone,exact_in_cohort,100,ET041098,Kumbi,East Hararge,Oromia
+Kurfa Chale Woreda,Oromia Region,East Hararge Zone,fuzzy_in_cohort,90,ET041007,Kurfa Chele,East Hararge,Oromia
+Meta Woreda,Oromia Region,East Hararge Zone,exact_in_cohort,100,ET041009,Meta,East Hararge,Oromia
+Midaga Tola Woreda,Oromia Region,East Hararge Zone,fuzzy_in_cohort,95,ET041014,Midhaga Tola,East Hararge,Oromia
+Adaa Woreda,Oromia Region,East Shewa Zone,fuzzy_in_cohort,88,ET040703,Adama,East Shewa,Oromia
+Adama Woreda,Oromia Region,East Shewa Zone,exact_in_cohort,100,ET040703,Adama,East Shewa,Oromia
+Adami Tulu Jido Kombolcha Woreda,Oromia Region,East Shewa Zone,fuzzy_in_cohort,96,ET040708,Adama Tulu Jido Kombolcha,East Shewa,Oromia
+Akaki Woreda,Oromia Region,East Shewa Zone,exact_in_cohort,100,ET042012,Akaki,Finfine Special,Oromia
+Bora Woreda,Oromia Region,East Shewa Zone,exact_in_cohort,100,ET040710,Bora (OR),East Shewa,Oromia
+Boset Woreda,Oromia Region,East Shewa Zone,exact_in_cohort,100,ET040702,Boset,East Shewa,Oromia
+Dugda Woreda,Oromia Region,East Shewa Zone,exact_in_cohort,100,ET040707,Dugda,East Shewa,Oromia
+Fentale Woreda,Oromia Region,East Shewa Zone,exact_in_cohort,100,ET040701,Fentale,East Shewa,Oromia
+Gimbichu Woreda,Oromia Region,East Shewa Zone,exact_in_cohort,100,ET040705,Gimbichu,East Shewa,Oromia
+Liben Woreda,Oromia Region,East Shewa Zone,exact_in_cohort,100,ET041407,Liben,Guji,Oromia
+Metehara Town,Oromia Region,East Shewa Zone,exact_in_cohort,100,ET040799,Metehara town,East Shewa,Oromia
+Boneya Boshe Woreda,Oromia Region,East Wellega Zone,exact_in_cohort,100,ET040205,Boneya Boshe,East Wellega,Oromia
+Diga Woreda,Oromia Region,East Wellega Zone,exact_in_cohort,100,ET040210,Diga,East Wellega,Oromia
+Gida Ayana Woreda,Oromia Region,East Wellega Zone,exact_in_cohort,100,ET040203,Gida Ayana,East Wellega,Oromia
+Gobu Seyo Woreda,Oromia Region,East Wellega Zone,exact_in_cohort,100,ET040208,Gobu Seyo,East Wellega,Oromia
+Guto Gida Woreda,Oromia Region,East Wellega Zone,exact_in_cohort,100,ET040213,Guto Gida,East Wellega,Oromia
+Haro Limu Woreda,Oromia Region,East Wellega Zone,exact_in_cohort,100,ET040204,Haro Limu,East Wellega,Oromia
+Jima Arjo Woreda,Oromia Region,East Wellega Zone,fuzzy_in_cohort,94,ET040214,Jimma Arjo,East Wellega,Oromia
+Leka Dulecha Woreda,Oromia Region,East Wellega Zone,exact_in_cohort,100,ET040212,Leka Dulecha,East Wellega,Oromia
+Limu Woreda,Oromia Region,East Wellega Zone,exact_in_cohort,100,ET040201,Limu (OR),East Wellega,Oromia
+Nekemte Town Woreda,Oromia Region,East Wellega Zone,exact_in_cohort,100,ET040297,Nekemte town,East Wellega,Oromia
+Nunu Kumba Woreda,Oromia Region,East Wellega Zone,exact_in_cohort,100,ET040215,Nunu Kumba,East Wellega,Oromia
+Sasiga Woreda,Oromia Region,East Wellega Zone,exact_in_cohort,100,ET040211,Sasiga,East Wellega,Oromia
+Sibu Sire Woreda,Oromia Region,East Wellega Zone,exact_in_cohort,100,ET040209,Sibu Sire,East Wellega,Oromia
+Wama Hagalo Woreda,Oromia Region,East Wellega Zone,exact_in_cohort,100,ET040216,Wama Hagalo,East Wellega,Oromia
+Wayu Tuqa Woreda,Oromia Region,East Wellega Zone,fuzzy_in_cohort,88,ET040206,Wayu Tuka,East Wellega,Oromia
+Adola Rede Woreda,Oromia Region,Guji Zone,fuzzy_in_cohort,90,ET041403,Adola,Guji,Oromia
+Adola Town,Oromia Region,Guji Zone,exact_in_cohort,100,ET041403,Adola,Guji,Oromia
+Aga Wayu Woreda,Oromia Region,Guji Zone,exact_in_cohort,100,ET041482,Aga Wayu,Guji,Oromia
+Ana Sora Woreda,Oromia Region,Guji Zone,exact_in_cohort,100,ET041411,Ana Sora,Guji,Oromia
+Arda Jila Me`e Boko Woreda,Oromia Region,Guji Zone,fuzzy_in_cohort,90,ET041409,Arda Jila,Guji,Oromia
+Bore Woreda,Oromia Region,Guji Zone,exact_in_cohort,100,ET041402,Bore,Guji,Oromia
+Dama Woreda,Oromia Region,Guji Zone,exact_in_cohort,100,ET041408,Dama,Guji,Oromia
+Girja Woreda,Oromia Region,Guji Zone,fuzzy_in_cohort,90,ET041410,Girja /Harenfema,Guji,Oromia
+Haro Wolabu Woreda,Oromia Region,Guji Zone,fuzzy_in_cohort,90,ET041490,Haro Walabu,Guji,Oromia
+Odo Shakiso Woreda,Oromia Region,Guji Zone,exact_in_cohort,100,ET041405,Odo Shakiso,Guji,Oromia
+Saba Boru Woreda,Oromia Region,Guji Zone,exact_in_cohort,100,ET041412,Saba Boru,Guji,Oromia
+Uraga Woreda,Oromia Region,Guji Zone,exact_in_cohort,100,ET041401,Uraga,Guji,Oromia
+Abay Chomen Woreda,Oromia Region,Horo Guduru Wollega Zone,exact_in_cohort,100,ET041905,Abay Chomen,Horo Gudru Wellega,Oromia
+Abe Dengoro Woreda,Oromia Region,Horo Guduru Wollega Zone,exact_in_cohort,100,ET041910,Abe Dongoro,Horo Gudru Wellega,Oromia
+Amuru Woreda,Oromia Region,Horo Guduru Wollega Zone,exact_in_cohort,100,ET041909,Amuru,Horo Gudru Wellega,Oromia
+Chomen Guduru Woreda,Oromia Region,Horo Guduru Wollega Zone,fuzzy_in_cohort,92,ET041911,Choman Guduru,Horo Gudru Wellega,Oromia
+Guduru Woreda,Oromia Region,Horo Guduru Wollega Zone,exact_in_cohort,100,ET041903,Guduru,Horo Gudru Wellega,Oromia
+Hababo Guduru Woreda,Oromia Region,Horo Guduru Wollega Zone,fuzzy_in_cohort,90,ET040111,Babo,West Wellega,Oromia
+Horo Bulluk Woreda,Oromia Region,Horo Guduru Wollega Zone,fuzzy_in_cohort,95,ET041912,Horo Buluk,Horo Gudru Wellega,Oromia
+Horo Woreda,Oromia Region,Horo Guduru Wollega Zone,exact_in_cohort,100,ET041901,Horo,Horo Gudru Wellega,Oromia
+Jardga Jarte Woreda,Oromia Region,Horo Guduru Wollega Zone,fuzzy_in_cohort,91,ET041908,Jarte Jardega,Horo Gudru Wellega,Oromia
+Jimma Geneti Woreda,Oromia Region,Horo Guduru Wollega Zone,fuzzy_in_cohort,91,ET041906,Jimma Genete,Horo Gudru Wellega,Oromia
+Jimma Rare Woreda,Oromia Region,Horo Guduru Wollega Zone,exact_in_cohort,100,ET041907,Jimma Rare,Horo Gudru Wellega,Oromia
+Shambu Town Woreda,Oromia Region,Horo Guduru Wollega Zone,exact_in_cohort,100,ET041902,Shambu town,Horo Gudru Wellega,Oromia
+Ale Woreda,Oromia Region,Ilu Aba Bora Zone,exact_in_cohort,100,ET040311,Ale,Ilu Aba Bora,Oromia
+Alge Sachi Woreda,Oromia Region,Ilu Aba Bora Zone,exact_in_cohort,100,ET040302,Alge Sachi,Ilu Aba Bora,Oromia
+Becho Woreda,Oromia Region,Ilu Aba Bora Zone,fuzzy_in_cohort,90,ET040314,Becho (Ilu Aba Bora),Ilu Aba Bora,Oromia
+Bilo Nopha Woreda,Oromia Region,Ilu Aba Bora Zone,exact_in_cohort,100,ET040315,Bilo Nopha,Ilu Aba Bora,Oromia
+Bure Woreda,Oromia Region,Ilu Aba Bora Zone,exact_in_cohort,100,ET040312,Bure (OR),Ilu Aba Bora,Oromia
+Darimu Woreda,Oromia Region,Ilu Aba Bora Zone,exact_in_cohort,100,ET040301,Darimu,Ilu Aba Bora,Oromia
+Didu Woreda,Oromia Region,Ilu Aba Bora Zone,exact_in_cohort,100,ET040317,Didu,Ilu Aba Bora,Oromia
+Halu Woreda,Oromia Region,Ilu Aba Bora Zone,fuzzy_in_cohort,90,ET040319,Halu /Huka,Ilu Aba Bora,Oromia
+Hurumu Woreda,Oromia Region,Ilu Aba Bora Zone,exact_in_cohort,100,ET040316,Hurumu,Ilu Aba Bora,Oromia
+Metu Rural Woreda,Oromia Region,Ilu Aba Bora Zone,fuzzy_in_cohort,90,ET040320,Metu town,Ilu Aba Bora,Oromia
+Sale Nono Woreda,Oromia Region,Ilu Aba Bora Zone,exact_in_cohort,100,ET040313,Sale Nono,Ilu Aba Bora,Oromia
+Botor Tolay Woreda,Oromia Region,Jimma Zone,exact_in_cohort,100,ET040495,Botor Tolay,Jimma,Oromia
+Dedo Woreda,Oromia Region,Jimma Zone,exact_in_cohort,100,ET040410,Dedo,Jimma,Oromia
+Gera Woreda,Oromia Region,Jimma Zone,exact_in_cohort,100,ET040408,Gera,Jimma,Oromia
+Gomma Woreda,Oromia Region,Jimma Zone,fuzzy_in_cohort,88,ET040407,Goma,Jimma,Oromia
+Gumay Woreda,Oromia Region,Jimma Zone,exact_in_cohort,100,ET040416,Gumay,Jimma,Oromia
+Kersa Woreda,Oromia Region,Jimma Zone,fuzzy_in_cohort,90,ET040405,Kersa (Jimma),Jimma,Oromia
+Limu Genet Town,Oromia Region,Jimma Zone,fuzzy_in_cohort,90,ET040201,Limu (OR),East Wellega,Oromia
+Limu Kosa Woreda,Oromia Region,Jimma Zone,exact_in_cohort,100,ET040402,Limu Kosa,Jimma,Oromia
+Limu Seka Woreda,Oromia Region,Jimma Zone,exact_in_cohort,100,ET040401,Limu Seka,Jimma,Oromia
+Mana Woreda,Oromia Region,Jimma Zone,fuzzy_in_cohort,90,ET040101,Mana Sibu,West Wellega,Oromia
+Nono Benja Woreda,Oromia Region,Jimma Zone,exact_in_cohort,100,ET040499,Nono Benja,Jimma,Oromia
+Omo Beyem Woreda,Oromia Region,Jimma Zone,fuzzy_in_cohort,88,ET040491,Omo Beyam,Jimma,Oromia
+Omo Nada Woreda,Oromia Region,Jimma Zone,exact_in_cohort,100,ET040411,Omo Nada,Jimma,Oromia
+Seka Chekorsa Woreda,Oromia Region,Jimma Zone,exact_in_cohort,100,ET040409,Seka Chekorsa,Jimma,Oromia
+Setema Woreda,Oromia Region,Jimma Zone,exact_in_cohort,100,ET040413,Setema,Jimma,Oromia
+Sigmo Woreda,Oromia Region,Jimma Zone,exact_in_cohort,100,ET040412,Sigmo,Jimma,Oromia
+Tiro Afeta,Oromia Region,Jimma Zone,exact_in_cohort,100,ET040404,Tiro Afeta,Jimma,Oromia
+Anfilo Woreda,Oromia Region,Kelem Wellega Zone,exact_in_cohort,100,ET041807,Anfilo,Kelem Wellega,Oromia
+Dale Sadi Woreda,Oromia Region,Kelem Wellega Zone,exact_in_cohort,100,ET041808,Dale Sadi,Kelem Wellega,Oromia
+Dale Wabera Woreda,Oromia Region,Kelem Wellega Zone,exact_in_cohort,100,ET041803,Dale Wabera,Kelem Wellega,Oromia
+Gawo Kebe Woreda,Oromia Region,Kelem Wellega Zone,exact_in_cohort,100,ET041804,Gawo Kebe,Kelem Wellega,Oromia
+Gidami Woreda,Oromia Region,Kelem Wellega Zone,exact_in_cohort,100,ET041809,Gidami,Kelem Wellega,Oromia
+Hawa Gelan Woreda,Oromia Region,Kelem Wellega Zone,fuzzy_in_cohort,90,ET041801,Hawa Galan,Kelem Wellega,Oromia
+Jimma Horo Woreda,Oromia Region,Kelem Wellega Zone,exact_in_cohort,100,ET041810,Jimma Horo,Kelem Wellega,Oromia
+Lalo Kile Woreda,Oromia Region,Kelem Wellega Zone,exact_in_cohort,100,ET041811,Lalo Kile,Kelem Wellega,Oromia
+Seyo Woreda,Oromia Region,Kelem Wellega Zone,fuzzy_in_cohort,90,ET040207,Bila Seyo,East Wellega,Oromia
+Yemalogi Welel Woreda,Oromia Region,Kelem Wellega Zone,fuzzy_in_cohort,89,ET041802,Yama Logi Welel,Kelem Wellega,Oromia
+Aweday Subcity,Oromia Region,Maya Town,exact_in_cohort,100,ET041099,Aweday town,East Hararge,Oromia
+Metu Town Health Office,Oromia Region,Metu Town Health Office,exact_in_cohort,100,ET040320,Metu town,Ilu Aba Bora,Oromia
+Modjo Town Health Office,Oromia Region,Modjo Town Health Office,fuzzy_in_cohort,88,ET040797,Mojo Town,East Shewa,Oromia
+Nedjo Town,Oromia Region,Nedjo Town,fuzzy_in_cohort,88,ET040102,Nejo,West Wellega,Oromia
+Nekemte Town,Oromia Region,Nekemte Town,exact_in_cohort,100,ET040297,Nekemte town,East Wellega,Oromia
+Abichu Gnea Woreda,Oromia Region,North Shewa Zone,fuzzy_in_cohort,88,ET040609,Abichugna Gne'a,North Shewa (OR),Oromia
+Aleltu Woreda,Oromia Region,North Shewa Zone,exact_in_cohort,100,ET040617,Aleltu,North Shewa (OR),Oromia
+Debre Libanos Woreda,Oromia Region,North Shewa Zone,exact_in_cohort,100,ET040607,Debre Libanos,North Shewa (OR),Oromia
+Degem Woreda,Oromia Region,North Shewa Zone,exact_in_cohort,100,ET040605,Degem,North Shewa (OR),Oromia
+Derra Woreda,Oromia Region,North Shewa Zone,fuzzy_in_cohort,88,ET040602,Dera (OR),North Shewa (OR),Oromia
+Fitche Town,Oromia Region,North Shewa Zone,fuzzy_in_cohort,90,ET040613,Fiche town,North Shewa (OR),Oromia
+Girar Jarso Woreda,Oromia Region,North Shewa Zone,fuzzy_in_cohort,90,ET040606,Gerar Jarso,North Shewa (OR),Oromia
+Hidabu Abote Woreda,Oromia Region,North Shewa Zone,exact_in_cohort,100,ET040603,Hidabu Abote,North Shewa (OR),Oromia
+Jida Woreda,Oromia Region,North Shewa Zone,exact_in_cohort,100,ET040615,Jida,North Shewa (OR),Oromia
+Kimbibit Woreda,Oromia Region,North Shewa Zone,exact_in_cohort,100,ET040610,Kimbibit,North Shewa (OR),Oromia
+Kuyu Woreda,Oromia Region,North Shewa Zone,exact_in_cohort,100,ET040604,Kuyu,North Shewa (OR),Oromia
+Mulo Woreda,Oromia Region,North Shewa Zone,exact_in_cohort,100,ET042016,Mulo,Finfine Special,Oromia
+Sululta Woreda,Oromia Region,North Shewa Zone,exact_in_cohort,100,ET042005,Sululta town,Finfine Special,Oromia
+Wuchale Woreda,Oromia Region,North Shewa Zone,exact_in_cohort,100,ET040608,Wuchale,North Shewa (OR),Oromia
+Yaya Gulele Woreda,Oromia Region,North Shewa Zone,exact_in_cohort,100,ET040614,Yaya Gulele,North Shewa (OR),Oromia
+Goba Sub City,Oromia Region,Robe Town Zonal Health Department,exact_in_cohort,100,ET041110,Goba (OR),Bale,Oromia
+Robe Town Woreda,Oromia Region,Robe Town Zonal Health Department,exact_in_cohort,100,ET040812,Robe,Arsi,Oromia
+Burayu Sub City,Oromia Region,Shagar City,exact_in_cohort,100,ET042001,Burayu,Finfine Special,Oromia
+Kura Jida Sub City,Oromia Region,Shagar City,fuzzy_in_cohort,90,ET040615,Jida,North Shewa (OR),Oromia
+Malka Nono Sub City,Oromia Region,Shagar City,fuzzy_in_cohort,90,ET040508,Nono,West Shewa,Oromia
+Shakiso Town,Oromia Region,Shakiso Town,exact_in_cohort,100,ET041499,Shakiso town,Guji,Oromia
+Bishan Guracha Sub City,Oromia Region,Shashemene Town1,exact_in_cohort,100,ET041798,Bishan Guracha,West Arsi,Oromia
+Becho Woreda,Oromia Region,South West Shewa Zone,fuzzy_in_cohort,90,ET040314,Becho (Ilu Aba Bora),Ilu Aba Bora,Oromia
+Dawo Woreda,Oromia Region,South West Shewa Zone,exact_in_cohort,100,ET041304,Dawo,South West Shewa,Oromia
+Goro Woreda,Oromia Region,South West Shewa Zone,fuzzy_in_cohort,90,ET041010,Goro Gutu,East Hararge,Oromia
+Ilu Woreda,Oromia Region,South West Shewa Zone,exact_in_cohort,100,ET041305,Ilu,South West Shewa,Oromia
+Saden Sodo Woreda,Oromia Region,South West Shewa Zone,fuzzy_in_cohort,90,ET041310,Seden Sodo,South West Shewa,Oromia
+Sebeta Hawas Woreda,Oromia Region,South West Shewa Zone,exact_in_cohort,100,ET042006,Sebeta Hawas,Finfine Special,Oromia
+Sebeta Town Woreda,Oromia Region,South West Shewa Zone,exact_in_cohort,100,ET042009,Sebeta town,Finfine Special,Oromia
+Sodo Dachi Woreda,Oromia Region,South West Shewa Zone,fuzzy_in_cohort,94,ET041314,Sodo Daci,South West Shewa,Oromia
+Tole Woreda,Oromia Region,South West Shewa Zone,exact_in_cohort,100,ET041308,Tole,South West Shewa,Oromia
+Woliso Woreda,Oromia Region,South West Shewa Zone,exact_in_cohort,100,ET041311,Woliso town,South West Shewa,Oromia
+Adaba Woreda,Oromia Region,West Arsi Zone,exact_in_cohort,100,ET041710,Adaba,West Arsi,Oromia
+Arsi Negele Rural Woreda,Oromia Region,West Arsi Zone,fuzzy_in_cohort,90,ET041414,Negele town,Guji,Oromia
+Arsi Negele Town,Oromia Region,West Arsi Zone,exact_in_cohort,100,ET041703,Arsi Negele,West Arsi,Oromia
+Dodola Rural Woreda,Oromia Region,West Arsi Zone,fuzzy_in_cohort,90,ET041700,Dodola town,West Arsi,Oromia
+Gedeb Hasasa Woreda,Oromia Region,West Arsi Zone,fuzzy_in_cohort,95,ET041706,Gedeb Asasa,West Arsi,Oromia
+Heben Arsi Woreda,Oromia Region,West Arsi Zone,fuzzy_in_cohort,90,ET041783,Heban Arsi,West Arsi,Oromia
+Kofele Town,Oromia Region,West Arsi Zone,exact_in_cohort,100,ET041704,Kofele,West Arsi,Oromia
+Kofele Woreda,Oromia Region,West Arsi Zone,exact_in_cohort,100,ET041704,Kofele,West Arsi,Oromia
+Kokosa Woreda,Oromia Region,West Arsi Zone,exact_in_cohort,100,ET041708,Kokosa,West Arsi,Oromia
+Kore Woreda,Oromia Region,West Arsi Zone,exact_in_cohort,100,ET041705,Kore,West Arsi,Oromia
+Shala Woreda,Oromia Region,West Arsi Zone,exact_in_cohort,100,ET041702,Shala,West Arsi,Oromia
+Shashemene Zuria Woreda,Oromia Region,West Arsi Zone,exact_in_cohort,100,ET041712,Shashemene Zuria,West Arsi,Oromia
+Siraro Woreda,Oromia Region,West Arsi Zone,exact_in_cohort,100,ET041701,Siraro,West Arsi,Oromia
+Wondo Woreda,Oromia Region,West Arsi Zone,exact_in_cohort,100,ET041797,Wondo,West Arsi,Oromia
+Abaya Woreda,Oromia Region,West Guji Zone,exact_in_cohort,100,ET041513,Abaya,West Guji,Oromia
+Birbirsa Kojowa Woreda,Oromia Region,West Guji Zone,exact_in_cohort,100,ET041596,Birbirsa Kojowa,West Guji,Oromia
+Bule Hora Woreda,Oromia Region,West Guji Zone,exact_in_cohort,100,ET041501,Bule Hora,West Guji,Oromia
+Dugda Dawa Woreda,Oromia Region,West Guji Zone,exact_in_cohort,100,ET041515,Dugda Dawa,West Guji,Oromia
+Gelana Woreda,Oromia Region,West Guji Zone,fuzzy_in_cohort,90,ET041517,Gelana (West Guji),West Guji,Oromia
+Hambela Wamena Woreda,Oromia Region,West Guji Zone,exact_in_cohort,100,ET041509,Hambela Wamena,West Guji,Oromia
+Kercha Town Health Office,Oromia Region,West Guji Zone,exact_in_cohort,100,ET041502,Kercha,West Guji,Oromia
+Kercha Woreda,Oromia Region,West Guji Zone,exact_in_cohort,100,ET041502,Kercha,West Guji,Oromia
+Melka Soda Woreda,Oromia Region,West Guji Zone,exact_in_cohort,100,ET041518,Melka Soda,West Guji,Oromia
+Suro Barguda Woreda,Oromia Region,West Guji Zone,fuzzy_in_cohort,91,ET041594,Suro Berguda,West Guji,Oromia
+Anchar Woreda,Oromia Region,West Hararge Zone,exact_in_cohort,100,ET040906,Anchar,West Hararge,Oromia
+Bedesa Woreda,Oromia Region,West Hararge Zone,exact_in_cohort,100,ET040914,Bedesa,West Hararge,Oromia
+Boke Woreda,Oromia Region,West Hararge Zone,exact_in_cohort,100,ET040910,Boke,West Hararge,Oromia
+Burka Dhintu Woreda,Oromia Region,West Hararge Zone,fuzzy_in_cohort,88,ET040998,Burqua Dhintu,West Hararge,Oromia
+Chiro Town,Oromia Region,West Hararge Zone,exact_in_cohort,100,ET040905,Chiro town,West Hararge,Oromia
+Chiro Zurya Woreda,Oromia Region,West Hararge Zone,fuzzy_in_cohort,90,ET040913,Chiro Zuria,West Hararge,Oromia
+Daro Lebu Woreda,Oromia Region,West Hararge Zone,exact_in_cohort,100,ET040909,Daro Lebu,West Hararge,Oromia
+Doba Woreda,Oromia Region,West Hararge Zone,exact_in_cohort,100,ET040902,Doba,West Hararge,Oromia
+Gemechis Woreda,Oromia Region,West Hararge Zone,exact_in_cohort,100,ET040912,Gemechis,West Hararge,Oromia
+Gumbi Bordode Woreda,Oromia Region,West Hararge Zone,fuzzy_in_cohort,92,ET040991,Gumbi Bordede,West Hararge,Oromia
+Habro Woreda,Oromia Region,West Hararge Zone,exact_in_cohort,100,ET040908,Habro,West Hararge,Oromia
+Hawi Gudina Woreda,Oromia Region,West Hararge Zone,exact_in_cohort,100,ET040915,Hawi Gudina,West Hararge,Oromia
+Mesela Woreda,Oromia Region,West Hararge Zone,exact_in_cohort,100,ET040904,Mesela,West Hararge,Oromia
+Mieso Woreda,Oromia Region,West Hararge Zone,exact_in_cohort,100,ET040901,Mieso,West Hararge,Oromia
+Oda Bultum Woreda,Oromia Region,West Hararge Zone,fuzzy_in_cohort,90,ET040911,Kuni /Oda Bultum,West Hararge,Oromia
+Tulo Woreda,Oromia Region,West Hararge Zone,exact_in_cohort,100,ET040903,Tulo (OR),West Hararge,Oromia
+Abuna Gindeberet Woreda,Oromia Region,West Shewa Zone Health Office,exact_in_cohort,100,ET040516,Abuna Ginde Beret,West Shewa,Oromia
+Ada Berga Woreda,Oromia Region,West Shewa Zone Health Office,fuzzy_in_cohort,94,ET040513,Adda Berga,West Shewa,Oromia
+Ambo Woreda,Oromia Region,West Shewa Zone Health Office,exact_in_cohort,100,ET040515,Ambo town,West Shewa,Oromia
+Bako Tibe Woreda,Oromia Region,West Shewa Zone Health Office,exact_in_cohort,100,ET040506,Bako Tibe,West Shewa,Oromia
+Burayu Town Woreda,Oromia Region,West Shewa Zone Health Office,exact_in_cohort,100,ET042001,Burayu,Finfine Special,Oromia
+Chelia Woreda,Oromia Region,West Shewa Zone Health Office,fuzzy_in_cohort,92,ET040505,Cheliya,West Shewa,Oromia
+Chobi Woreda,Oromia Region,West Shewa Zone Health Office,fuzzy_in_cohort,88,ET040592,Cobi,West Shewa,Oromia
+Dano Woreda,Oromia Region,West Shewa Zone Health Office,exact_in_cohort,100,ET040507,Dano,West Shewa,Oromia
+Dendi Woreda,Oromia Region,West Shewa Zone Health Office,exact_in_cohort,100,ET040510,Dendi,West Shewa,Oromia
+Dire Enchini Woreda,Oromia Region,West Shewa Zone Health Office,fuzzy_in_cohort,90,ET041211,Dire,Borena,Oromia
+Ejere Woreda,Oromia Region,West Shewa Zone Health Office,fuzzy_in_cohort,90,ET040511,Ejere /Addis Alem,West Shewa,Oromia
+Ejersa Lafo Woreda,Oromia Region,West Shewa Zone Health Office,exact_in_cohort,100,ET040590,Ejersa Lafo,West Shewa,Oromia
+Gindebert Woreda,Oromia Region,West Shewa Zone Health Office,fuzzy_in_cohort,94,ET040501,Ginde Beret,West Shewa,Oromia
+Ilu Galan Woreda,Oromia Region,West Shewa Zone Health Office,fuzzy_in_cohort,94,ET040500,Illu Galan,West Shewa,Oromia
+Jeldu Woreda,Oromia Region,West Shewa Zone Health Office,exact_in_cohort,100,ET040502,Jeldu,West Shewa,Oromia
+Jibat Woreda,Oromia Region,West Shewa Zone Health Office,exact_in_cohort,100,ET040518,Jibat,West Shewa,Oromia
+Liban Jawi Woreda,Oromia Region,West Shewa Zone Health Office,exact_in_cohort,100,ET040597,Liban Jawi,West Shewa,Oromia
+Meta Robi Woreda,Oromia Region,West Shewa Zone Health Office,exact_in_cohort,100,ET040514,Meta Robi,West Shewa,Oromia
+Meta Welkite Woreda,Oromia Region,West Shewa Zone Health Office,fuzzy_in_cohort,91,ET040594,Meta Walkite,West Shewa,Oromia
+Mida Kegni Woreda,Oromia Region,West Shewa Zone Health Office,fuzzy_in_cohort,94,ET040504,Mida Kegn,West Shewa,Oromia
+Nonoo Woreda,Oromia Region,West Shewa Zone Health Office,fuzzy_in_cohort,88,ET040508,Nono,West Shewa,Oromia
+Toke Kutaye Woreda,Oromia Region,West Shewa Zone Health Office,exact_in_cohort,100,ET040517,Toke Kutaye,West Shewa,Oromia
+Ayira Woreda,Oromia Region,West Wollega Zone,exact_in_cohort,100,ET040107,Ayira,West Wellega,Oromia
+Babo Gembel Woreda,Oromia Region,West Wollega Zone,fuzzy_in_cohort,90,ET040111,Babo,West Wellega,Oromia
+Begi Woreda,Oromia Region,West Wollega Zone,exact_in_cohort,100,ET040116,Begi,West Wellega,Oromia
+Boji Dirmeji Woreda,Oromia Region,West Wollega Zone,exact_in_cohort,100,ET040106,Boji Dirmeji,West Wellega,Oromia
+Ganji Woreda,Oromia Region,West Wollega Zone,fuzzy_in_cohort,88,ET040113,Gaji,West Wellega,Oromia
+Gimbi Rural Woreda,Oromia Region,West Wollega Zone,fuzzy_in_cohort,90,ET040103,Gimbi,West Wellega,Oromia
+Gimbi Town Woreda,Oromia Region,West Wollega Zone,exact_in_cohort,100,ET040103,Gimbi,West Wellega,Oromia
+Guliso Woreda,Oromia Region,West Wollega Zone,exact_in_cohort,100,ET040119,Guliso,West Wellega,Oromia
+Haru Woreda,Oromia Region,West Wollega Zone,exact_in_cohort,100,ET040114,Haru,West Wellega,Oromia
+Homa Woreda,Oromia Region,West Wollega Zone,exact_in_cohort,100,ET040117,Homa,West Wellega,Oromia
+Jarso Woreda,Oromia Region,West Wollega Zone,fuzzy_in_cohort,90,ET040108,Jarso (West Wellega),West Wellega,Oromia
+Kiltu Kara Woreda,Oromia Region,West Wollega Zone,exact_in_cohort,100,ET040105,Kiltu Kara,West Wellega,Oromia
+Lalo Asabi Woreda,Oromia Region,West Wollega Zone,exact_in_cohort,100,ET040104,Lalo Asabi,West Wellega,Oromia
+Leta Sibu Woreda,Oromia Region,West Wollega Zone,exact_in_cohort,100,ET040197,Leta Sibu,West Wellega,Oromia
+Mendi Twon Woreda,Oromia Region,West Wollega Zone,fuzzy_in_cohort,90,ET040198,Mendi town,West Wellega,Oromia
+Nole Kaba Woreda,Oromia Region,West Wollega Zone,exact_in_cohort,100,ET040115,Nole Kaba,West Wellega,Oromia
+Seyo Nole Woreda,Oromia Region,West Wollega Zone,fuzzy_in_cohort,88,ET040118,Sayo Nole,West Wellega,Oromia
+Yubdo Woreda,Oromia Region,West Wollega Zone,exact_in_cohort,100,ET040112,Yubdo,West Wellega,Oromia
+Arbegona Woreda,Sidama Region,Central Sidama Zone,exact_in_cohort,100,ET160003,Arbegona,Sidama,Sidama
+Dale Woreda,Sidama Region,Central Sidama Zone,exact_in_cohort,100,ET160004,Dale,Sidama,Sidama
+Darara Woreda,Sidama Region,Central Sidama Zone,exact_in_cohort,100,ET160033,Darara,Sidama,Sidama
+Loka Abaya Woreda,Sidama Region,Central Sidama Zone,exact_in_cohort,100,ET160037,Loka Abaya,Sidama,Sidama
+Shafamo Woreda,Sidama Region,Central Sidama Zone,exact_in_cohort,100,ET160028,Shafamo,Sidama,Sidama
+Yirgalem Town,Sidama Region,Central Sidama Zone,exact_in_cohort,100,ET160020,Yirgalem town,Sidama,Sidama
+Aroressa Woreda,Sidama Region,Eastern Sidama Zone,fuzzy_in_cohort,93,ET160009,Aroresa,Sidama,Sidama
+Bensa Woreda,Sidama Region,Eastern Sidama Zone,exact_in_cohort,100,ET160008,Bensa,Sidama,Sidama
+Bona Zuria Woreda,Sidama Region,Eastern Sidama Zone,exact_in_cohort,100,ET160017,Bona Zuria,Sidama,Sidama
+Bura Woreda,Sidama Region,Eastern Sidama Zone,exact_in_cohort,100,ET160024,Bura,Sidama,Sidama
+Chabe Gambeltu Woreda,Sidama Region,Eastern Sidama Zone,exact_in_cohort,100,ET160029,Chabe Gambeltu,Sidama,Sidama
+Chire Woreda,Sidama Region,Eastern Sidama Zone,exact_in_cohort,100,ET160014,Chire,Sidama,Sidama
+Daela Woreda,Sidama Region,Eastern Sidama Zone,fuzzy_in_cohort,90,ET160034,Daella,Sidama,Sidama
+Hoko Woreda,Sidama Region,Eastern Sidama Zone,fuzzy_in_cohort,88,ET160031,Hokko,Sidama,Sidama
+Hawassa Town,Sidama Region,Hawassa City Administration,fuzzy_in_cohort,92,ET160018,Hawasa town,Sidama,Sidama
+Bilate Zuria Woreda,Sidama Region,Northern Sidama Zone,exact_in_cohort,100,ET160032,Bilate Zuria,Sidama,Sidama
+Borricha Woreda,Sidama Region,Northern Sidama Zone,fuzzy_in_cohort,93,ET160010,Boricha,Sidama,Sidama
+Gorche Woreda,Sidama Region,Northern Sidama Zone,exact_in_cohort,100,ET160011,Gorche,Sidama,Sidama
+Hawassa Zuriya Woreda,Sidama Region,Northern Sidama Zone,fuzzy_in_cohort,96,ET160002,Hawassa Zuria,Sidama,Sidama
+Hawella Woreda,Sidama Region,Northern Sidama Zone,fuzzy_in_cohort,92,ET160023,Hawela,Sidama,Sidama
+Leku Town,Sidama Region,Northern Sidama Zone,exact_in_cohort,100,ET160022,Leku town,Sidama,Sidama
+Shebedino Woreda,Sidama Region,Northern Sidama Zone,fuzzy_in_cohort,94,ET160001,Shebe Dino,Sidama,Sidama
+Wondogenet Town,Sidama Region,Northern Sidama Zone,fuzzy_in_cohort,95,ET160019,Wondo-Genet,Sidama,Sidama
+Wondogenet Woreda,Sidama Region,Northern Sidama Zone,fuzzy_in_cohort,95,ET160019,Wondo-Genet,Sidama,Sidama
+Aleta Chuko Town,Sidama Region,Southern Sidama Zone,exact_in_cohort,100,ET160016,Aleta Chuko,Sidama,Sidama
+Aleta Chuko Woreda,Sidama Region,Southern Sidama Zone,exact_in_cohort,100,ET160016,Aleta Chuko,Sidama,Sidama
+Aleta Wondo Town,Sidama Region,Southern Sidama Zone,exact_in_cohort,100,ET160021,Aleta Wondo town,Sidama,Sidama
+Aleta Wondo Woreda,Sidama Region,Southern Sidama Zone,exact_in_cohort,100,ET160021,Aleta Wondo town,Sidama,Sidama
+Bursa Woreda,Sidama Region,Southern Sidama Zone,exact_in_cohort,100,ET160015,Bursa,Sidama,Sidama
+Chirone Woreda,Sidama Region,Southern Sidama Zone,exact_in_cohort,100,ET160027,Chirone,Sidama,Sidama
+Dara Otilcho Woreda,Sidama Region,Southern Sidama Zone,fuzzy_in_cohort,96,ET160025,Dara Otilicho,Sidama,Sidama
+Dara Woreda,Sidama Region,Southern Sidama Zone,exact_in_cohort,100,ET160006,Dara,Sidama,Sidama
+Hulla Woreda,Sidama Region,Southern Sidama Zone,exact_in_cohort,100,ET160007,Hulla,Sidama,Sidama
+Teticha Woreda,Sidama Region,Southern Sidama Zone,exact_in_cohort,100,ET160026,Teticha,Sidama,Sidama
+Bare Woreda,Somali Region,Afder Zone,fuzzy_in_cohort,90,ET050205,Aw-Bare,Fafan,Somali
+God-God Woreda,Somali Region,Afder Zone,exact_in_cohort,100,ET050899,God-God,Afder,Somali
+Hargele Woreda,Somali Region,Afder Zone,exact_in_cohort,100,ET050806,Hargele,Afder,Somali
+Raso Woreda,Somali Region,Afder Zone,exact_in_cohort,100,ET050809,Raso,Afder,Somali
+Hudhet Woreda,Somali Region,Dawa Zone,fuzzy_in_cohort,90,ET051104,Hudet,Daawa,Somali
+Moyale Woreda,Somali Region,Dawa Zone,exact_global,95,ET041210,Moyale (OR),Borena,Oromia
+Bokh Woreda,Somali Region,Dollo Zone,exact_in_cohort,100,ET050702,Bokh,Doolo,Somali
+Daratole Woreda,Somali Region,Dollo Zone,exact_in_cohort,100,ET050788,Daratole,Doolo,Somali
+Galadi Woreda,Somali Region,Dollo Zone,exact_in_cohort,100,ET050703,Galadi,Doolo,Somali
+Galhamur Woreda,Somali Region,Dollo Zone,exact_in_cohort,100,ET050799,Galhamur,Doolo,Somali
+Lehelyuub Woreda,Somali Region,Dollo Zone,fuzzy_in_cohort,90,ET050798,Lehel-Yucub,Doolo,Somali
+Warder Woreda,Somali Region,Dollo Zone,exact_in_cohort,100,ET050704,Warder,Doolo,Somali
+Fik Woreda,Somali Region,Erar Zone,exact_in_cohort,100,ET050402,Fik,Erer,Somali
+Lagahida Woreda,Somali Region,Erar Zone,exact_in_cohort,100,ET050407,Lagahida,Erer,Somali
+Qubi Woreda,Somali Region,Erar Zone,exact_in_cohort,100,ET050497,Qubi,Erer,Somali
+Salahad Woreda,Somali Region,Erar Zone,exact_in_cohort,100,ET050403,Salahad,Erer,Somali
+Wangey Woreda,Somali Region,Erar Zone,exact_in_cohort,100,ET050499,Wangey,Erer,Somali
+Yahoob Woreda,Somali Region,Erar Zone,fuzzy_in_cohort,90,ET050498,Yahob,Erer,Somali
+Awbare Woreda,Somali Region,Fafan Zone,fuzzy_in_cohort,92,ET050205,Aw-Bare,Fafan,Somali
+Goljano Woreda,Somali Region,Fafan Zone,exact_in_cohort,100,ET050290,Goljano,Fafan,Somali
+Gursum Woreda,Somali Region,Fafan Zone,exact_global,95,ET041003,Gursum (OR),East Hararge,Oromia
+Harawo Woreda,Somali Region,Fafan Zone,exact_in_cohort,100,ET050299,Harawo,Fafan,Somali
+Harshin Woreda,Somali Region,Fafan Zone,exact_in_cohort,100,ET050207,Harshin,Fafan,Somali
+Jigjiga City,Somali Region,Fafan Zone,exact_in_cohort,100,ET050293,Jigjiga town,Fafan,Somali
+Koran Mula Woreda,Somali Region,Fafan Zone,fuzzy_in_cohort,95,ET050297,Koran /Mulla,Fafan,Somali
+Shabeley Woreda,Somali Region,Fafan Zone,fuzzy_in_cohort,94,ET050204,Shabeeley,Fafan,Somali
+Togwajale town Woreda,Somali Region,Fafan Zone,fuzzy_in_cohort,90,ET050295,Wajale town,Fafan,Somali
+Tuliguled Woreda,Somali Region,Fafan Zone,exact_in_cohort,100,ET050283,Tuliguled,Fafan,Somali
+Ararso Woreda,Somali Region,Jarar Zone,exact_in_cohort,100,ET050395,Ararso,Jarar,Somali
+Aware Woreda,Somali Region,Jarar Zone,exact_in_cohort,100,ET050303,Aware,Jarar,Somali
+Bilcilbur Woreda,Somali Region,Jarar Zone,fuzzy_in_cohort,94,ET050306,Bilcil-Bur,Jarar,Somali
+Daroor Woreda,Somali Region,Jarar Zone,fuzzy_in_cohort,90,ET050392,Daror,Jarar,Somali
+Degahbur Woreda,Somali Region,Jarar Zone,fuzzy_in_cohort,94,ET050307,Degahabur town,Jarar,Somali
+Degahbur town Woreda,Somali Region,Jarar Zone,fuzzy_in_cohort,94,ET050307,Degahabur town,Jarar,Somali
+Gashamo Woreda,Somali Region,Jarar Zone,exact_in_cohort,100,ET050304,Gashamo,Jarar,Somali
+Gunagado Woreda,Somali Region,Jarar Zone,exact_in_cohort,100,ET050305,Gunagado,Jarar,Somali
+dig Woreda,Somali Region,Jarar Zone,exact_in_cohort,100,ET050399,Dig,Jarar,Somali
+yocale Woreda,Somali Region,Jarar Zone,exact_in_cohort,100,ET050382,Yocale,Jarar,Somali
+EL-Ogaden Woreda,Somali Region,Korahay Zone,exact_in_cohort,100,ET050598,El-Ogaden,Korahe,Somali
+Goglo Woreda,Somali Region,Korahay Zone,exact_in_cohort,100,ET050595,Goglo,Korahe,Somali
+Higloley Woreda,Somali Region,Korahay Zone,exact_in_cohort,100,ET050597,Higloley,Korahe,Somali
+Kebridahar Woreda,Somali Region,Korahay Zone,fuzzy_in_cohort,90,ET050502,Kebridehar,Korahe,Somali
+Kebridahar town Woreda,Somali Region,Korahay Zone,fuzzy_in_cohort,90,ET050502,Kebridehar,Korahe,Somali
+Lasdhankeyre Woreda,Somali Region,Korahay Zone,fuzzy_in_cohort,91,ET050596,Lasdhankayre,Korahe,Somali
+Marsin Woreda,Somali Region,Korahay Zone,exact_in_cohort,100,ET050586,Marsin,Korahe,Somali
+Shilabo Woreda,Somali Region,Korahay Zone,exact_in_cohort,100,ET050503,Shilabo,Korahe,Somali
+Bokolmanyo Woreda,Somali Region,Liben Zone,fuzzy_in_cohort,94,ET050999,Bokolmayo,Liban,Somali
+Dekasuftu Woreda,Somali Region,Liben Zone,fuzzy_in_cohort,94,ET050991,Deka Suftu,Liban,Somali
+Dolo Ado Woreda,Somali Region,Liben Zone,exact_in_cohort,100,ET050902,Dolo Ado,Liban,Somali
+Filtu Woreda,Somali Region,Liben Zone,exact_in_cohort,100,ET050901,Filtu,Liban,Somali
+Gura Damole Woreda,Somali Region,Liben Zone,exact_global,95,ET041115,Gura Damole,Bale,Oromia
+Ayun Woreda,Somali Region,Nogob Zone,exact_in_cohort,100,ET051001,Ayun,Nogob,Somali
+Elwayne Woreda,Somali Region,Nogob Zone,exact_in_cohort,100,ET051002,Elwayne,Nogob,Somali
+Garbo Woreda,Somali Region,Nogob Zone,exact_in_cohort,100,ET051003,Garbo,Nogob,Somali
+Hararey Woreda,Somali Region,Nogob Zone,exact_in_cohort,100,ET051096,Hararey,Nogob,Somali
+Horashagah Woreda,Somali Region,Nogob Zone,fuzzy_in_cohort,94,ET051095,Horshagah,Nogob,Somali
+Sagag Woreda,Somali Region,Nogob Zone,exact_in_cohort,100,ET051005,Sagag,Nogob,Somali
+Adadle Woreda,Somali Region,Shebelle Zone,exact_in_cohort,100,ET050602,Adadle,Shabelle,Somali
+Dhanan Woreda,Somali Region,Shebelle Zone,fuzzy_in_cohort,90,ET050603,Danan,Shabelle,Somali
+Ferfer Woreda,Somali Region,Shebelle Zone,exact_in_cohort,100,ET050607,Ferfer,Shabelle,Somali
+Godey City,Somali Region,Shebelle Zone,exact_in_cohort,100,ET050696,Godey town,Shabelle,Somali
+Godey Woreda,Somali Region,Shebelle Zone,exact_in_cohort,100,ET050696,Godey town,Shabelle,Somali
+Mustahil Woreda,Somali Region,Shebelle Zone,exact_in_cohort,100,ET050606,Mustahil,Shabelle,Somali
+Ayisha Woreda,Somali Region,Sitti Zone,exact_in_cohort,100,ET050101,Ayisha,Siti,Somali
+Erer Woreda,Somali Region,Sitti Zone,fuzzy_in_cohort,90,ET050104,Erer (SM),Siti,Somali
+Gablalu Woreda,Somali Region,Sitti Zone,exact_in_cohort,100,ET050199,Gablalu,Siti,Somali
+Hadagala Woreda,Somali Region,Sitti Zone,fuzzy_in_cohort,94,ET050106,Hadhagala,Siti,Somali
+Shinile Woreda,Somali Region,Sitti Zone,exact_in_cohort,100,ET050103,Shinile,Siti,Somali
+gota-biki Woreda,Somali Region,Sitti Zone,exact_in_cohort,100,ET050198,Gota-Biki,Siti,Somali
+Jinka Town Administration,South Ethiopia Region,Aari Zone,exact_in_cohort,100,ET070709,Jinka town,South Omo,Southern Ethiopi
+North Ari Woreda,South Ethiopia Region,Aari Zone,exact_in_cohort,100,ET070703,North Ari,South Omo,Southern Ethiopi
+South Ari Woreda,South Ethiopia Region,Aari Zone,exact_in_cohort,100,ET070702,South Ari,South Omo,Southern Ethiopi
+Arbaminch Town Administration,South Ethiopia Region,Arbaminch Town Administration,fuzzy_in_cohort,94,ET071021,Arba Minch town,Gamo,Southern Ethiopi
+Dilla Town Administration,South Ethiopia Region,Dilla Town Administration,fuzzy_in_cohort,88,ET070507,Dila town,Gedeo,Southern Ethiopi
+Arbaminch Zuria Woreda,South Ethiopia Region,Gamo Zone,fuzzy_in_cohort,96,ET071015,Arba Minch Zuria,Gamo,Southern Ethiopi
+Bonke Woreda,South Ethiopia Region,Gamo Zone,exact_in_cohort,100,ET071014,Bonke,Gamo,Southern Ethiopi
+Boreda Woreda,South Ethiopia Region,Gamo Zone,exact_in_cohort,100,ET071004,Boreda,Gamo,Southern Ethiopi
+Chencha Town Adminstration,South Ethiopia Region,Gamo Zone,fuzzy_in_cohort,90,ET071010,Chencha,Gamo,Southern Ethiopi
+Chencha Zuria Woreda,South Ethiopia Region,Gamo Zone,fuzzy_in_cohort,96,ET071006,Chencha Zuriya,Gamo,Southern Ethiopi
+Darmalo Woreda,South Ethiopia Region,Gamo Zone,fuzzy_in_cohort,93,ET071009,Daramalo,Gamo,Southern Ethiopi
+Dita Woreda,South Ethiopia Region,Gamo Zone,exact_in_cohort,100,ET071008,Dita,Gamo,Southern Ethiopi
+Gacho Baba Woreda,South Ethiopia Region,Gamo Zone,exact_in_cohort,100,ET071016,Gacho Baba,Gamo,Southern Ethiopi
+Garda Martha Woreda,South Ethiopia Region,Gamo Zone,fuzzy_in_cohort,95,ET071018,Garda Marta,Gamo,Southern Ethiopi
+Gerese Town Administration,South Ethiopia Region,Gamo Zone,exact_in_cohort,100,ET071013,Gerese,Gamo,Southern Ethiopi
+Gerese Zuriya Woreda,South Ethiopia Region,Gamo Zone,fuzzy_in_cohort,90,ET071013,Gerese,Gamo,Southern Ethiopi
+Kogota Woreda,South Ethiopia Region,Gamo Zone,fuzzy_in_cohort,90,ET071007,Ezo /Kogota,Gamo,Southern Ethiopi
+Kucha Alpha Woreda,South Ethiopia Region,Gamo Zone,exact_in_cohort,100,ET071017,Kucha Alpha,Gamo,Southern Ethiopi
+Kucha Zuria Woreda,South Ethiopia Region,Gamo Zone,fuzzy_in_cohort,90,ET071019,Kucha,Gamo,Southern Ethiopi
+Mirab Abaya Woreda,South Ethiopia Region,Gamo Zone,exact_in_cohort,100,ET071005,Mirab Abaya,Gamo,Southern Ethiopi
+Selamber Town Administration,South Ethiopia Region,Gamo Zone,exact_in_cohort,100,ET071003,Selamber town,Gamo,Southern Ethiopi
+Wacha Town Administration,South Ethiopia Region,Gamo Zone,exact_global,95,ET110214,Wacha,Kefa,South West Ethiopia
+Derashe Woreda,South Ethiopia Region,Gardula Zone,exact_in_cohort,100,ET072304,Derashe Special,Derashe,Southern Ethiopi
+Bule Town Adminstration Health Office,South Ethiopia Region,Gedeo Zone,fuzzy_in_cohort,90,ET070504,Bule,Gedeo,Southern Ethiopi
+Bule Woreda,South Ethiopia Region,Gedeo Zone,exact_in_cohort,100,ET070504,Bule,Gedeo,Southern Ethiopi
+Chelelektu Town,South Ethiopia Region,Gedeo Zone,exact_in_cohort,100,ET070508,Chelelektu town,Gedeo,Southern Ethiopi
+Dilla Zuria Woreda,South Ethiopia Region,Gedeo Zone,fuzzy_in_cohort,95,ET070505,Dila Zuria,Gedeo,Southern Ethiopi
+Gedeb Town Woreda Administration,South Ethiopia Region,Gedeo Zone,fuzzy_in_cohort,90,ET070506,Gedeb,Gedeo,Southern Ethiopi
+Gedeb Woreda,South Ethiopia Region,Gedeo Zone,exact_in_cohort,100,ET070506,Gedeb,Gedeo,Southern Ethiopi
+Rape Woreda,South Ethiopia Region,Gedeo Zone,exact_in_cohort,100,ET070509,Rape,Gedeo,Southern Ethiopi
+Wenago Town,South Ethiopia Region,Gedeo Zone,exact_in_cohort,100,ET070501,Wenago,Gedeo,Southern Ethiopi
+Wenago Woreda,South Ethiopia Region,Gedeo Zone,exact_in_cohort,100,ET070501,Wenago,Gedeo,Southern Ethiopi
+Yirgachefe Town Administration,South Ethiopia Region,Gedeo Zone,exact_in_cohort,100,ET070502,Yirgachefe,Gedeo,Southern Ethiopi
+Yirgachefe Woreda,South Ethiopia Region,Gedeo Zone,exact_in_cohort,100,ET070502,Yirgachefe,Gedeo,Southern Ethiopi
+Denba Gofa Woreda,South Ethiopia Region,Gofa Zone,exact_in_cohort,100,ET071502,Denba Gofa,Gofa,Southern Ethiopi
+Geze Gofa Woreda,South Ethiopia Region,Gofa Zone,fuzzy_in_cohort,94,ET071505,Gezei Gofa,Gofa,Southern Ethiopi
+Melekoza Woreda,South Ethiopia Region,Gofa Zone,exact_in_cohort,100,ET071501,Melekoza,Gofa,Southern Ethiopi
+Melo Gada Woreda,South Ethiopia Region,Gofa Zone,exact_in_cohort,100,ET071509,Melo Gada,Gofa,Southern Ethiopi
+Oyida Woreda,South Ethiopia Region,Gofa Zone,fuzzy_in_cohort,90,ET071506,O'yida,Gofa,Southern Ethiopi
+Sawla Town Administration,South Ethiopia Region,Gofa Zone,exact_in_cohort,100,ET071507,Sawla town,Gofa,Southern Ethiopi
+Uba Debretsehay Woreda,South Ethiopia Region,Gofa Zone,fuzzy_in_cohort,96,ET071504,Uba Debre Tsehay,Gofa,Southern Ethiopi
+Zalla Woreda,South Ethiopia Region,Gofa Zone,fuzzy_in_cohort,88,ET071503,Zala,Gofa,Southern Ethiopi
+Karat Town Administration,South Ethiopia Region,Konso Zone,exact_in_cohort,100,ET071301,Karat town,Konso,Southern Ethiopi
+Karat Zuria Woreda,South Ethiopia Region,Konso Zone,exact_in_cohort,100,ET071303,Karat Zuria,Konso,Southern Ethiopi
+Kena Woreda,South Ethiopia Region,Konso Zone,exact_in_cohort,100,ET071304,Kena,Konso,Southern Ethiopi
+Segen Zuria Woreda,South Ethiopia Region,Konso Zone,exact_in_cohort,100,ET071302,Segen Zuria,Konso,Southern Ethiopi
+Sodo Town Administration,South Ethiopia Region,Sodo Town Administration,exact_in_cohort,100,ET070613,Sodo Town,Wolayita,Southern Ethiopi
+Benatsemay Woreda,South Ethiopia Region,South Omo Zone,fuzzy_in_cohort,95,ET070705,Bena Tsemay,South Omo,Southern Ethiopi
+Dasenech Woreda,South Ethiopia Region,South Omo Zone,fuzzy_in_cohort,90,ET070706,Dasenech /Kuraz,South Omo,Southern Ethiopi
+Hamer Woreda,South Ethiopia Region,South Omo Zone,exact_in_cohort,100,ET070704,Hamer,South Omo,Southern Ethiopi
+Malie Woreda,South Ethiopia Region,South Omo Zone,exact_in_cohort,100,ET070707,Malie,South Omo,Southern Ethiopi
+Salamago Woreda,South Ethiopia Region,South Omo Zone,exact_in_cohort,100,ET070701,Salamago,South Omo,Southern Ethiopi
+Abala Abaya Woreda,South Ethiopia Region,Wolaita Zone,fuzzy_in_cohort,90,ET070621,Abela Abaya,Wolayita,Southern Ethiopi
+Areka Town Administration,South Ethiopia Region,Wolaita Zone,exact_in_cohort,100,ET070614,Areka town,Wolayita,Southern Ethiopi
+Bayra Koysha Woreda,South Ethiopia Region,Wolaita Zone,fuzzy_in_cohort,88,ET070622,Bayera Koisha,Wolayita,Southern Ethiopi
+Bedesa Town Administration,South Ethiopia Region,Wolaita Zone,exact_global,95,ET040914,Bedesa,West Hararge,Oromia
+Boditi Town Administration,South Ethiopia Region,Wolaita Zone,exact_in_cohort,100,ET070615,Boditi town,Wolayita,Southern Ethiopi
+Boloso Sore Woreda,South Ethiopia Region,Wolaita Zone,exact_in_cohort,100,ET070601,Boloso Sore,Wolayita,Southern Ethiopi
+Bolosso Bombe Woreda,South Ethiopia Region,Wolaita Zone,fuzzy_in_cohort,96,ET070608,Boloso Bombe,Wolayita,Southern Ethiopi
+Bombe Town Administration,South Ethiopia Region,Wolaita Zone,fuzzy_in_cohort,90,ET070608,Boloso Bombe,Wolayita,Southern Ethiopi
+Damot Gale Woreda,South Ethiopia Region,Wolaita Zone,exact_in_cohort,100,ET070602,Damot Gale,Wolayita,Southern Ethiopi
+Damot Pulassa Woreda,South Ethiopia Region,Wolaita Zone,fuzzy_in_cohort,92,ET070611,Damot Pullasa,Wolayita,Southern Ethiopi
+Damot Sore Woreda,South Ethiopia Region,Wolaita Zone,exact_in_cohort,100,ET070609,Damot Sore,Wolayita,Southern Ethiopi
+Damot Woyide Woreda,South Ethiopia Region,Wolaita Zone,fuzzy_in_cohort,95,ET070603,Damot Woide,Wolayita,Southern Ethiopi
+Duguna Fango Woreda,South Ethiopia Region,Wolaita Zone,exact_in_cohort,100,ET070612,Duguna Fango,Wolayita,Southern Ethiopi
+Gesuba Town Administration,South Ethiopia Region,Wolaita Zone,exact_in_cohort,100,ET070617,Gesuba town,Wolayita,Southern Ethiopi
+Gununo Town Administration,South Ethiopia Region,Wolaita Zone,fuzzy_in_cohort,90,ET070618,Gununo Hamus town,Wolayita,Southern Ethiopi
+Hobicha Woreda,South Ethiopia Region,Wolaita Zone,fuzzy_in_cohort,90,ET070619,Hobicha Abaya,Wolayita,Southern Ethiopi
+Humbo Woreda,South Ethiopia Region,Wolaita Zone,exact_in_cohort,100,ET070604,Humbo,Wolayita,Southern Ethiopi
+Kawo Koyisha Woreda,South Ethiopia Region,Wolaita Zone,fuzzy_in_cohort,95,ET070620,Kawo Koisha,Wolayita,Southern Ethiopi
+Kindo Didaye Woreda,South Ethiopia Region,Wolaita Zone,fuzzy_in_cohort,88,ET070610,Kindo Daddaye,Wolayita,Southern Ethiopi
+Kindo Koyisha Woreda,South Ethiopia Region,Wolaita Zone,fuzzy_in_cohort,92,ET070606,Kindo Koyesha,Wolayita,Southern Ethiopi
+Sodo Zuriya Woreda,South Ethiopia Region,Wolaita Zone,fuzzy_in_cohort,95,ET070605,Sodo Zuria,Wolayita,Southern Ethiopi
+Tebela Town Administration,South Ethiopia Region,Wolaita Zone,exact_in_cohort,100,ET070616,Tebela town,Wolayita,Southern Ethiopi
+Gide Bench Worda,South West Ethiopia Region,Bench Sheko Zone,fuzzy_in_cohort,90,ET110306,Gidi Bench,Bench Sheko,South West Ethiopia
+Gura Ferda worda,South West Ethiopia Region,Bench Sheko Zone,fuzzy_in_cohort,90,ET110302,Gurafereda,Bench Sheko,South West Ethiopia
+Mizan Aman Town Administration,South West Ethiopia Region,Bench Sheko Zone,exact_in_cohort,100,ET110307,Mizan Aman town,Bench Sheko,South West Ethiopia
+Sheko Town Administration,South West Ethiopia Region,Bench Sheko Zone,exact_in_cohort,100,ET110301,Sheko,Bench Sheko,South West Ethiopia
+Sheko Woreda,South West Ethiopia Region,Bench Sheko Zone,exact_in_cohort,100,ET110301,Sheko,Bench Sheko,South West Ethiopia
+Shey Bench Worda,South West Ethiopia Region,Bench Sheko Zone,fuzzy_in_cohort,90,ET110304,Shay Bench,Bench Sheko,South West Ethiopia
+Disa Woreda,South West Ethiopia Region,Dawro Zone,exact_in_cohort,100,ET110409,Disa,Dawuro,South West Ethiopia
+Gena Bosa Woreda,South West Ethiopia Region,Dawro Zone,fuzzy_in_cohort,90,ET110404,Gena,Dawuro,South West Ethiopia
+Gesa Town Administration,South West Ethiopia Region,Dawro Zone,exact_in_cohort,100,ET110412,Gesa town,Dawuro,South West Ethiopia
+Isara Woreda,South West Ethiopia Region,Dawro Zone,exact_in_cohort,100,ET110405,Isara,Dawuro,South West Ethiopia
+Loma Bosa Woreda,South West Ethiopia Region,Dawro Zone,fuzzy_in_cohort,90,ET110403,Loma,Dawuro,South West Ethiopia
+Mareka Woreda,South West Ethiopia Region,Dawro Zone,exact_in_cohort,100,ET110402,Mareka,Dawuro,South West Ethiopia
+Mari mansa Woreda,South West Ethiopia Region,Dawro Zone,exact_in_cohort,100,ET110408,Mari Mansa,Dawuro,South West Ethiopia
+Tarcha zuriya Woreda,South West Ethiopia Region,Dawro Zone,fuzzy_in_cohort,92,ET110407,Tercha Zuriya,Dawuro,South West Ethiopia
+Tercha Town Adiministration,South West Ethiopia Region,Dawro Zone,fuzzy_in_cohort,90,ET110411,Tercha town,Dawuro,South West Ethiopia
+Tocha Woreda,South West Ethiopia Region,Dawro Zone,exact_in_cohort,100,ET110401,Tocha,Dawuro,South West Ethiopia
+Zaba Gazo Woreda,South West Ethiopia Region,Dawro Zone,fuzzy_in_cohort,94,ET110410,Zabagazo,Dawuro,South West Ethiopia
+Adiyo Woreda,South West Ethiopia Region,Kaffa Zone,fuzzy_in_cohort,90,ET110205,Adiyio,Kefa,South West Ethiopia
+Bita Woreda,South West Ethiopia Region,Kaffa Zone,exact_in_cohort,100,ET110210,Bita,Kefa,South West Ethiopia
+Bonga Town,South West Ethiopia Region,Kaffa Zone,exact_in_cohort,100,ET110211,Bonga town,Kefa,South West Ethiopia
+Chena Woreda,South West Ethiopia Region,Kaffa Zone,exact_in_cohort,100,ET110209,Chena,Kefa,South West Ethiopia
+Cheta Woreda,South West Ethiopia Region,Kaffa Zone,exact_in_cohort,100,ET110207,Cheta,Kefa,South West Ethiopia
+Decha Woreda,South West Ethiopia Region,Kaffa Zone,exact_in_cohort,100,ET110208,Decha,Kefa,South West Ethiopia
+Gesha Woreda,South West Ethiopia Region,Kaffa Zone,exact_in_cohort,100,ET110202,Gesha,Kefa,South West Ethiopia
+Gewata Woreda,South West Ethiopia Region,Kaffa Zone,exact_in_cohort,100,ET110203,Gewata,Kefa,South West Ethiopia
+Gimbo Woreda,South West Ethiopia Region,Kaffa Zone,exact_in_cohort,100,ET110204,Gimbo,Kefa,South West Ethiopia
+Goba woreda,South West Ethiopia Region,Kaffa Zone,fuzzy_in_cohort,90,ET110212,Goba (SP),Kefa,South West Ethiopia
+Saylem Woreda,South West Ethiopia Region,Kaffa Zone,exact_in_cohort,100,ET110201,Saylem,Kefa,South West Ethiopia
+Wacha Town Adminstration,South West Ethiopia Region,Kaffa Zone,fuzzy_in_cohort,90,ET110214,Wacha,Kefa,South West Ethiopia
+Ameya Town Administration,South West Ethiopia Region,Konta Zone,exact_global,95,ET041301,Ameya,South West Shewa,Oromia
+Konta Koysha woreda,South West Ethiopia Region,Konta Zone,fuzzy_in_cohort,90,ET110601,Konta,Konta Special,South West Ethiopia
+Anderacha Woreda,South West Ethiopia Region,Sheka Zone,exact_in_cohort,100,ET110101,Anderacha,Sheka,South West Ethiopia
+Masha Town Administration,South West Ethiopia Region,Sheka Zone,exact_in_cohort,100,ET110102,Masha,Sheka,South West Ethiopia
+Masha Woreda,South West Ethiopia Region,Sheka Zone,exact_in_cohort,100,ET110102,Masha,Sheka,South West Ethiopia
+Teppi Town Administration,South West Ethiopia Region,Sheka Zone,fuzzy_in_cohort,88,ET110104,Tepi,Sheka,South West Ethiopia
+Yeki Woreda,South West Ethiopia Region,Sheka Zone,exact_in_cohort,100,ET110103,Yeki,Sheka,South West Ethiopia
+Bero Woreda,South West Ethiopia Region,West Omo Zone,exact_in_cohort,100,ET110505,Bero,Mirab Omo,South West Ethiopia
+Gachit Woreda,South West Ethiopia Region,West Omo Zone,exact_in_cohort,100,ET110501,Gachit,Mirab Omo,South West Ethiopia
+Gorigesha Woreda,South West Ethiopia Region,West Omo Zone,fuzzy_in_cohort,94,ET110503,Gori Gesha,Mirab Omo,South West Ethiopia
+Maji Woreda,South West Ethiopia Region,West Omo Zone,exact_in_cohort,100,ET110507,Maji,Mirab Omo,South West Ethiopia
+Maji-Tumi Town Administration,South West Ethiopia Region,West Omo Zone,fuzzy_in_cohort,90,ET110507,Maji,Mirab Omo,South West Ethiopia
+Menit Goldia Woreda,South West Ethiopia Region,West Omo Zone,fuzzy_in_cohort,88,ET110502,Menit Goldiye,Mirab Omo,South West Ethiopia
+Menit Shasha Woreda,South West Ethiopia Region,West Omo Zone,exact_in_cohort,100,ET110504,Menit Shasha,Mirab Omo,South West Ethiopia
+Abergele Yechila Woreda,Tigray Region,Central Zone,fuzzy_in_cohort,90,ET010201,Chila,Central,Tigray
+Abi Adi Woreda,Tigray Region,Central Zone,exact_in_cohort,100,ET010211,Abi Adi town,Central,Tigray
+Adet Woreda,Tigray Region,Central Zone,exact_in_cohort,100,ET010207,Adet,Central,Tigray
+Adwa Town Woreda,Tigray Region,Central Zone,exact_in_cohort,100,ET010204,Adwa,Central,Tigray
+Adwa Woreda,Tigray Region,Central Zone,exact_in_cohort,100,ET010204,Adwa,Central,Tigray
+Ahferom Woreda,Tigray Region,Central Zone,fuzzy_in_cohort,93,ET010202,Aheferom,Central,Tigray
+Axum Town Woreda,Tigray Region,Central Zone,exact_in_cohort,100,ET010213,Axum town,Central,Tigray
+Chila woreda,Tigray Region,Central Zone,exact_in_cohort,100,ET010201,Chila,Central,Tigray
+Egela woreda,Tigray Region,Central Zone,exact_in_cohort,100,ET010216,Egela,Central,Tigray
+Emba Seneyti Woreda,Tigray Region,Central Zone,fuzzy_in_cohort,91,ET010219,Emba Sieneti,Central,Tigray
+Enticho Town,Tigray Region,Central Zone,exact_in_cohort,100,ET010220,Enticho town,Central,Tigray
+Hahayle woreda,Tigray Region,Central Zone,exact_in_cohort,100,ET010217,Hahayle,Central,Tigray
+Keyh Tekli Woreda,Tigray Region,Central Zone,fuzzy_in_cohort,95,ET010221,Keyhe tekli,Central,Tigray
+Kola Tembien,Tigray Region,Central Zone,fuzzy_in_cohort,95,ET010208,Kola Temben,Central,Tigray
+Laelay Maychew Woreda,Tigray Region,Central Zone,exact_in_cohort,100,ET010205,Laelay Maychew,Central,Tigray
+Naeder woreda,Tigray Region,Central Zone,exact_in_cohort,100,ET010209,Naeder,Central,Tigray
+Rama Adiarbaete,Tigray Region,Central Zone,fuzzy_in_cohort,90,ET010214,Rama,Central,Tigray
+Tahtay Maychew Woreda,Tigray Region,Central Zone,fuzzy_in_cohort,96,ET010206,Tahtay Mayechew,Central,Tigray
+Tanqua Mlash Woreda,Tigray Region,Central Zone,fuzzy_in_cohort,92,ET010222,Tanqua Melashe,Central,Tigray
+Adigrat Town Administration,Tigray Region,Eastern Zone,exact_in_cohort,100,ET010308,Adigrat town,Eastern,Tigray
+Atsbi Woreda,Tigray Region,Eastern Zone,exact_in_cohort,100,ET010307,Atsbi,Eastern,Tigray
+Bizet Woreda,Tigray Region,Eastern Zone,exact_in_cohort,100,ET010310,Bizet,Eastern,Tigray
+Edaga Hamus Town Woreda,Tigray Region,Eastern Zone,exact_in_cohort,100,ET010311,Edaga Hamus town,Eastern,Tigray
+Ganta Afeshum Woreda,Tigray Region,Eastern Zone,exact_in_cohort,100,ET010304,Ganta Afeshum,Eastern,Tigray
+Gulomekeda Woreda,Tigray Region,Eastern Zone,fuzzy_in_cohort,95,ET010301,Gulo Mekeda,Eastern,Tigray
+Hawzien Town Administration,Tigray Region,Eastern Zone,fuzzy_in_cohort,92,ET010305,Hawzen,Eastern,Tigray
+Hawzien Woreda,Tigray Region,Eastern Zone,fuzzy_in_cohort,92,ET010305,Hawzen,Eastern,Tigray
+Sewha Saesie woreda,Tigray Region,Eastern Zone,fuzzy_in_cohort,90,ET010303,Saesie,Eastern,Tigray
+Tsaeda Emba Woreda,Tigray Region,Eastern Zone,exact_in_cohort,100,ET010314,Tsaeda Emba,Eastern,Tigray
+Wukro Town Adminstration,Tigray Region,Eastern Zone,fuzzy_in_cohort,90,ET010309,Wukro town,Eastern,Tigray
+Zalanbesa Town Woreda,Tigray Region,Eastern Zone,fuzzy_in_cohort,90,ET010318,Zala Anbesa town,Eastern,Tigray
+Adi Daero Town,Tigray Region,North Western Zone,exact_in_cohort,100,ET010111,Adi Daero,North Western,Tigray
+Asgede Woreda,Tigray Region,North Western Zone,exact_in_cohort,100,ET010105,Asgede,North Western,Tigray
+Endabaguna Town,Tigray Region,North Western Zone,exact_in_cohort,100,ET010114,Endabaguna town,North Western,Tigray
+Laelay Tselemti,Tigray Region,North Western Zone,fuzzy_in_cohort,90,ET010106,Tselemti,North Western,Tigray
+May tsebri Town Woreda,Tigray Region,North Western Zone,exact_in_cohort,100,ET010116,May Tsebri town,North Western,Tigray
+Seyemti Adyabo Woreda Health Office,Tigray Region,North Western Zone,exact_in_cohort,100,ET010110,Seyemti Adyabo,North Western,Tigray
+Sheraro Woreda,Tigray Region,North Western Zone,exact_in_cohort,100,ET010107,Sheraro town,North Western,Tigray
+Tahtay Adyabo Woreda,Tigray Region,North Western Zone,fuzzy_in_cohort,96,ET010101,Tahtay Adiyabo,North Western,Tigray
+Tahtay Qoraro Woreda,Tigray Region,North Western Zone,fuzzy_in_cohort,92,ET010104,Tahtay Koraro,North Western,Tigray
+Tselemti Woreda,Tigray Region,North Western Zone,exact_in_cohort,100,ET010106,Tselemti,North Western,Tigray
+Tsimbla Woreda Health Office,Tigray Region,North Western Zone,exact_in_cohort,100,ET010113,Tsimbla,North Western,Tigray
+Zana Woreda Health Office,Tigray Region,North Western Zone,exact_in_cohort,100,ET010103,Zana,North Western,Tigray
+Degua Tembien Woreda,Tigray Region,South Eastern Zone,fuzzy_in_cohort,96,ET010604,Degua Temben,South Eastern,Tigray
+Enderta Woreda,Tigray Region,South Eastern Zone,exact_in_cohort,100,ET010602,Enderta,South Eastern,Tigray
+Hagere Selam Town,Tigray Region,South Eastern Zone,exact_in_cohort,100,ET010605,Hagere Selam town,South Eastern,Tigray
+Hintalo Woreda,Tigray Region,South Eastern Zone,exact_in_cohort,100,ET010603,Hintalo,South Eastern,Tigray
+Samre Wereda,Tigray Region,South Eastern Zone,exact_in_cohort,100,ET010606,Samre,South Eastern,Tigray
+Alamata Town,Tigray Region,Southern Zone,exact_in_cohort,100,ET010411,Alamata town,Southern,Tigray
+Bora Woreda,Tigray Region,Southern Zone,exact_in_cohort,100,ET010402,Bora (TG),Southern,Tigray
+Emba Alaje Woreda,Tigray Region,Southern Zone,exact_in_cohort,100,ET010404,Emba Alaje,Southern,Tigray
+Endamehoni Woreda,Tigray Region,Southern Zone,exact_in_cohort,100,ET010405,Endamehoni,Southern,Tigray
+Korem Town,Tigray Region,Southern Zone,exact_in_cohort,100,ET010410,Korem town,Southern,Tigray
+Maichew Town,Tigray Region,Southern Zone,exact_in_cohort,100,ET010409,Maichew town,Southern,Tigray
+Mekoni Town,Tigray Region,Southern Zone,fuzzy_in_cohort,92,ET010412,Mekhoni town,Southern,Tigray
+Ofla Woreda,Tigray Region,Southern Zone,exact_in_cohort,100,ET010408,Ofla,Southern,Tigray
+Raya Alamata Woreda,Tigray Region,Southern Zone,exact_in_cohort,100,ET010407,Raya Alamata,Southern,Tigray
+Raya Azebo Woreda,Tigray Region,Southern Zone,exact_in_cohort,100,ET010406,Raya Azebo,Southern,Tigray
+Raya Chercher woreda,Tigray Region,Southern Zone,fuzzy_in_cohort,90,ET010414,Chercher,Southern,Tigray
+Selewa Woreda,Tigray Region,Southern Zone,exact_in_cohort,100,ET010401,Selewa,Southern,Tigray
+Zata woreda,Tigray Region,Southern Zone,exact_in_cohort,100,ET010413,Zata,Southern,Tigray
+Awra Woreda,Tigray Region,Western Zone,exact_in_cohort,100,ET010507,Awra (TG),Western,Tigray
+Dansha Town Woreda,Tigray Region,Western Zone,exact_in_cohort,100,ET010506,Dansha town,Western,Tigray
+Kafta Humera Woreda,Tigray Region,Western Zone,exact_in_cohort,100,ET010501,Kafta Humera,Western,Tigray
+Korarit Town,Tigray Region,Western Zone,exact_in_cohort,100,ET010508,Korarit,Western,Tigray
+May Gaba Town Woreda,Tigray Region,Western Zone,exact_in_cohort,100,ET010509,May Gaba,Western,Tigray
+May Kadra Town Woreda,Tigray Region,Western Zone,exact_in_cohort,100,ET010505,May Kadra,Western,Tigray
+Setit Humra Woreda,Tigray Region,Western Zone,fuzzy_in_cohort,95,ET010504,Setit Humera,Western,Tigray
+Tsegede Woreda,Tigray Region,Western Zone,exact_in_cohort,100,ET010503,Tsegede (TG),Western,Tigray
+Welkayit Woreda,Tigray Region,Western Zone,fuzzy_in_cohort,93,ET010502,Welkait,Western,Tigray
+Aysita City Admin Woreda,Afar Region,Zone 1 Zone,manual,,ET020103,,,
+Ayssaita Woreda,Afar Region,Zone 1 Zone,manual,,ET020103,,,
+Erabti Woreda,Afar Region,Zone 2 Zone,manual,,ET020201,,,
+Koneba Woreda,Afar Region,Zone 2 Zone,manual,,ET020202,,,
+Magale Woreda,Afar Region,Zone 2 Zone,manual,,ET020204,,,
+Buremedaytu Woreda,Afar Region,Zone 3 Zone,manual,,ET030710,,,
+Galalo Woreda,Afar Region,Zone 3 Zone,manual,,ET020404,,,
+Dalifaghe Woreda,Afar Region,Zone 5 Zone,manual,,ET020504,,,
+Dewe Woreda,Afar Region,Zone 5 Zone,manual,,ET020503,,,
+Semirobi Woreda,Afar Region,Zone 5 Zone,manual,,ET020502,,,
+Telalak Woreda,Afar Region,Zone 5 Zone,manual,,ET020501,,,
+Gereni Woreda,Afar Region,Zone 6 Zone,manual,,ET020110,,,
+Dangla Zuria Woreda,Amhara Region,Awi Zone,manual,,ET030901,,,
+Fagitalekoma Woreda,Amhara Region,Awi Zone,manual,,ET030905,,,
+Cetral Armachiho Woreda,Amhara Region,Central Gondar Zone,manual,,ET031119,,,
+Nebaru Chilga Woreda,Amhara Region,Central Gondar Zone,manual,,ET031106,,,
+Wogera Woreda,Amhara Region,Central Gondar Zone,manual,,ET030203,,,
+Debaytilatgin Woreda,Amhara Region,East Gojjam Zone,manual,,ET030607,,,
+Gozamin Woreda,Amhara Region,East Gojjam Zone,manual,,ET030610,,,
+Machakel Woreda,Amhara Region,East Gojjam Zone,manual,,ET030609,,,
+Sedie Woreda,Amhara Region,East Gojjam Zone,manual,,ET030214,,,
+Sinan Woreda,Amhara Region,East Gojjam Zone,manual,,ET030412,,,
+Gonji Kollela Woreda,Amhara Region,North Gojjam zone,manual,,ET030718,,,
+North Achefer Woreda,Amhara Region,North Gojjam zone,manual,,ET030701,,,
+South Achefer Woreda,Amhara Region,North Gojjam zone,manual,,ET030713,,,
+Angolela Tara Woreda,Amhara Region,North Shewa Zone,manual,,ET030513,,,
+Antsokia Gemiza Woreda,Amhara Region,North Shewa Zone,manual,,ET030507,,,
+Kewot Woreda,Amhara Region,North Shewa Zone,manual,,ET030512,,,
+Menz Keya Gebreal Woreda,Amhara Region,North Shewa Zone,manual,,ET030521,,,
+Dawa Chefa Woreda,Amhara Region,Oromia Special Zone,manual,,ET031001,,,
+Jile Timuga Woreda,Amhara Region,Oromia Special Zone,manual,,ET031003,,,
+Ebinat Woreda,Amhara Region,South Gondar Zone,manual,,ET030201,,,
+Estie Woreda,Amhara Region,South Gondar Zone,manual,,ET030418,,,
+Simada Woreda,Amhara Region,South Gondar Zone,manual,,ET030207,,,
+Tehuledre Woreda,Amhara Region,South Wollo Zone,manual,,ET030405,,,
+Worebabo Woreda,Amhara Region,South Wollo Zone,manual,,ET030422,,,
+Woreilu Woreda,Amhara Region,South Wollo Zone,manual,,ET030423,,,
+Sehala Woreda,Amhara Region,Waghimera Zone,manual,,ET041702,,,
+Tsagibji Woreda,Amhara Region,Waghimera Zone,manual,,ET030808,,,
+Ziquala Woreda,Amhara Region,Waghimera Zone,manual,,ET030801,,,
+Wenberma Woreda,Amhara Region,West Gojjam Zone,manual,,ET030711,,,
+West Armachho Woreda,Amhara Region,West Gondar Zone,manual,,ET031120,,,
+Buldigilu Woreda,Benishangul Gumuz Region,Assosa Zone,manual,,ET060306,,,
+Dambe Woreda,Benishangul Gumuz Region,Kamashi Zone,manual,,ET060404,,,
+Mizhiga Woreda,Benishangul Gumuz Region,Kamashi Zone,manual,,ET060405,,,
+Zay Woreda,Benishangul Gumuz Region,Kamashi Zone,manual,,ET060401,,,
+Mao Komo Zone,Benishangul Gumuz Region,Mao Komo Zone,manual,,ET060508,,,
+Pawi Woreda,Benishangul Gumuz Region,Metekel Zone,manual,,ET060206,,,
+Agena Town,Central Ethiopian Region,Gurage Zone,manual,,ET070306,,,
+Emdibir Town,Central Ethiopian Region,Gurage Zone,manual,,ET070116,,,
+Endegagn Woreda,Central Ethiopian Region,Gurage Zone,manual,,ET070108,,,
+Gunchire Town,Central Ethiopian Region,Gurage Zone,manual,,ET160014,,,
+Wolkite Town,Central Ethiopian Region,Gurage Zone,manual,,ET070114,,,
+Ann Lemo Woreda,Central Ethiopian Region,Hadiya Zone,manual,,ET070203,,,
+East Badawacho Woreda,Central Ethiopian Region,Hadiya Zone,manual,,ET070205,,,
+West Badewacho Woreda,Central Ethiopian Region,Hadiya Zone,manual,,ET050805,,,
+Demboya Town,Central Ethiopian Region,Kembata Zone,manual,,ET070307,,,
+Demboya Woreda,Central Ethiopian Region,Kembata Zone,manual,,ET070307,,,
+Alemgebeya Town Administration,Central Ethiopian Region,Silte Zone,manual,,ET040311,,,
+East Azernet Berbere Woreda,Central Ethiopian Region,Silte Zone,manual,,ET072004,,,
+East Silti Woreda,Central Ethiopian Region,Silte Zone,manual,,ET072002,,,
+Hulbareg Woreda,Central Ethiopian Region,Silte Zone,manual,,ET072008,,,
+Lanfuro Woreda,Central Ethiopian Region,Silte Zone,manual,,ET072003,,,
+West Azernet Woreda,Central Ethiopian Region,Silte Zone,manual,,ET030211,,,
+Deri Saja Zuria Woreda,Central Ethiopian Region,Yem Zone,manual,,ET040310,,,
+Fofa Woreda,Central Ethiopian Region,Yem Zone,manual,,ET070607,,,
+Addis Ketema Operational Woreda,Dire Dawa City Administration,Addis Ketema Operational Woreda,manual,,ET150109,,,
+Dire Dawa Operational Woreda,Dire Dawa City Administration,Dire Dawa Operational Woreda,manual,,ET041211,,,
+Gendekore Operational Woreda,Dire Dawa City Administration,Gendekore Operational Woreda,manual,,ET150110,,,
+Goro Operational Woreda,Dire Dawa City Administration,Goro Operational Woreda,manual,,ET041010,,,
+Dimma Woreda,Gambella Region,Agniwa Zone,manual,,ET010115,,,
+Jor Woreda,Gambella Region,Agniwa Zone,manual,,ET120204,,,
+Wanthoa Woreda,Gambella Region,Nuer Zone,manual,,ET120104,,,
+Boku Shenen Sub City,Oromia Region,Adama City Health Office,manual,,ET040910,,,
+Dabe Sub City,Oromia Region,Adama City Health Office,manual,,ET040824,,,
+Dambela Sub City,Oromia Region,Adama City Health Office,manual,,ET041408,,,
+Bokoji Town,Oromia Region,Arsi Zone,manual,,ET040894,,,
+Enkelo Wabe Woreda,Oromia Region,Arsi Zone,manual,,ET040824,,,
+Lode Hetosa Woreda,Oromia Region,Arsi Zone,manual,,ET040821,,,
+Delo Mena Woreda,Oromia Region,Bale Zone,manual,,ET040813,,,
+Dawe Kachen Woreda,Oromia Region,East Bale Zone,manual,,ET042106,,,
+Dawe Serer Woreda,Oromia Region,East Bale Zone,manual,,ET041304,,,
+Laga Hidha Woreda,Oromia Region,East Bale Zone,manual,,ET041220,,,
+Das Woreda,Oromia Region,East Borena Zone,manual,,ET041220,,,
+Gumi Eldalo Woreda,Oromia Region,East Borena Zone,manual,,ET041497,,,
+Mada Walabu Woreda,Oromia Region,East Borena Zone,manual,,ET041113,,,
+West Welabu Woreda,Oromia Region,East Borena Zone,manual,,ET040108,,,
+Gola Oda Woreda,Oromia Region,East Hararge Zone,manual,,ET041017,,,
+Mekanisa Oromo Woreda,Oromia Region,East Hararge Zone,manual,,ET041618,,,
+Melka Bello Woreda,Oromia Region,East Hararge Zone,manual,,ET041012,,,
+Meye Muluke Woreda,Oromia Region,East Hararge Zone,manual,,ET041018,,,
+Lume Woreda,Oromia Region,East Shewa Zone,manual,,ET040704,,,
+Ebantu Woreda,Oromia Region,East Wellega Zone,manual,,ET040202,,,
+Kiramu Woreda,Oromia Region,East Wellega Zone,manual,,ET040217,,,
+Wadara Woreda,Oromia Region,Guji Zone,manual,,ET041404,,,
+Holota Woreda,Oromia Region,Holeta Town,manual,,ET042020,,,
+Sulula Fincha Woreda,Oromia Region,Horo Guduru Wollega Zone,manual,,ET042005,,,
+Doreni Woreda,Oromia Region,Ilu Aba Bora Zone,manual,,ET040324,,,
+Yayo Woreda,Oromia Region,Ilu Aba Bora Zone,manual,,ET040614,,,
+Chora Botor Woreda,Oromia Region,Jimma Zone,manual,,ET041603,,,
+Mencho Woreda,Oromia Region,Jimma Zone,manual,,ET040490,,,
+Shabe Sombo Woreda,Oromia Region,Jimma Zone,manual,,ET040414,,,
+Sokoru Woreda,Oromia Region,Jimma Zone,manual,,ET040403,,,
+Dambi Dollo Woreda,Oromia Region,Kelem Wellega Zone,manual,,ET041806,,,
+Sadi Chanka Woreda,Oromia Region,Kelem Wellega Zone,manual,,ET041812,,,
+Adele Sub City,Oromia Region,Maya Town,manual,,ET041603,,,
+Haramaya Subcity,Oromia Region,Maya Town,manual,,ET041019,,,
+Berek Woreda,Oromia Region,North Shewa Zone,manual,,ET042011,,,
+Chancho Town,Oromia Region,North Shewa Zone,manual,,ET040490,,,
+Gebra Guracha Town,Oromia Region,North Shewa Zone,manual,,ET041798,,,
+Lega Tafo Lega Dadhi Town Woreda,Oromia Region,North Shewa Zone,manual,,ET042004,,,
+Were Jarso Woreda,Oromia Region,North Shewa Zone,manual,,ET040108,,,
+Gafarsa Guje Sub City,Oromia Region,Shagar City,manual,,ET041104,,,
+Laga Tafo Laga Dadhi Sub City,Oromia Region,Shagar City,manual,,ET042004,,,
+Mana Abichu Sub City,Oromia Region,Shagar City,manual,,ET040706,,,
+Amaya Woreda,Oromia Region,South West Shewa Zone,manual,,ET041006,,,
+Kersa Mamila Woreda,Oromia Region,South West Shewa Zone,manual,,ET041008,,,
+Wonchi Woreda,Oromia Region,South West Shewa Zone,manual,,ET041302,,,
+Nansebo Woreda,Oromia Region,West Arsi Zone,manual,,ET041709,,,
+Guba Qoricha Woreda,Oromia Region,West Hararge Zone,manual,,ET040907,,,
+Hirna Town,Oromia Region,West Hararge Zone,manual,,ET040814,,,
+Mechara Micheta Town,Oromia Region,West Hararge Zone,manual,,ET030306,,,
+Boji Choqorsa Woreda,Oromia Region,West Wollega Zone,manual,,ET040110,,,
+Mene Sibu Woreda,Oromia Region,West Wollega Zone,manual,,ET040101,,,
+Nedjo Rural Woreda,Oromia Region,West Wollega Zone,manual,,ET040311,,,
+Weliso Town Woreda,Oromia Region,Woliso Town,manual,,ET041303,,,
+Wensho Woreda,Sidama Region,Central Sidama Zone,manual,,ET160013,,,
+Melga Woreda,Sidama Region,Northern Sidama Zone,manual,,ET160012,,,
+Chareti Woreda,Somali Region,Afder Zone,manual,,ET050802,,,
+Dollo bay Woreda,Somali Region,Afder Zone,manual,,ET050808,,,
+Elkari Woreda,Somali Region,Afder Zone,manual,,ET050804,,,
+Qooxle Woreda,Somali Region,Afder Zone,manual,,ET050898,,,
+West Imay Woreda,Somali Region,Afder Zone,manual,,ET050805,,,
+Kadadumo Woreda,Somali Region,Dawa Zone,manual,,ET051198,,,
+Mubarak Woreda,Somali Region,Dawa Zone,manual,,ET051187,,,
+Danot Woreda,Somali Region,Dollo Zone,manual,,ET050701,,,
+Hamaro Woreda,Somali Region,Erar Zone,manual,,ET050404,,,
+Mayumuluqo Woreda,Somali Region,Erar Zone,manual,,ET050408,,,
+Harorays Woreda,Somali Region,Fafan Zone,manual,,ET050298,,,
+Qabribayah Woreda,Somali Region,Fafan Zone,manual,,ET050296,,,
+Qabribayah town Woreda,Somali Region,Fafan Zone,manual,,ET050296,,,
+babili Woreda,Somali Region,Fafan Zone,manual,,ET050203,,,
+Birqod Woreda,Somali Region,Jarar Zone,manual,,ET050394,,,
+Bodalay Woreda,Somali Region,Korahay Zone,manual,,ET050599,,,
+Shaykosh Woreda,Somali Region,Korahay Zone,manual,,ET050501,,,
+Gorabaqaqsa Woreda,Somali Region,Liben Zone,manual,,ET050903,,,
+Duhun Woreda,Somali Region,Nogob Zone,manual,,ET051006,,,
+Berano Woreda,Somali Region,Shebelle Zone,manual,,ET050608,,,
+East Imey Woreda,Somali Region,Shebelle Zone,manual,,ET050601,,,
+Elele Woreda,Somali Region,Shebelle Zone,manual,,ET070508,,,
+Afdam Woreda,Somali Region,Sitti Zone,manual,,ET050105,,,
+Maeso Woreda,Somali Region,Sitti Zone,manual,,ET050107,,,
+Baka Dawula Woreda,South Ethiopia Region,Aari Zone,manual,,ET070710,,,
+Gelila Town Administration,South Ethiopia Region,Aari Zone,manual,,ET070507,,,
+Woba Ari Woreda,South Ethiopia Region,Aari Zone,manual,,ET070711,,,
+Laska Town Administration,South Ethiopia Region,Basketo Zone,manual,,ET070611,,,
+Laska Zuria Woreda,South Ethiopia Region,Basketo Zone,manual,,ET070505,,,
+Soyama Zuria Woreda,South Ethiopia Region,Burji Zone,manual,,ET070605,,,
+Birbir Town Administration,South Ethiopia Region,Gamo Zone,manual,,ET041596,,,
+Kamba Town Administration,South Ethiopia Region,Gamo Zone,manual,,ET071011,,,
+Kamba Zuria Woreda,South Ethiopia Region,Gamo Zone,manual,,ET071303,,,
+Choriso Woreda,South Ethiopia Region,Gedeo Zone,manual,,ET070510,,,
+Kochore Woreda,South Ethiopia Region,Gedeo Zone,manual,,ET070503,,,
+Bulki Town Administration,South Ethiopia Region,Gofa Zone,manual,,ET071508,,,
+Laha Town Administration,South Ethiopia Region,Gofa Zone,manual,,ET050403,,,
+Kele Town,South Ethiopia Region,Koore zone,manual,,ET010306,,,
+Sarmale Woreda,South Ethiopia Region,Koore zone,manual,,ET071205,,,
+Gnangatom Woreda,South Ethiopia Region,South Omo Zone,manual,,ET070708,,,
+Bele Hawassa Town,South Ethiopia Region,Wolaita Zone,manual,,ET160018,,,
+Offa Woreda,South Ethiopia Region,Wolaita Zone,manual,,ET070607,,,
+Siz Town Administration,South West Ethiopia Region,Bench Sheko Zone,manual,,ET110308,,,
+South Bench Woreda,South West Ethiopia Region,Bench Sheko Zone,manual,,ET110304,,,
+Essera Bale Town Admnistration,South West Ethiopia Region,Dawro Zone,manual,,ET041112,,,
+Kechi worda,South West Ethiopia Region,Dawro Zone,manual,,ET110406,,,
+Deka Town Administration,South West Ethiopia Region,Kaffa Zone,manual,,ET050991,,,
+Shishinda Town Administration,South West Ethiopia Region,Kaffa Zone,manual,,ET110213,,,
+Shishoinde Woreda,South West Ethiopia Region,Kaffa Zone,manual,,ET110213,,,
+Tello Woreda,South West Ethiopia Region,Kaffa Zone,manual,,ET110206,,,
+Ameya Zuria woreda,South West Ethiopia Region,Konta Zone,manual,,ET041301,,,
+Chida Town Admininistration,South West Ethiopia Region,Konta Zone,manual,,ET110405,,,
+Ela Hanchano woreda,South West Ethiopia Region,Konta Zone,manual,,ET110214,,,
+Ahsia Woreda,Tigray Region,Central Zone,manual,,ET010215,,,
+Atsibi Endaslasie Town,Tigray Region,Eastern Zone,manual,,ET010307,,,
+Erop Woreda,Tigray Region,Eastern Zone,manual,,ET010111,,,
+Freweini Town,Tigray Region,Eastern Zone,manual,,ET010313,,,
+Gerealta Woreda,Tigray Region,Eastern Zone,manual,,ET010317,,,
+Klite Awlaelo Woreda,Tigray Region,Eastern Zone,manual,,ET010306,,,
+Adi Haki Woreda,Tigray Region,Mekelle Zone,manual,,ET010211,,,
+Ayder Woreda,Tigray Region,Mekelle Zone,manual,,ET010209,,,
+Hadnet Woreda,Tigray Region,Mekelle Zone,manual,,ET010207,,,
+Qedamay Woyane Woreda,Tigray Region,Mekelle Zone,manual,,ET041408,,,
+Semen Woreda,Tigray Region,Mekelle Zone,manual,,ET030701,,,
+Shire Endasilase Woreda,Tigray Region,North Western Zone,manual,,ET010108,,,
+Adigudem Town,Tigray Region,South Eastern Zone,manual,,ET010607,,,
+Seharti Woreda,Tigray Region,South Eastern Zone,manual,,ET010601,,,
+Wajerat Wereda,Tigray Region,South Eastern Zone,manual,,ET010608,,,
+Neksege Woreda,Tigray Region,Southern Zone,manual,,ET010403,,,
