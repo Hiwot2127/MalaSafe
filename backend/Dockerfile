@@ -2,7 +2,7 @@
 # Multi-stage build for optimized production image
 
 # Stage 1: Base image with dependencies
-FROM python:3.11-slim as base
+FROM python:3.12-slim AS base
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -11,7 +11,7 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     postgresql-client \
     pkg-config \
@@ -24,11 +24,11 @@ WORKDIR /app
 # Copy requirements first (for layer caching)
 COPY requirements.txt .
 
-# Install Python dependencies
+# Install Python dependencies (Will now use wheels, avoiding compilation)
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Development image
-FROM base as development
+FROM base AS development
 
 # Copy application code
 COPY . .
@@ -40,7 +40,7 @@ EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 # Stage 3: Production image
-FROM base as production
+FROM base AS production
 
 # Copy application code
 COPY . .

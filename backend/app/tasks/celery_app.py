@@ -21,7 +21,8 @@ celery_app = Celery(
         "app.tasks.upload_tasks",
         "app.tasks.prediction_tasks",
         "app.tasks.climate_tasks",
-    ]
+        "app.tasks.monthly_close",  # 👈 Add this line
+    ],
 )
 
 # Celery configuration
@@ -32,42 +33,34 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="Africa/Addis_Ababa",
     enable_utc=True,
-    
     # Task routing
     task_routes={
         "app.tasks.upload_tasks.*": {"queue": "uploads"},
         "app.tasks.prediction_tasks.*": {"queue": "predictions"},
         "app.tasks.climate_tasks.*": {"queue": "climate"},
     },
-    
     # Task time limits
     task_time_limit=3600,  # 1 hour hard limit
     task_soft_time_limit=3300,  # 55 minutes soft limit
-    
     # Task retries
     task_acks_late=True,  # Acknowledge after task completes
     task_reject_on_worker_lost=True,  # Requeue if worker dies
-    
     # Result backend
     result_expires=86400,  # Results expire after 24 hours
     result_extended=True,  # Store task args/kwargs
-    
     # Worker configuration
     worker_prefetch_multiplier=1,  # One task at a time (for heavy tasks)
     worker_max_tasks_per_child=100,  # Restart worker after 100 tasks (prevent memory leaks)
-    
     # Monitoring
     worker_send_task_events=True,
     task_send_sent_event=True,
-    
     # Beat schedule (for periodic tasks)
-    beat_schedule={
-        # Example: Daily cleanup of old results
-        "cleanup-old-results": {
-            "task": "app.tasks.maintenance_tasks.cleanup_old_results",
-            "schedule": 86400.0,  # Every 24 hours
-        },
-    },
+    # beat_schedule={
+    #     "cleanup-old-results": {
+    #         "task": "app.tasks.monthly_close.cleanup_old_results",
+    #         "schedule": 86400.0,  # Every 24 hours
+    #     },
+    # },
 )
 
 

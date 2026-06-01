@@ -14,7 +14,7 @@ export default function SettingsPage() {
       />
 
       <div className="grid gap-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-        
+
         {/* Security Preferences */}
         <section className="flex flex-col gap-4">
           <SectionHeader index="01" label="Security" tone="valid" />
@@ -63,7 +63,7 @@ export default function SettingsPage() {
 
         {/* System Config */}
         <section className="flex flex-col gap-4 mt-4">
-          <SectionHeader index="02" label="System" tone="neutral" />
+          <SectionHeader index="02" label="System" />
           <EditorialCard className="p-0 border-border/40 overflow-hidden bg-background/60 backdrop-blur-md">
             <div className="p-6 sm:p-8 space-y-8">
               <div className="flex gap-4 items-start border-b border-border/40 pb-8">
@@ -96,10 +96,10 @@ export default function SettingsPage() {
                     <p className="text-sm text-muted-foreground">Email address for critical system alerts (e.g. database failure, ML drift).</p>
                   </div>
                   <div className="max-w-md">
-                    <input 
-                      type="email" 
+                    <input
+                      type="email"
                       defaultValue="admin_malasafe@gmail.com"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" 
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -109,7 +109,7 @@ export default function SettingsPage() {
         </section>
 
       </div>
-      
+
       <div className="flex items-center justify-end gap-4 border-t border-border/40 pt-6 mt-4 pb-12 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         <Button variant="outline" className="gap-2">
           <RotateCcw className="h-4 w-4" /> Reset Defaults
