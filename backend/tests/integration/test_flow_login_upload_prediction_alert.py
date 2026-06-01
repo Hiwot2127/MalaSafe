@@ -23,6 +23,7 @@ class TestLoginUploadPredictionAlertFlow:
         malaria_history,
         climate_history,
         valid_climate_csv,
+        target_month,
     ):
         login = await client.post(
             "/api/v1/auth/login",
@@ -46,7 +47,7 @@ class TestLoginUploadPredictionAlertFlow:
             confidence_score=0.81,
             prediction_reason="Integration fixture: elevated cases",
             is_warm=True,
-            target_month=date(2024, 7, 1),
+            target_month=target_month,
         )
 
         with patch("app.routes.predictions.get_predictor") as mock_get_predictor:
@@ -56,7 +57,7 @@ class TestLoginUploadPredictionAlertFlow:
                 headers=headers,
                 json={
                     "district_id": str(test_district.id),
-                    "target_month": "2024-07-01",
+                    "target_month": target_month.isoformat(),
                 },
             )
 

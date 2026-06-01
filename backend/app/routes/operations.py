@@ -11,7 +11,7 @@ Provides internal admin APIs for:
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, desc
+from sqlalchemy import select, func, and_, desc, case
 from app.database import get_db
 from app.models import User, UploadedFile, Prediction, AuditLog
 from app.models.user import UserRole
@@ -118,17 +118,17 @@ async def get_metrics(
     - users: User statistics
     - system: System resource usage
     """
-    # Upload metrics (last 24 hours)
+    # Upload metrics (last 24 hours). UploadedFile has no status column - a row is
+    # only persisted after a successful parse, so every stored upload counts as
+    # completed and there is no failed/ success-rate distinction to compute.
     yesterday = datetime.utcnow() - timedelta(days=1)
-    
+
     upload_stats = await db.execute(
         select(
             func.count(UploadedFile.id).label("total"),
-            func.sum(func.case((UploadedFile.status == "completed", 1), else_=0)).label("completed"),
-            func.sum(func.case((UploadedFile.status == "failed", 1), else_=0)).label("failed"),
-        ).where(UploadedFile.uploaded_at >= yesterday)
+        ).where(UploadedFile.created_at >= yesterday)
     )
-    upload_row = upload_stats.first()
+    upload_total = int(upload_stats.scalar() or 0)
     
     # Prediction metrics (last 24 hours)
     prediction_stats = await db.execute(
@@ -143,7 +143,7 @@ async def get_metrics(
     user_stats = await db.execute(
         select(
             func.count(User.id).label("total"),
-            func.sum(func.case((User.is_active == True, 1), else_=0)).label("active"),
+            func.sum(case((User.is_active == True, 1), else_=0)).label("active"),
         )
     )
     user_row = user_stats.first()
@@ -156,14 +156,10 @@ async def get_metrics(
     return {
         "uploads": {
             "last_24h": {
-                "total": int(upload_row.total or 0),
-                "completed": int(upload_row.completed or 0),
-                "failed": int(upload_row.failed or 0),
-                "success_rate": (
-                    round(upload_row.completed / upload_row.total * 100, 2)
-                    if upload_row.total and upload_row.total > 0
-                    else 0
-                ),
+                "total": upload_total,
+                "completed": upload_total,
+                "failed": 0,
+                "success_rate": 100.0 if upload_total > 0 else 0,
             }
         },
         "predictions": {
@@ -260,27 +256,12 @@ async def get_recent_errors(
     """
     if limit > 200:
         limit = 200
-    
-    # Get recent failed uploads
-    failed_uploads = await db.execute(
-        select(UploadedFile)
-        .where(UploadedFile.status == "failed")
-        .order_by(desc(UploadedFile.uploaded_at))
-        .limit(limit)
-    )
-    
-    errors = []
-    for upload in failed_uploads.scalars():
-        errors.append({
-            "type": "upload_failed",
-            "timestamp": upload.uploaded_at.isoformat() + "Z" if upload.uploaded_at else None,
-            "details": {
-                "file_id": str(upload.id),
-                "filename": upload.filename,
-                "user_id": str(upload.uploaded_by),
-            }
-        })
-    
+
+    # UploadedFile no longer tracks a failure status, so there is no upload-error
+    # source to surface here. Return an empty set rather than querying columns the
+    # model does not have. (A future implementation could read from AuditLog.)
+    errors: list = []
+
     return {
         "errors": errors[:limit],
         "total": len(errors),

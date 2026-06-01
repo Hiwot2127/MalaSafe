@@ -5,6 +5,8 @@ Tests for analytics endpoints with caching.
 import pytest
 from httpx import AsyncClient
 
+from app.config import settings
+
 
 class TestDashboard:
     """Tests for dashboard endpoint."""
@@ -184,6 +186,12 @@ class TestRiskMap:
         assert response.status_code == 200
     
     @pytest.mark.asyncio
+    @pytest.mark.skipif(
+        not settings.CACHE_ENABLED,
+        reason="caching disabled / no Redis: risk map embeds a per-call "
+        "generated_at timestamp, so responses only match when the cache returns "
+        "the stored payload",
+    )
     async def test_risk_map_caching(self, client: AsyncClient, admin_headers: dict):
         """Test risk map response is cached."""
         # First request

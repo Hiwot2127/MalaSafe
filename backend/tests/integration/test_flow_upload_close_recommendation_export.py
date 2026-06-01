@@ -28,6 +28,7 @@ class TestUploadCloseRecommendationExportFlow:
         monthly_close_record,
         moh_headers: dict,
         ephi_headers: dict,
+        target_month,
     ):
         upload = await client.post(
             "/api/v1/uploads/climate",
@@ -48,7 +49,7 @@ class TestUploadCloseRecommendationExportFlow:
             confidence_score=0.77,
             prediction_reason="Integration fixture for reporting pipeline",
             is_warm=True,
-            target_month=date(2024, 7, 1),
+            target_month=target_month,
         )
 
         with patch("app.routes.predictions.get_predictor") as mock_get_predictor:
@@ -58,7 +59,7 @@ class TestUploadCloseRecommendationExportFlow:
                 headers=moh_headers,
                 json={
                     "district_id": str(test_district.id),
-                    "target_month": "2024-07-01",
+                    "target_month": target_month.isoformat(),
                 },
             )
 

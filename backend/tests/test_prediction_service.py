@@ -23,9 +23,9 @@ class TestPredictionService:
         malaria_history,
         climate_history,
         mock_predictor,
+        target_month,
     ):
         service = PredictionService(db_session, mock_predictor)
-        target_month = date(2024, 7, 1)
 
         prediction = await service.generate_one(test_district.id, target_month)
 
@@ -41,9 +41,9 @@ class TestPredictionService:
         malaria_history,
         climate_history,
         mock_predictor,
+        target_month,
     ):
         service = PredictionService(db_session, mock_predictor)
-        target_month = date(2024, 7, 1)
 
         first = await service.generate_one(test_district.id, target_month)
         mock_predictor.predict_one.reset_mock()
@@ -60,11 +60,11 @@ class TestPredictionService:
         malaria_history,
         climate_history,
         mock_predictor,
+        target_month,
     ):
         from app.ai.predictor import PredictionResult
 
         service = PredictionService(db_session, mock_predictor)
-        target_month = date(2024, 7, 1)
 
         first = await service.generate_one(test_district.id, target_month)
         assert mock_predictor.predict_one.call_count == 1
@@ -92,9 +92,10 @@ class TestPredictionService:
         malaria_history,
         climate_history,
         mock_predictor,
+        target_month,
     ):
         service = PredictionService(db_session, mock_predictor)
-        await service.generate_one(test_district.id, date(2024, 7, 1))
+        await service.generate_one(test_district.id, target_month)
 
         alerts = (await db_session.execute(select(Alert))).scalars().all()
         assert len(alerts) == 1
@@ -108,9 +109,10 @@ class TestPredictionService:
         malaria_history,
         climate_history,
         low_risk_predictor,
+        target_month,
     ):
         service = PredictionService(db_session, low_risk_predictor)
-        await service.generate_one(test_district.id, date(2024, 7, 1))
+        await service.generate_one(test_district.id, target_month)
 
         alerts = (await db_session.execute(select(Alert))).scalars().all()
         assert len(alerts) == 0
@@ -119,13 +121,14 @@ class TestPredictionService:
         self,
         db_session,
         mock_predictor,
+        target_month,
     ):
         import uuid
 
         service = PredictionService(db_session, mock_predictor)
 
         with pytest.raises(ValueError, match="district .* not found"):
-            await service.generate_one(uuid.uuid4(), date(2024, 7, 1))
+            await service.generate_one(uuid.uuid4(), target_month)
 
     async def test_generate_batch_processes_multiple_districts(
         self,
@@ -134,9 +137,10 @@ class TestPredictionService:
         malaria_history,
         climate_history,
         mock_predictor,
+        target_month,
     ):
         service = PredictionService(db_session, mock_predictor)
-        count = await service.generate_batch(date(2024, 7, 1), district_ids=[test_district.id])
+        count = await service.generate_batch(target_month, district_ids=[test_district.id])
 
         assert count == 1
         predictions = (await db_session.execute(select(Prediction))).scalars().all()

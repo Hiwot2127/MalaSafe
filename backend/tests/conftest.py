@@ -36,6 +36,20 @@ def _resolve_test_database_url() -> str:
     return base + "_test"
 
 
+def _month_offset(base: date, months: int) -> date:
+    """First day of the month ``months`` away from ``base`` (negative = past)."""
+    index = base.year * 12 + (base.month - 1) + months
+    year, month = divmod(index, 12)
+    return date(year, month + 1, 1)
+
+
+# Target month used by the prediction tests, computed at runtime. The predictor
+# rejects target months more than 12 months in the past, so a hardcoded literal
+# (e.g. date(2024, 7, 1)) silently rots and fails once enough wall-clock time
+# passes. Anchoring to "last month" keeps the suite green over time.
+TEST_TARGET_MONTH = _month_offset(date.today().replace(day=1), -1)
+
+
 TEST_DATABASE_URL = _resolve_test_database_url()
 
 test_engine = create_async_engine(
@@ -249,6 +263,12 @@ def public_headers(public_token: str) -> dict:
 
 
 @pytest.fixture
+def target_month() -> date:
+    """Relative target month for prediction tests (see TEST_TARGET_MONTH)."""
+    return TEST_TARGET_MONTH
+
+
+@pytest.fixture
 async def test_district(db_session: AsyncSession) -> District:
     district = District(
         id=uuid.uuid4(),
@@ -273,17 +293,18 @@ async def malaria_history(
     test_district: District,
     test_moh_user: User,
 ) -> list[MalariaData]:
-    """Six months of malaria history for prediction tests."""
+    """Six months of malaria history immediately before TEST_TARGET_MONTH."""
     records: list[MalariaData] = []
-    for month in range(1, 7):
+    for step in range(1, 7):
+        m = _month_offset(TEST_TARGET_MONTH, -step)  # target-1 .. target-6
         record = MalariaData(
             district_id=test_district.id,
             source_type="test_fixture",
-            month=month,
-            year=2024,
-            positive=40 + month * 8,
-            tests=400 + month * 20,
-            travel=month,
+            month=m.month,
+            year=m.year,
+            positive=40 + step * 8,
+            tests=400 + step * 20,
+            travel=step,
             uploaded_by=test_moh_user.id,
         )
         db_session.add(record)
@@ -300,13 +321,15 @@ async def climate_history(
     test_district: District,
 ) -> list[ClimateData]:
     records: list[ClimateData] = []
-    for month in range(1, 8):
+    for step in range(6, -1, -1):  # target-6 .. target (7 records)
+        d = _month_offset(TEST_TARGET_MONTH, -step)
+        scale = 7 - step  # 1..7, preserves the original increasing values
         record = ClimateData(
             district_id=test_district.id,
-            rainfall=80.0 + month * 5,
-            temperature=22.0 + month * 0.5,
-            date=date(2024, month, 1),
-            season="kiremt" if month in (6, 7, 8, 9) else "bega",
+            rainfall=80.0 + scale * 5,
+            temperature=22.0 + scale * 0.5,
+            date=d,
+            season="kiremt" if d.month in (6, 7, 8, 9) else "bega",
             data_source="manual_upload",
             is_provisional=False,
         )
@@ -329,7 +352,7 @@ async def test_prediction(
         prediction_score=180.0,
         confidence_score=0.82,
         prediction_reason="Elevated recent cases in test fixture",
-        prediction_date=date(2024, 7, 1),
+        prediction_date=TEST_TARGET_MONTH,
     )
     db_session.add(prediction)
     await db_session.commit()
@@ -409,7 +432,7 @@ def mock_predictor():
     predictor = MagicMock()
 
     def _predict_one(**kwargs):
-        target_month = kwargs.get("target_month", date(2024, 7, 1))
+        target_month = kwargs.get("target_month", TEST_TARGET_MONTH)
         return PredictionResult(
             risk_level="high",
             prediction_score=165.0,
@@ -428,7 +451,7 @@ def low_risk_predictor():
     predictor = MagicMock()
 
     def _predict_one(**kwargs):
-        target_month = kwargs.get("target_month", date(2024, 7, 1))
+        target_month = kwargs.get("target_month", TEST_TARGET_MONTH)
         return PredictionResult(
             risk_level="low",
             prediction_score=12.0,

@@ -4,6 +4,7 @@ Tests for authentication endpoints.
 
 import pytest
 from httpx import AsyncClient
+from app.config import settings
 from app.models.user import User
 
 
@@ -68,13 +69,20 @@ class TestLogin:
     
     @pytest.mark.asyncio
     @pytest.mark.rate_limit
+    @pytest.mark.skipif(
+        not settings.RATE_LIMIT_ENABLED,
+        reason="rate limiting disabled in this environment (the limiter bakes "
+        "`enabled` at import time, so it can't be toggled per-test)",
+    )
     async def test_login_rate_limiting(self, client: AsyncClient):
         """Test rate limiting on login endpoint."""
-        # Make 6 requests (limit is 5/minute)
+        # Make 6 requests (limit is 5/minute). Password must satisfy the schema's
+        # min_length=8 so the request reaches the handler (not a 422) before the
+        # rate limiter trips on the 6th call.
         for i in range(6):
             response = await client.post(
                 "/api/v1/auth/login",
-                json={"email": "test@test.com", "password": "wrong"}
+                json={"email": "test@test.com", "password": "wrongpass1"}
             )
             
             if i < 5:
@@ -243,11 +251,13 @@ class TestCreateOfficial:
             json={
                 "email": "abebe.kebede@moh.gov.et",
                 "full_name": "QA Official",
-                "password": "weak",
+                # >=8 chars so it passes the schema length check and reaches the
+                # strength validator (no upper/digit/special) -> custom 400.
+                "password": "weakpassword",
                 "role": "moh_officer"
             }
         )
-        
+
         assert response.status_code == 400
     
     @pytest.mark.asyncio

@@ -184,7 +184,7 @@ async def login(
         key="session_token",
         value=access_token,
         httponly=True,
-        secure=True,  # HTTPS only in production
+        secure=settings.ENVIRONMENT == "production",  # HTTPS only in production
         samesite="lax",  # CSRF protection
         max_age=1800,  # 30 minutes
         path="/",
@@ -194,7 +194,7 @@ async def login(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True,
+        secure=settings.ENVIRONMENT == "production",
         samesite="lax",
         max_age=604800,  # 7 days
         path="/api/v1/auth/refresh",  # Only sent to refresh endpoint
@@ -205,7 +205,7 @@ async def login(
         key="user_role",
         value=user.role.value,
         httponly=True,
-        secure=True,
+        secure=settings.ENVIRONMENT == "production",
         samesite="lax",
         max_age=1800,
     )
@@ -407,7 +407,7 @@ async def refresh_token(
         key="session_token",
         value=new_access_token,
         httponly=True,
-        secure=True,
+        secure=settings.ENVIRONMENT == "production",
         samesite="lax",
         max_age=1800,  # 30 minutes
         path="/",
@@ -417,7 +417,7 @@ async def refresh_token(
         key="refresh_token",
         value=new_refresh_token,
         httponly=True,
-        secure=True,
+        secure=settings.ENVIRONMENT == "production",
         samesite="lax",
         max_age=604800,  # 7 days
         path="/api/v1/auth/refresh",
@@ -427,7 +427,7 @@ async def refresh_token(
         key="user_role",
         value=user.role.value,
         httponly=True,
-        secure=True,
+        secure=settings.ENVIRONMENT == "production",
         samesite="lax",
         max_age=1800,
     )
