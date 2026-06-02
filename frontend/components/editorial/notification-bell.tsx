@@ -15,7 +15,7 @@ interface NotificationBellProps {
 
 export function NotificationBell({
   count = null,
-  href = "/alerts",
+  href = "/dashboard/alerts",
   className,
   ariaLabel,
 }: NotificationBellProps) {

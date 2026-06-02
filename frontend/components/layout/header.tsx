@@ -29,7 +29,12 @@ export default function Header() {
     ? 'MOH Data Officer' 
     : user?.role?.replace(/_/g, ' ').toUpperCase() ?? 'USER';
   const isDark = mounted && resolvedTheme === 'dark';
-  const pageName = pathname === '/dashboard' ? 'Overview' : pathname?.split('/')[1]?.replace(/-/g, ' ') ?? 'Overview';
+  const pageSegment = pathname?.startsWith('/dashboard')
+    ? pathname.split('/')[2]
+    : pathname?.split('/')[1];
+  const pageName = pathname === '/dashboard'
+    ? 'Overview'
+    : pageSegment?.replace(/-/g, ' ') ?? 'Overview';
 
   return (
     <header className="sticky top-0 z-40 flex h-[4.5rem] shrink-0 items-center justify-between border-b border-border/40 px-8 backdrop-blur-2xl bg-background/40">
@@ -77,7 +82,7 @@ export default function Header() {
         </button>
 
         <Link
-          href="/settings"
+          href="/dashboard/settings"
           aria-label="Open settings"
           className="rounded-full transition-opacity hover:opacity-80"
         >

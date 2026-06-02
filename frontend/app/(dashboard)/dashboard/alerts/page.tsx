@@ -240,7 +240,7 @@ export default function AlertsPage() {
                   action={
                     alert.district_id ? (
                       <Link
-                        href={`/predictions?district=${alert.district_id}`}
+                        href={`/dashboard/predictions?district=${alert.district_id}`}
                         className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:text-muted-foreground"
                       >
                         View district

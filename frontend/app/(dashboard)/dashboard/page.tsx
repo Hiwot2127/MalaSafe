@@ -24,21 +24,21 @@ const QUICK_LINKS = [
     eyebrow: 'Ingest',
     title: 'Upload data',
     description: 'Drop a malaria or climate CSV.',
-    href: '/upload',
+    href: '/dashboard/upload',
   },
   {
     index: '02',
     eyebrow: 'Surface',
     title: 'Risk maps',
     description: 'District-level heat at a glance.',
-    href: '/maps',
+    href: '/dashboard/maps',
   },
   {
     index: '03',
     eyebrow: 'Series',
     title: 'Analytics',
     description: 'Weekly and monthly trends.',
-    href: '/analytics',
+    href: '/dashboard/analytics',
   },
 ];
 
@@ -108,7 +108,7 @@ export default function DashboardPage() {
           title={postureLabel}
           stats={alertStats}
           description={alertDescription}
-          cta={activeAlerts > 0 ? { label: 'Review alerts', href: '/alerts' } : undefined}
+          cta={activeAlerts > 0 ? { label: 'Review alerts', href: '/dashboard/alerts' } : undefined}
         />
       </div>
 
@@ -219,7 +219,7 @@ export default function DashboardPage() {
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <Link
-                href="/maps"
+                href="/dashboard/maps"
                 className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-primary transition-all hover:bg-primary/10 hover:shadow-[0_0_12px_rgba(var(--primary-rgb),0.3)]"
               >
                 View risk surface
@@ -227,7 +227,7 @@ export default function DashboardPage() {
               </Link>
               {activeAlerts > 0 ? (
                 <Link
-                  href="/alerts"
+                  href="/dashboard/alerts"
                   className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-primary-foreground shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)] transition-all hover:opacity-90 hover:shadow-[0_0_20px_rgba(var(--primary-rgb),0.8)]"
                 >
                   Review alerts

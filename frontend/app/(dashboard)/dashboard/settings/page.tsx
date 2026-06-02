@@ -94,29 +94,7 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* Section 003 - Preferences */}
-      <section className="flex flex-col gap-5">
-        <SectionHeader index="003" label="Preferences" />
-        <EditorialCard className="flex items-start gap-4 px-6 py-6">
-          <span
-            aria-hidden
-            className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground"
-          >
-            <SettingsIcon className="size-5" strokeWidth={1.75} />
-          </span>
-          <div className="flex flex-col gap-2">
-            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              Coming soon
-            </p>
-            <p className="max-w-prose font-sans text-sm leading-relaxed text-foreground/85">
-              Theme and notification preferences will be available in a future
-              update. The theme toggle in the header switches between light and
-              dark; the rest of the settings still inherit from the district-level
-              configuration in the backend.
-            </p>
-          </div>
-        </EditorialCard>
-      </section>
+      {/* Section 003 - Preferences removed per UX request */}
     </div>
   );
 }

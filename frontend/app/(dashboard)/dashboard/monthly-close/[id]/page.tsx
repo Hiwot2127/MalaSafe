@@ -156,7 +156,7 @@ export default function MonthlyClosePage() {
   if (error || !close) {
     return (
       <div className="mx-auto flex max-w-5xl flex-col gap-8 py-8">
-        <Link href="/upload" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+        <Link href="/dashboard/upload" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" /> back to upload
         </Link>
         <div className="border border-status-error/40 bg-status-error-tint p-6">
@@ -177,7 +177,7 @@ export default function MonthlyClosePage() {
       {/* Header */}
       <header className="flex flex-col gap-3">
         <Link
-          href="/upload"
+          href="/dashboard/upload"
           className="inline-flex w-fit items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft aria-hidden className="size-3.5" strokeWidth={1.5} />
