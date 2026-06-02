@@ -164,8 +164,7 @@ export default function UploadPage() {
         </p>
         <h1 className="font-display font-semibold text-4xl leading-[1.05] tracking-tight">Upload data</h1>
         <p className="max-w-prose font-sans text-base leading-relaxed text-muted-foreground">
-          Drop a malaria or climate CSV. Each row validates independently - defects are listed
-          and skipped, the rest still imports. Monthly malaria uploads also trigger a backtest,
+          Drop a malaria or climate CSV. Rows with issues are skipped; successful rows still import. Monthly malaria uploads also trigger a backtest,
           drift check, and re-prediction for the following month.
         </p>
       </header>

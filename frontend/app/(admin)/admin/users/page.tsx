@@ -88,7 +88,7 @@ export default function UsersPage() {
             Create and manage user accounts
           </p>
         </div>
-        <Button className="gap-2" onClick={() => setIsCreateModalOpen(true)}>
+        <Button className="gap-2" onClick={() => setIsCreateModalOpen(true)} aria-label="Create new user account">
           <Plus className="h-4 w-4" strokeWidth={1.5} />
           Create User
         </Button>
@@ -164,7 +164,13 @@ export default function UsersPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-muted/50 transition-colors">
+                  <tr 
+                    key={user.id} 
+                    className="hover:bg-muted/50 transition-colors focus-within:bg-muted/50"
+                    tabIndex={0}
+                    role="row"
+                    aria-label={`User ${user.full_name}, ${user.email}, ${user.is_active ? 'Active' : 'Inactive'}`}
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -186,13 +192,13 @@ export default function UsersPage() {
                     <td className="px-6 py-4">
                       {user.is_active ? (
                         <span className="inline-flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
-                          <div className="h-2 w-2 rounded-full bg-green-600 dark:bg-green-400" />
-                          Active
+                          <div className="h-2 w-2 rounded-full bg-green-600 dark:bg-green-400" aria-hidden="true" />
+                          <span>Active</span>
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
-                          <div className="h-2 w-2 rounded-full bg-red-600 dark:bg-red-400" />
-                          Inactive
+                          <div className="h-2 w-2 rounded-full bg-red-600 dark:bg-red-400" aria-hidden="true" />
+                          <span>Inactive</span>
                         </span>
                       )}
                     </td>
@@ -202,7 +208,7 @@ export default function UsersPage() {
                     <td className="px-6 py-4 text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label={`Actions for ${user.full_name}`}>
                             <MoreVertical className="h-4 w-4" strokeWidth={1.5} />
                           </Button>
                         </DropdownMenuTrigger>

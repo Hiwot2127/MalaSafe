@@ -21,9 +21,12 @@ import {
 export default function SettingsPage() {
   const { user } = useAuth();
 
-  const role = user?.role === 'admin' 
-    ? 'MOH Data Officer' 
-    : user?.role?.replace(/_/g, ' ').toUpperCase() ?? 'N/A';
+  const formatRole = (role?: string) => {
+    if (!role) return 'N/A';
+    return role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+  
+  const role = formatRole(user?.role);
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-14">

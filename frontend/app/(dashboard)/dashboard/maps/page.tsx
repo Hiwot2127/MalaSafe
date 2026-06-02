@@ -149,6 +149,17 @@ export default function MapsPage() {
                 ? 'Clear the risk filter or choose another color chip to show districts again.'
                 : 'Try switching to All regions or another region from the filter.'
             }
+            action={
+              selectedRisk ? (
+                <button
+                  type="button"
+                  onClick={() => setSelectedRisk(null)}
+                  className="mt-4 inline-flex items-center gap-2 rounded-full border border-border/60 bg-background px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:border-foreground/60 hover:bg-secondary/50"
+                >
+                  Clear risk filter
+                </button>
+              ) : undefined
+            }
           />
         ) : (
           <>
@@ -163,6 +174,7 @@ export default function MapsPage() {
                     type="button"
                     onClick={() => setSelectedRisk(null)}
                     aria-pressed={!selectedRisk}
+                    aria-label="Show all risk levels on map"
                     className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors ${
                       !selectedRisk
                         ? 'border-foreground bg-foreground text-background'
@@ -177,6 +189,7 @@ export default function MapsPage() {
                       type="button"
                       onClick={() => setSelectedRisk(item.key as RiskLevel)}
                       aria-pressed={selectedRisk === item.key}
+                      aria-label={`Filter map to show only ${item.label} risk districts`}
                       className={`inline-flex items-center gap-3 rounded-full border px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors ${
                         selectedRisk === item.key
                           ? 'border-foreground bg-secondary text-foreground'
@@ -194,17 +207,17 @@ export default function MapsPage() {
                           display: 'inline-block',
                         }}
                       />
-                      {item.label}
+                      <span>{item.label} risk</span>
                     </button>
                   ))}
                 </div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Click a color chip to filter the districts shown on the map.
+                <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Click a risk level to filter districts. Not color-only: each level is labeled with text.
                 </p>
               </div>
 
               <div className="absolute top-6 right-6 z-[400] flex items-center justify-center rounded-lg border border-border/40 bg-background/70 px-4 py-2.5 backdrop-blur-xl shadow-lg">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-foreground tabular-nums">
+                <span className="font-mono text-[11px] font-bold uppercase tracking-[0.20em] text-foreground tabular-nums">
                   {districtCount} districts loaded
                 </span>
               </div>
@@ -272,7 +285,7 @@ export default function MapsPage() {
                     return (
                       <tr
                         key={index}
-                        className="group border-b border-border/40 transition-all duration-300 last:border-0 hover:bg-primary/5 hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)] cursor-pointer"
+                        className="group border-b border-border/40 transition-all duration-300 last:border-0 hover:bg-primary/5 hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)]"
                       >
                         <Td>{p.district_name}</Td>
                         <Td muted>{p.region}</Td>

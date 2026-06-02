@@ -233,7 +233,7 @@ export default function Home() {
             {[
               {
                 icon: Map,
-                value: '1,082',
+                value: 'Live',
                 label: t.hero.stats.districts,
                 sublabel: t.hero.stats.districtsSub,
                 color: 'text-blue-600 dark:text-blue-400',
@@ -241,7 +241,7 @@ export default function Home() {
               },
               {
                 icon: TrendingUp,
-                value: '98.2%',
+                value: 'Trusted',
                 label: t.hero.stats.accuracy,
                 sublabel: t.hero.stats.accuracySub,
                 color: 'text-green-600 dark:text-green-400',
@@ -249,7 +249,7 @@ export default function Home() {
               },
               {
                 icon: Database,
-                value: '48K+',
+                value: 'Current',
                 label: t.hero.stats.records,
                 sublabel: t.hero.stats.recordsSub,
                 color: 'text-purple-600 dark:text-purple-400',
@@ -257,7 +257,7 @@ export default function Home() {
               },
               {
                 icon: Zap,
-                value: '4',
+                value: 'Ready',
                 label: t.hero.stats.aiModels,
                 sublabel: t.hero.stats.aiModelsSub,
                 color: 'text-amber-600 dark:text-amber-400',
@@ -478,7 +478,7 @@ export default function Home() {
                 },
                 {
                   icon: BarChart3,
-                  value: '3',
+                  value: '3 seasons',
                   label: t.coverage.seasons,
                   description: t.coverage.seasonsDesc,
                   color: 'text-purple-600 dark:text-purple-400',

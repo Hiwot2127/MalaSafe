@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Activity, Download, Sparkles } from 'lucide-react';
 import { useTrends } from '@/lib/api/queries';
 import { exportsApi } from '@/lib/api/exports';
+import { useToast } from '@/lib/hooks/use-toast';
 import type { TrendDataPoint } from '@/types/analytics';
 import {
   AlertBanner,
@@ -23,6 +24,7 @@ export default function AnalyticsPage() {
   const [trendType, setTrendType] = useState<TrendType>('monthly');
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const { toast } = useToast();
   
   const { data, isLoading, error } = useTrends({
     trend_type: trendType,
@@ -58,10 +60,21 @@ export default function AnalyticsPage() {
     try {
       setExporting(true);
       setExportError(null);
-      await exportsApi.downloadAnalyticsSummary();
+      const filename = await exportsApi.downloadAnalyticsSummary();
+      toast({
+        title: 'Report downloaded',
+        description: `${filename} has been saved to your downloads folder.`,
+        variant: 'success',
+      });
     } catch (err) {
       const maybe = err as { response?: { data?: { detail?: string } }; message?: string };
-      setExportError(maybe.response?.data?.detail || maybe.message || 'Failed to export PDF summary');
+      const errorMsg = maybe.response?.data?.detail || maybe.message || 'Failed to export PDF summary';
+      setExportError(errorMsg);
+      toast({
+        title: 'Export failed',
+        description: errorMsg,
+        variant: 'destructive',
+      });
     } finally {
       setExporting(false);
     }
@@ -82,6 +95,7 @@ export default function AnalyticsPage() {
             type="button"
             onClick={handleExport}
             disabled={exporting}
+            aria-label={exporting ? 'Exporting analytics summary PDF' : 'Export analytics summary PDF'}
             className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:border-foreground/60 hover:bg-secondary/50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download className="size-3.5" strokeWidth={1.75} aria-hidden />
@@ -137,7 +151,7 @@ export default function AnalyticsPage() {
           <AlertBanner
             tone="info"
             title="Weekly view coming soon"
-            description="The malaria reporting pipeline currently ingests monthly aggregates only. ISO-week granularity will land once the upload schema supports weekly rows — switch to Monthly above for the current view."
+            description="The malaria reporting pipeline currently ingests monthly aggregates only. Weekly (ISO-week) granularity is planned for a future update — switch to Monthly above for the current view."
           />
         ) : isLoading ? (
           <LoadingScreen caption="Loading series" />
@@ -154,10 +168,10 @@ export default function AnalyticsPage() {
               <div className="flex flex-col gap-4 bg-background/40 backdrop-blur-md p-6 group">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none" />
                 <div className="flex items-center justify-between relative z-10">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  <p className="font-mono text-[11px] uppercase tracking-[0.20em] text-muted-foreground">
                     Cases · oldest → most recent
                   </p>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary tabular-nums">
+                  <p className="font-mono text-[11px] uppercase tracking-[0.20em] text-primary tabular-nums">
                     {trends.length} mo
                   </p>
                 </div>
@@ -200,13 +214,13 @@ export default function AnalyticsPage() {
                     </defs>
                   </svg>
                 </div>
-                <div className="flex items-center gap-5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground relative z-10">
+                <div className="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.20em] text-muted-foreground relative z-10">
                   <span className="inline-flex items-center gap-2">
                     <span aria-hidden className="inline-block size-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.8)]" />
                     Cases
                   </span>
                 </div>
-                <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground tabular-nums relative z-10">
+                <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.20em] text-muted-foreground tabular-nums relative z-10">
                   <span>{trends[trends.length - 1]?.period ?? '-'}</span>
                   <span>{trends[0]?.period ?? '-'}</span>
                 </div>

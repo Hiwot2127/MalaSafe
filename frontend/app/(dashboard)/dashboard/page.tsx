@@ -202,7 +202,7 @@ export default function DashboardPage() {
         </div>
         <div className="grid grid-cols-1 gap-px bg-border/40 md:grid-cols-2 rounded-2xl overflow-hidden shadow-sm glass-panel">
           <div className="bg-background/40 backdrop-blur-md p-6">
-            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+            <p className="font-mono text-[11px] uppercase tracking-[0.20em] text-muted-foreground">
               Caseload signal
             </p>
             <p className="mt-3 max-w-prose font-sans text-sm leading-relaxed text-foreground">
@@ -210,7 +210,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="bg-background/40 backdrop-blur-md p-6">
-            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+            <p className="font-mono text-[11px] uppercase tracking-[0.20em] text-muted-foreground">
               Geographic concentration
             </p>
             <p className="mt-3 max-w-prose font-sans text-sm leading-relaxed text-foreground">
@@ -221,6 +221,7 @@ export default function DashboardPage() {
               <Link
                 href="/dashboard/maps"
                 className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-primary transition-all hover:bg-primary/10 hover:shadow-[0_0_12px_rgba(var(--primary-rgb),0.3)]"
+                aria-label="View risk surface map"
               >
                 View risk surface
                 <ArrowUpRight className="size-3.5" strokeWidth={1.5} aria-hidden />
@@ -229,6 +230,7 @@ export default function DashboardPage() {
                 <Link
                   href="/dashboard/alerts"
                   className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-primary-foreground shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)] transition-all hover:opacity-90 hover:shadow-[0_0_20px_rgba(var(--primary-rgb),0.8)]"
+                  aria-label={`Review ${activeAlerts} active alert${activeAlerts !== 1 ? 's' : ''}`}
                 >
                   Review alerts
                   <ArrowUpRight className="size-3.5" strokeWidth={1.5} aria-hidden />
@@ -238,7 +240,7 @@ export default function DashboardPage() {
           </div>
         </div>
         {(modelVersion || thresholdsVersion || riskThresholds) && (
-          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+          <p className="font-mono text-[11px] uppercase tracking-[0.20em] text-muted-foreground">
             {modelVersion ? <>Model {modelVersion}</> : null}
             {modelVersion && (thresholdsVersion || riskThresholds) ? ' · ' : null}
             {thresholdsVersion ? <>Thresholds {thresholdsVersion}</> : null}
@@ -292,9 +294,10 @@ export default function DashboardPage() {
               <Link
                 href={item.href}
                 className="relative flex h-full flex-col gap-2 rounded-2xl border border-border/40 bg-background/60 backdrop-blur-md p-6 transition-colors group-hover:bg-background/80 group-hover:border-primary/30"
+                aria-label={`Navigate to ${item.title}: ${item.description}`}
               >
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.20em] text-primary">
                     {item.eyebrow} · {item.index}
                   </span>
                   <ArrowUpRight

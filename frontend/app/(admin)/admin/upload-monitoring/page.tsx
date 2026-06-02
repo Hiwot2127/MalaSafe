@@ -125,7 +125,7 @@ export default function UploadMonitoringPage() {
             <option value="monthly_malaria">Monthly Malaria</option>
             <option value="climate">Climate Data</option>
           </select>
-          <Button variant="outline" size="sm" onClick={fetchUploads}>
+          <Button variant="outline" size="sm" onClick={fetchUploads} aria-label="Refresh upload list">
             Refresh
           </Button>
         </div>
@@ -204,10 +204,16 @@ export default function UploadMonitoringPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {uploads.map((upload) => (
-                  <tr key={upload.id} className="hover:bg-muted/50 transition-colors">
+                  <tr 
+                    key={upload.id} 
+                    className="hover:bg-muted/50 transition-colors focus-within:bg-muted/50"
+                    tabIndex={0}
+                    role="row"
+                    aria-label={`Upload ${upload.filename} by ${upload.uploaded_by_email}, status: ${upload.status}`}
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        {getStatusIcon(upload.status)}
+                        <span aria-hidden="true">{getStatusIcon(upload.status)}</span>
                         <div>
                           <p className="font-medium text-sm">{upload.filename}</p>
                           {upload.error_count && upload.error_count > 0 && (

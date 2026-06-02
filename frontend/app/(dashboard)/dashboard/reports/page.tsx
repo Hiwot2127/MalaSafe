@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
-import { Activity, FileText, ShieldAlert } from 'lucide-react';
+import { Activity, FileText, ShieldAlert, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import { reportsApi } from '@/lib/api/reports';
 import type { ReportsOverview } from '@/types/reports';
 import { parseAsString } from '@/lib/url-state';
@@ -53,14 +54,45 @@ export default function ReportsPage() {
     return () => controller.abort();
   }, [year]);
 
-  if (loading) {
-    return (
-      <div className="mx-auto flex max-w-6xl flex-col gap-12">
+  return (
+    <div className="mx-auto flex max-w-6xl flex-col gap-12">
+      <div className="flex flex-col gap-3">
+        <Link
+          href="/dashboard"
+          className="inline-flex w-fit items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
+          aria-label="Back to dashboard"
+        >
+          <ArrowLeft aria-hidden className="size-3.5" strokeWidth={1.5} />
+          Back to dashboard
+        </Link>
         <PageHeader
           eyebrow="MalaSafe · Reports"
           title="Annual surveillance report"
           description="Caseload and alerting posture by year and region."
         />
+      </div>
+      <LoadingScreen caption="Compiling report" />
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="mx-auto flex max-w-6xl flex-col gap-12">
+        <div className="flex flex-col gap-3">
+          <Link
+            href="/dashboard"
+            className="inline-flex w-fit items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Back to dashboard"
+          >
+            <ArrowLeft aria-hidden className="size-3.5" strokeWidth={1.5} />
+            Back to dashboard
+          </Link>
+          <PageHeader
+            eyebrow="MalaSafe · Reports"
+            title="Annual surveillance report"
+            description="Caseload and alerting posture by year and region."
+          />
+        </div>
         <LoadingScreen caption="Compiling report" />
       </div>
     );
@@ -68,19 +100,29 @@ export default function ReportsPage() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-12">
-      <PageHeader
-        eyebrow="MalaSafe · Reports"
-        title="Annual surveillance report"
-        description="Caseload and alerting posture for the selected reporting year."
-        actions={
-          <EditorialSelect
-            value={year}
-            onChange={setYear}
-            options={YEARS}
-            aria-label="Reporting year"
-          />
-        }
-      />
+      <div className="flex flex-col gap-3">
+        <Link
+          href="/dashboard"
+          className="inline-flex w-fit items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
+          aria-label="Back to dashboard"
+        >
+          <ArrowLeft aria-hidden className="size-3.5" strokeWidth={1.5} />
+          Back to dashboard
+        </Link>
+        <PageHeader
+          eyebrow="MalaSafe · Reports"
+          title="Annual surveillance report"
+          description="Caseload and alerting posture for the selected reporting year."
+          actions={
+            <EditorialSelect
+              value={year}
+              onChange={setYear}
+              options={YEARS}
+              aria-label="Reporting year"
+            />
+          }
+        />
+      </div>
 
       {error ? (
         <AlertBanner tone="error" title="Couldn't load the report" description={error} />

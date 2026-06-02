@@ -13,6 +13,8 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { canAccessDashboard } from '@/lib/rbac';
 import Sidebar from '@/components/layout/sidebar';
 import Header from '@/components/layout/header';
+import { ToastProvider } from '@/lib/hooks/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 
 export default function DashboardLayout({
   children,
@@ -56,14 +58,17 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-y-auto px-8 py-10">
-          {children}
-        </main>
+    <ToastProvider>
+      <div className="flex h-screen bg-background text-foreground">
+        <Sidebar />
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <Header />
+          <main className="flex-1 overflow-y-auto px-8 py-10">
+            {children}
+          </main>
+        </div>
+        <Toaster />
       </div>
-    </div>
+    </ToastProvider>
   );
 }

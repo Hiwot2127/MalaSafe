@@ -5,6 +5,7 @@ import { debounce, useQueryState, useQueryStates } from 'nuqs';
 import { Activity, MapPin, TrendingUp, ShieldAlert, Sparkles } from 'lucide-react';
 import { predictionsApi } from '@/lib/api/predictions';
 import { exportsApi } from '@/lib/api/exports';
+import { useToast } from '@/lib/hooks/use-toast';
 import type {
   DistrictRiskFeature,
   LatestPredictionsResponse,
@@ -112,6 +113,7 @@ export default function PredictionsPage() {
   const [latestLoading, setLatestLoading] = useState(true);
   const [latestError, setLatestError] = useState<string | null>(null);
   const [exportingDistrictPdf, setExportingDistrictPdf] = useState(false);
+  const { toast } = useToast();
 
   // ── Effects ────────────────────────────────────────────────────────────
 
@@ -255,10 +257,22 @@ export default function PredictionsPage() {
     if (!selectedDistrictId) return;
     try {
       setExportingDistrictPdf(true);
-      await exportsApi.downloadDistrictReport(selectedDistrictId);
+      const districtName = selectedFeature?.properties.district_name;
+      const filename = await exportsApi.downloadDistrictReport(selectedDistrictId, districtName);
+      toast({
+        title: 'Report downloaded',
+        description: `${filename} has been saved to your downloads folder.`,
+        variant: 'success',
+      });
     } catch (err) {
       const maybe = err as { response?: { data?: { detail?: string } }; message?: string };
-      setHistoryError(maybe.response?.data?.detail || maybe.message || 'Failed to export district PDF');
+      const errorMsg = maybe.response?.data?.detail || maybe.message || 'Failed to export district PDF';
+      setHistoryError(errorMsg);
+      toast({
+        title: 'Export failed',
+        description: errorMsg,
+        variant: 'destructive',
+      });
     } finally {
       setExportingDistrictPdf(false);
     }
@@ -360,7 +374,7 @@ export default function PredictionsPage() {
               <div className="flex flex-col gap-1 border-b border-border px-5 py-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex flex-col gap-1">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                    <p className="font-mono text-[11px] uppercase tracking-[0.20em] text-muted-foreground">
                       {selectedFeature?.properties.region}
                     </p>
                     <div className="flex items-baseline gap-3">
@@ -379,6 +393,7 @@ export default function PredictionsPage() {
                     type="button"
                     onClick={handleDistrictExport}
                     disabled={!selectedDistrictId || exportingDistrictPdf}
+                    aria-label={exportingDistrictPdf ? 'Exporting district report PDF' : `Export PDF report for ${selectedFeature?.properties.district_name || 'selected district'}`}
                     className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground transition-colors hover:border-foreground/60 hover:bg-secondary/50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Download className="size-3.5" strokeWidth={1.75} aria-hidden />
@@ -525,7 +540,17 @@ export default function PredictionsPage() {
                           setSelected(row.district_code);
                           setHistoryPage(1);
                         }}
-                        className="cursor-pointer border-b border-border/70 transition-colors last:border-0 hover:bg-secondary/40"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setSelected(row.district_code);
+                            setHistoryPage(1);
+                          }
+                        }}
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`View prediction history for ${row.district_name}, ${row.region}`}
+                        className="cursor-pointer border-b border-border/70 transition-colors last:border-0 hover:bg-secondary/40 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                       >
                         <Td className="font-sans text-foreground">{row.district_name}</Td>
                         <Td className="text-muted-foreground">{row.region}</Td>
@@ -540,7 +565,7 @@ export default function PredictionsPage() {
                               ) : null}
                             </div>
                             {row.prediction_period_label ? (
-                              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                              <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
                                 Forecast · {row.prediction_period_label}
                               </span>
                             ) : null}

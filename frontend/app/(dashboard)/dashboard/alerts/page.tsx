@@ -5,7 +5,7 @@ import { debounce, useQueryStates } from 'nuqs';
 import { alertsApi, type AlertsListResponse } from '@/lib/api/alerts';
 import { formatDateTime } from '@/lib/utils';
 import Link from 'next/link';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, ArrowLeft } from 'lucide-react';
 import {
   AlertBanner,
   EditorialCard,
