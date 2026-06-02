@@ -91,7 +91,7 @@ export default function MonthlyClosePage() {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-semibold text-sm">
-                      {format(new Date(close.target_month), "MMMM yyyy")}
+                      {format(new Date(close.month), "MMMM yyyy")}
                     </span>
                     <StatusBadge status={close.status} />
                   </div>
@@ -110,13 +110,13 @@ export default function MonthlyClosePage() {
                 {/* Close Details */}
                 <div className="rounded-lg border border-border bg-card p-6">
                   <h2 className="mb-4 text-xl font-semibold">
-                    {format(new Date(selectedClose.target_month), "MMMM yyyy")} Close
+                    {format(new Date(selectedClose.month), "MMMM yyyy")} Close
                   </h2>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <MetricCard
                       icon={Calendar}
                       label="Target Month"
-                      value={format(new Date(selectedClose.target_month), "MMM yyyy")}
+                      value={format(new Date(selectedClose.month), "MMM yyyy")}
                     />
                     <MetricCard
                       icon={FileText}
@@ -157,9 +157,9 @@ export default function MonthlyClosePage() {
                         <tbody>
                           {backtests.slice(0, 5).map((result) => (
                             <tr key={result.id} className="border-b border-border/50 last:border-0">
-                              <td className="py-3 text-sm">{result.district_name || "Unknown"}</td>
-                              <td className="py-3 text-sm">{result.predicted_cases?.toFixed(0) || "-"}</td>
-                              <td className="py-3 text-sm">{result.actual_cases || "-"}</td>
+                              <td className="py-3 text-sm">{result.district_name || result.district_id.substring(0, 8) + "..."}</td>
+                              <td className="py-3 text-sm">{result.predicted_positive?.toFixed(0) || "-"}</td>
+                              <td className="py-3 text-sm">{result.actual_positive || "-"}</td>
                               <td className="py-3 text-sm">
                                 {result.abs_error ? `${result.abs_error.toFixed(0)} (${result.pct_error?.toFixed(1)}%)` : "-"}
                               </td>
@@ -193,9 +193,9 @@ export default function MonthlyClosePage() {
                         >
                           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" strokeWidth={1.5} />
                           <div className="flex-1">
-                            <p className="font-medium text-sm">{drift.feature_name}</p>
+                            <p className="font-medium text-sm capitalize">{drift.metric}</p>
                             <p className="mt-1 text-xs text-muted-foreground">
-                              Severity: {drift.severity} | Drift Score: {drift.drift_score?.toFixed(3) || "N/A"}
+                              Severity: {drift.severity} | Z-Score: {drift.z_score?.toFixed(3) || "N/A"}
                             </p>
                           </div>
                         </div>

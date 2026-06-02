@@ -49,12 +49,13 @@ async def upload_monthly_malaria_data(
     current_user: User = Depends(require_official)
 ):
     """
-    Upload monthly malaria data CSV file (DHIS2 facility-grain).
+    Upload monthly malaria data CSV file (DHIS2 org-unit or district-code keyed).
 
     **Authorization:** Officials only (not public users)
 
     **CSV Format:**
-    - organisationunitid: DHIS2 organisation unit ID (e.g., `JgBKioqJo5h`)
+    - organisationunitid: DHIS2 organisation unit ID (e.g., `JgBKioqJo5h`) OR
+    - district_code: Ethiopian woreda code (e.g., `ET120101`)
     - Eth_Month_Year: Ethiopian month + year label (e.g., `Ginbot 2016`)
     - Positive: Number of positive cases (>=0)
     - Tests: Number of tests performed (>=0)
@@ -66,13 +67,20 @@ async def upload_monthly_malaria_data(
     JgBKioqJo5h,Ginbot 2016,17,89,823
     JgBKioqJo5h,Sene 2016,5,42,510
     ```
+    or
+    ```csv
+    district_code,Eth_Month_Year,Travel,Positive,Tests
+    ET120101,Tahsas 2018,11,64,598
+    ET120102,Tahsas 2018,9,57,552
+    ```
 
     **Validation:**
-    - Required columns: organisationunitid, Eth_Month_Year, Positive, Tests
+    - Required columns: Eth_Month_Year, Positive, Tests, plus one identifier
+      column (`organisationunitid` or `district_code`)
     - Numeric values must be valid (Positive/Tests/Travel >= 0)
     - Eth_Month_Year must be a valid Ethiopian month + EC year
-    - organisationunitid must exist in the districts catalog
-    - Duplicate detection (same DHIS2 org unit, month, year — facility rows
+    - identifier must exist in the districts catalog
+    - Duplicate detection (same identifier, month, year — facility rows
       are aggregated to the woreda level before duplicate check)
 
     **Returns:**

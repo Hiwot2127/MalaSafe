@@ -27,9 +27,12 @@ export interface LocalPreviewResult {
 }
 
 const REQUIRED_BY_KIND: Record<UploadKind, string[]> = {
-  monthly: ["organisationunitid", "eth_month_year", "travel", "positive", "tests"],
+  monthly: ["eth_month_year", "positive", "tests"],
   climate: ["district_code", "date", "rainfall", "temperature"],
 };
+
+// For monthly uploads, at least ONE identifier column is required
+const MONTHLY_IDENTIFIER_OPTIONS = ["organisationunitid", "district_code"];
 
 const SMALL_UPLOAD_MAX_MONTHS = 2;
 
@@ -70,6 +73,16 @@ export async function parseLocalPreview(
             error: `Missing required column${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}`,
           });
         }
+        
+        // For monthly uploads, verify at least one identifier column exists
+        if (kind === "monthly" && fileErrors.length === 0) {
+          const hasIdentifier = MONTHLY_IDENTIFIER_OPTIONS.some(col => headers.includes(col));
+          if (!hasIdentifier) {
+            fileErrors.push({
+              error: `Missing required identifier column: include organisationunitid or district_code`,
+            });
+          }
+        }
 
         if (fileErrors.length === 0) {
           rows.forEach((row, idx) => {
@@ -84,6 +97,21 @@ export async function parseLocalPreview(
                   column: col,
                   value: "empty",
                   error: "Required field cannot be empty",
+                });
+              }
+            }
+            
+            // For monthly uploads, check that at least one identifier is present
+            if (kind === "monthly") {
+              const hasIdentifier = MONTHLY_IDENTIFIER_OPTIONS.some(col => 
+                headers.includes(col) && row[col] && row[col] !== ""
+              );
+              if (!hasIdentifier) {
+                issues.push({
+                  row: rowNumber,
+                  column: "identifier",
+                  value: "empty",
+                  error: "Row must have organisationunitid or district_code",
                 });
               }
             }

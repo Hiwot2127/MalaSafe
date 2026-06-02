@@ -80,16 +80,16 @@ class BacktestService:
         interval_hits: list[bool] = []
 
         for actual, pred in rows:
-            abs_err = abs(float(actual.cases) - float(pred.prediction_score))
+            abs_err = abs(float(actual.positive) - float(pred.prediction_score))
             pct_err: Optional[float] = None
-            if actual.cases > 0:
-                pct_err = abs_err / float(actual.cases) * 100.0
+            if actual.positive > 0:
+                pct_err = abs_err / float(actual.positive) * 100.0
                 pct_errors.append(pct_err)
             abs_errors.append(abs_err)
 
             within_q10_q90: Optional[bool] = None
             if pred.q10 is not None and pred.q90 is not None:
-                within_q10_q90 = pred.q10 <= float(actual.cases) <= pred.q90
+                within_q10_q90 = pred.q10 <= float(actual.positive) <= pred.q90
                 interval_hits.append(within_q10_q90)
 
             self.db.add(BacktestResult(
@@ -98,8 +98,8 @@ class BacktestService:
                 model_version_id=active_version_id,
                 district_id=actual.district_id,
                 month=month,
-                actual_cases=int(actual.cases),
-                predicted_cases=float(pred.prediction_score),
+                actual_positive=int(actual.positive),
+                predicted_positive=float(pred.prediction_score),
                 predicted_risk=pred.risk_level,
                 q10=pred.q10,
                 q90=pred.q90,

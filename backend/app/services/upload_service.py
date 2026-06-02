@@ -130,17 +130,16 @@ class UploadService:
         """
         self.db = db
         self.user_id = user_id
-        # Climate uploads still use the legacy code-based DistrictMapper.
-        self.district_mapper = DistrictMapper(db)
-        # Malaria monthly uploads use the new DHIS2 org-unit mapper.
+        # Support both organisationunitid (facility-level) and district_code uploads
         self.orgunit_mapper = OrgUnitMapper(db)
+        self.district_mapper = DistrictMapper(db)
     
     async def _validate_monthly_rows(
         self,
         df: pd.DataFrame,
         row_errors: List[Dict],
     ) -> Tuple[List[Dict], List[Dict], List[Dict], int]:
-        """Aggregate monthly rows to woreda-month, run org-unit + dup checks.
+        """Validate monthly rows and check for duplicates.
 
         Shared between the real upload path and the dry-run preview path so both
         produce identical outcomes.
@@ -150,6 +149,7 @@ class UploadService:
              skipped_count)
         """
         await self.orgunit_mapper.load()
+        await self.district_mapper.load_districts()
 
         bad_rows: Set[int] = {int(e["row"]) for e in row_errors if "row" in e}
         validation_errors: List[Dict] = list(row_errors)
@@ -159,13 +159,31 @@ class UploadService:
         skipped_count = len(bad_rows)
 
         # Drop bad rows (NaN month/year) before aggregating so they don't
-        # contaminate the (orgunitid, year, month) groups.
+        # contaminate the (identifier, year, month) groups.
         if bad_rows:
             keep_mask = ~df.index.to_series().add(2).isin(bad_rows)
             clean_df = df.loc[keep_mask]
         else:
             clean_df = df
-        clean_df = clean_df.dropna(subset=['organisationunitid', 'month', 'year'])
+        if 'district_code' not in clean_df.columns:
+            clean_df = clean_df.assign(district_code=None)
+        clean_df = clean_df.assign(
+            organisationunitid=clean_df['organisationunitid'].astype(str).str.strip(),
+            district_code=clean_df['district_code'].astype(str).str.strip().str.upper(),
+        )
+        clean_df = clean_df.assign(
+            identifier_type=clean_df['organisationunitid'].apply(
+                lambda v: 'organisationunitid' if v and v.lower() != 'none' else 'district_code'
+            ),
+            identifier_value=clean_df.apply(
+                lambda r: r['organisationunitid']
+                if r['organisationunitid'] and str(r['organisationunitid']).lower() != 'none'
+                else r['district_code'],
+                axis=1,
+            ),
+        )
+        clean_df = clean_df.dropna(subset=['identifier_value', 'month', 'year'])
+        clean_df = clean_df[clean_df['identifier_value'].astype(str).str.strip() != '']
 
         if clean_df.empty:
             return records_to_create, validation_errors, duplicate_errors, skipped_count
@@ -175,30 +193,35 @@ class UploadService:
         agg = (
             clean_df
             .assign(
-                organisationunitid=clean_df['organisationunitid'].astype(str).str.strip(),
                 month=clean_df['month'].astype(int),
                 year=clean_df['year'].astype(int),
             )
-            .groupby(['organisationunitid', 'year', 'month'], as_index=False)
+            .groupby(['identifier_type', 'identifier_value', 'year', 'month'], as_index=False)
             .agg(positive=('positive', 'sum'),
                  tests=('tests', 'sum'),
                  travel=('travel', 'sum'))
         )
 
         for _, row in agg.iterrows():
-            orgunitid = str(row['organisationunitid']).strip()
+            identifier_type = str(row['identifier_type']).strip()
+            identifier_value = str(row['identifier_value']).strip()
             month = int(row['month'])
             year = int(row['year'])
 
-            is_valid, district_id, error_msg = await self.orgunit_mapper.validate(orgunitid)
+            if identifier_type == 'organisationunitid':
+                is_valid, district_id, error_msg = await self.orgunit_mapper.validate(identifier_value)
+                error_column = "organisationunitid"
+            else:
+                is_valid, district_id, error_msg = await self.district_mapper.validate_district_code(identifier_value)
+                error_column = "district_code"
             if not is_valid:
                 validation_errors.append({
                     "row": 0,  # aggregated row — original row index no longer applies
-                    "column": "organisationunitid",
-                    "value": orgunitid,
+                    "column": error_column,
+                    "value": identifier_value,
                     "error": error_msg,
                     "row_data": {
-                        "organisationunitid": orgunitid,
+                        error_column: identifier_value,
                         "month": month,
                         "year": year,
                     },
@@ -218,10 +241,10 @@ class UploadService:
                 duplicate_errors.append({
                     "row": 0,
                     "column": "duplicate",
-                    "value": f"{orgunitid}, {month}/{year}",
+                    "value": f"{identifier_value}, {month}/{year}",
                     "error": "Duplicate record already exists",
                     "row_data": {
-                        "organisationunitid": orgunitid,
+                        error_column: identifier_value,
                         "month": month,
                         "year": year,
                     },
@@ -309,13 +332,20 @@ class UploadService:
             {(int(r['year']), int(r['month'])) for _, r in df_resolved.iterrows()}
         )
         month_span = len(distinct_months)
-        # Distinct DHIS2 org units in the upload — used to gate whether this
+        # Distinct identifiers in the upload — used to gate whether this
         # upload counts as an "official monthly close batch" worth running
         # the country-wide forecast refresh against.
         distinct_districts = {
-            str(r['organisationunitid']).strip()
+            (
+                str(r['organisationunitid']).strip()
+                if r.get('organisationunitid') is not None and str(r.get('organisationunitid')).strip()
+                else str(r.get('district_code') or '').strip().upper()
+            )
             for _, r in df_resolved.iterrows()
-            if r.get('organisationunitid') is not None
+            if (
+                (r.get('organisationunitid') is not None and str(r.get('organisationunitid')).strip())
+                or (r.get('district_code') is not None and str(r.get('district_code')).strip())
+            )
         }
         district_span = len(distinct_districts)
 

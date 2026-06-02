@@ -20,6 +20,7 @@ class District(Base):
     # OCHA ADM3 P-code (ETxxxxxx). Same value as district_code when seeded from
     # reference_geo_names.csv, kept separately for clarity and migration safety.
     adm3_pcode = Column(String(20), unique=True, nullable=True, index=True)
+    organisationunitid = Column(String(50), nullable=True, index=True)  # DHIS2 facility/org unit ID
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
     elevation_m = Column(Float, nullable=True)

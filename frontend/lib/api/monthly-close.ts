@@ -29,9 +29,10 @@ export interface BacktestRow {
   monthly_close_id: string;
   model_version_id: string | null;
   district_id: string;
+  district_name?: string; // Optional, added by API join
   month: string;
-  actual_cases: number;
-  predicted_cases: number | null;
+  actual_positive: number;
+  predicted_positive: number | null;
   predicted_risk: string | null;
   q10: number | null;
   q90: number | null;
@@ -45,7 +46,7 @@ export interface DriftRow {
   id: string;
   monthly_close_id: string;
   district_id: string;
-  metric: "cases" | "rainfall" | "temp" | "humidity";
+  metric: "positive" | "rainfall" | "temp" | "humidity";
   observed_value: number;
   baseline_mean: number;
   baseline_std: number;
@@ -68,12 +69,60 @@ export interface PageParams {
 }
 
 export const monthlyCloseApi = {
+  listMonthlyCloses: async (
+    params: PageParams & { status?: string; month?: string } = {},
+    options: { signal?: AbortSignal } = {},
+  ): Promise<MonthlyCloseDetail[]> => {
+    const { status, month, skip, limit } = params;
+    const query: Record<string, unknown> = {
+      skip: skip ?? 0,
+      limit: limit ?? 50,
+    };
+    if (status) query.status = status;
+    if (month) query.month = month;
+    const r = await apiClient.get(`/monthly-close`, {
+      params: query,
+      signal: options.signal,
+    });
+    return r.data.items; // API returns {items: [...]}
+  },
+
   get: async (
     id: string,
     options: { signal?: AbortSignal } = {},
   ): Promise<MonthlyCloseDetail> => {
     const r = await apiClient.get(`/monthly-close/${id}`, { signal: options.signal });
     return r.data;
+  },
+
+  getBacktestResults: async (
+    id: string,
+    params: PageParams = {},
+    options: { signal?: AbortSignal } = {},
+  ): Promise<BacktestRow[]> => {
+    const r = await apiClient.get(`/monthly-close/${id}/backtest`, {
+      params: { skip: params.skip ?? 0, limit: params.limit ?? 50 },
+      signal: options.signal,
+    });
+    return r.data.items; // Extract items from paginated response
+  },
+
+  getDriftFindings: async (
+    id: string,
+    params: PageParams & { severity?: "warn" | "critical" } = {},
+    options: { signal?: AbortSignal } = {},
+  ): Promise<DriftRow[]> => {
+    const { severity, skip, limit } = params;
+    const query: Record<string, unknown> = {
+      skip: skip ?? 0,
+      limit: limit ?? 50,
+    };
+    if (severity) query.severity = severity;
+    const r = await apiClient.get(`/monthly-close/${id}/drift`, {
+      params: query,
+      signal: options.signal,
+    });
+    return r.data.items; // Extract items from paginated response
   },
 
   getBacktest: async (

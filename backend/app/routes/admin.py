@@ -495,7 +495,9 @@ async def list_upload_metadata(
     
     **Authorization:** Admin only
     """
-    query = select(UploadedFile).order_by(desc(UploadedFile.created_at)).limit(limit)
+    from sqlalchemy.orm import selectinload
+    
+    query = select(UploadedFile).options(selectinload(UploadedFile.uploader)).order_by(desc(UploadedFile.created_at)).limit(limit)
     
     if upload_type:
         query = query.where(UploadedFile.upload_type == upload_type)
@@ -643,7 +645,7 @@ async def get_dashboard_summary(
     first_day_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     monthly_uploads_result = await db.execute(
         select(func.count(UploadedFile.id)).where(
-            UploadedFile.uploaded_at >= first_day_of_month
+            UploadedFile.created_at >= first_day_of_month
         )
     )
     monthly_uploads = monthly_uploads_result.scalar()
@@ -715,7 +717,7 @@ async def get_system_health(
     # Uploads last 24h
     yesterday = datetime.utcnow() - timedelta(days=1)
     uploads_24h_result = await db.execute(
-        select(func.count(UploadedFile.id)).where(UploadedFile.uploaded_at >= yesterday)
+        select(func.count(UploadedFile.id)).where(UploadedFile.created_at >= yesterday)
     )
     uploads_last_24h = uploads_24h_result.scalar()
     

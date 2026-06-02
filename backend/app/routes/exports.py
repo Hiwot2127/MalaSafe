@@ -104,13 +104,25 @@ async def export_analytics_summary(
     
     cutoff_date = datetime.utcnow() - timedelta(days=days)
     
-    # Get summary statistics
-    from sqlalchemy import func
+    # Calculate cutoff year and month
+    cutoff_year = cutoff_date.year
+    cutoff_month = cutoff_date.month
     
-    # Total positive cases
+    # Get summary statistics
+    from sqlalchemy import func, or_, and_
+    
+    # Total positive cases (filter by year/month instead of date)
     total_positive_result = await db.execute(
         select(func.sum(MalariaData.positive))
-        .where(MalariaData.date >= cutoff_date)
+        .where(
+            or_(
+                MalariaData.year > cutoff_year,
+                and_(
+                    MalariaData.year == cutoff_year,
+                    MalariaData.month >= cutoff_month
+                )
+            )
+        )
     )
     total_positive = total_positive_result.scalar() or 0
     
@@ -144,7 +156,15 @@ async def export_analytics_summary(
             func.count(func.distinct(MalariaData.district_id)).label("district_count")
         )
         .join(MalariaData, District.id == MalariaData.district_id)
-        .where(MalariaData.date >= cutoff_date)
+        .where(
+            or_(
+                MalariaData.year > cutoff_year,
+                and_(
+                    MalariaData.year == cutoff_year,
+                    MalariaData.month >= cutoff_month
+                )
+            )
+        )
         .group_by(District.region)
         .order_by(func.sum(MalariaData.positive).desc())
     )
@@ -159,16 +179,25 @@ async def export_analytics_summary(
         for row in regional_result.all()
     ]
     
-    # Get trends (weekly aggregation)
+    # Get trends (monthly aggregation since we don't have a date field)
     from sqlalchemy import extract
     trends_result = await db.execute(
         select(
-            func.date_trunc('week', MalariaData.date).label("week"),
+            MalariaData.year,
+            MalariaData.month,
             func.sum(MalariaData.positive).label("total_cases")
         )
-        .where(MalariaData.date >= cutoff_date)
-        .group_by(func.date_trunc('week', MalariaData.date))
-        .order_by(func.date_trunc('week', MalariaData.date).desc())
+        .where(
+            or_(
+                MalariaData.year > cutoff_year,
+                and_(
+                    MalariaData.year == cutoff_year,
+                    MalariaData.month >= cutoff_month
+                )
+            )
+        )
+        .group_by(MalariaData.year, MalariaData.month)
+        .order_by(MalariaData.year.desc(), MalariaData.month.desc())
     )
     
     trends_list = trends_result.all()
@@ -179,7 +208,7 @@ async def export_analytics_summary(
         change_pct = ((current_cases - prev_cases) / prev_cases * 100) if prev_cases > 0 else 0
         
         trends_data.append({
-            "period": row.week.strftime("%Y-%m-%d") if row.week else "N/A",
+            "period": f"{row.year}-{row.month:02d}",
             "total_cases": current_cases,
             "change_percentage": change_pct
         })
