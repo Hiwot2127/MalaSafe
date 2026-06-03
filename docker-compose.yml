@@ -99,6 +99,8 @@ services:
         sleep 5 &&
         echo 'Running migrations...' &&
         alembic upgrade head &&
+        echo 'Seeding database (first run only)...' &&
+        python scripts/seed_all.py &&
         echo 'Starting development server...' &&
         uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
       "
