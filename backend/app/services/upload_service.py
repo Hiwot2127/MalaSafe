@@ -4,7 +4,7 @@ Service for handling CSV uploads and data processing.
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
-from app.models import MalariaData, ClimateData, UploadedFile, District, MonthlyClose
+from app.models import MalariaData, ClimateData, UploadedFile, District, MonthlyClose, OrgUnitMapping
 from app.utils.csv_parser import MalariaCSVParser, ClimateCSVParser
 from app.utils.district_mapper import DistrictMapper
 from app.utils.season_generator import SeasonGenerator
@@ -65,53 +65,44 @@ def _jsonable(v: Any) -> Any:
 class OrgUnitMapper:
     """Maps DHIS2 `organisationunitid` strings to internal `District.id` UUIDs.
 
-    Embedded inline (rather than in a new util file) to keep this phase's edit
-    surface to the 4 files in scope. Will graduate to `app/utils/` once the
-    Phase A schema migration adds `District.organisationunitid`.
+    The authoritative source is the `org_unit_mappings` table, which holds the
+    full many-org-units-to-one-district relationship. `districts.organisationunitid`
+    (one id per district) is merged in as a fallback for back-compat.
     """
 
     def __init__(self, db: AsyncSession):
         self.db = db
         self._loaded = False
         self._by_orgunit: Dict[str, Any] = {}
-        self._has_orgunit_column = hasattr(District, "organisationunitid")
 
     async def load(self) -> None:
-        """Load all districts and index by organisationunitid.
-
-        # TODO(phase-a): switch from district_name fallback to
-        # districts.organisationunitid once Phase A adds the column.
-        """
+        """Index every known DHIS2 org unit id -> district_id."""
         if self._loaded:
             return
+        # Primary source: org_unit_mappings (many org units -> one district).
+        result = await self.db.execute(select(OrgUnitMapping))
+        for m in result.scalars().all():
+            if m.org_unit_id:
+                self._by_orgunit[str(m.org_unit_id).strip()] = m.district_id
+        # Back-compat: also honor districts.organisationunitid (single id per district).
         result = await self.db.execute(select(District))
-        rows = result.scalars().all()
-        if self._has_orgunit_column:
-            for d in rows:
-                ou = getattr(d, "organisationunitid", None)
-                if ou:
-                    self._by_orgunit[str(ou).strip()] = d.id
-        else:
+        for d in result.scalars().all():
+            ou = getattr(d, "organisationunitid", None)
+            if ou:
+                self._by_orgunit.setdefault(str(ou).strip(), d.id)
+        if not self._by_orgunit:
             logger.warning(
-                "OrgUnitMapper: District model has no organisationunitid column — "
-                "all rows will fail validation until Phase A migration lands."
+                "OrgUnitMapper: no org unit mappings found — all organisationunitid "
+                "uploads will fail. Run scripts/seed_orgunit_mappings.py."
             )
         self._loaded = True
 
     async def validate(self, orgunitid: str) -> Tuple[bool, Optional[Any], Optional[str]]:
-        """Resolve an orgunitid to (is_valid, district_id, error_msg).
-
-        # TODO(phase-a): fallback path always fails until District.organisationunitid exists.
-        """
+        """Resolve an orgunitid to (is_valid, district_id, error_msg)."""
         await self.load()
         key = (orgunitid or "").strip()
         if not key:
             return False, None, "organisationunitid is empty"
-        if not self._has_orgunit_column:
-            return False, None, (
-                "organisationunitid mapping unavailable: districts table has no "
-                "organisationunitid column. Phase A migration required."
-            )
         if key in self._by_orgunit:
             return True, self._by_orgunit[key], None
         return False, None, f"Unknown organisationunitid: {key}"

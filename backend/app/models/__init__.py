@@ -1,5 +1,6 @@
 from .user import User, UserRole
 from .district import District
+from .org_unit_mapping import OrgUnitMapping
 from .malaria_data import MalariaData
 from .climate_data import ClimateData
 from .district_environment import DistrictEnvironment
@@ -17,6 +18,7 @@ __all__ = [
     "User",
     "UserRole",
     "District",
+    "OrgUnitMapping",
     "MalariaData",
     "ClimateData",
     "DistrictEnvironment",

@@ -23,7 +23,10 @@ if settings.ENVIRONMENT == "production":
         db_url += "&sslmode=require"
     else:
         db_url += "?sslmode=require"
-config.set_main_option("sqlalchemy.url", db_url)
+# Escape literal '%' (e.g. URL-encoded passwords like %2F/%24) so ConfigParser
+# does not treat them as interpolation syntax. SQLAlchemy still receives the
+# original URL. No-op for URLs without '%'.
+config.set_main_option("sqlalchemy.url", db_url.replace("%", "%%"))
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
