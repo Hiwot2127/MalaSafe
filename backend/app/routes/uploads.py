@@ -6,8 +6,9 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status,
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
-from app.models import User
+from app.models import User, District, OrgUnitMapping
 from app.utils.dependencies import get_current_user, require_official
+from sqlalchemy import select
 from app.schemas.upload import UploadResponse, UploadError, StageResult, UploadPreviewResponse
 from app.services.upload_service import UploadService
 from app.middleware.rate_limit import limiter
@@ -17,6 +18,46 @@ import csv
 from loguru import logger
 
 router = APIRouter(prefix="/uploads", tags=["Uploads"])
+
+
+@router.get(
+    "/geo-names",
+    summary="Lookup woreda (district) names for upload identifiers",
+)
+async def get_geo_names(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Identifier -> woreda name maps for the upload preview EDA.
+
+    The CSV only carries opaque identifiers (DHIS2 `organisationunitid` or a
+    woreda `district_code`); the human-readable woreda name lives in the DB.
+    This returns both lookups so the client-side EDA can label charts by name.
+
+    - `by_org_unit`: DHIS2 organisationunitid -> district_name
+      (org_unit_mappings is the authoritative many-to-one source; the single
+      `districts.organisationunitid` is merged in as a fallback)
+    - `by_district_code`: woreda code (uppercased) -> district_name
+    """
+    districts = (await db.execute(select(District))).scalars().all()
+    id_to_name = {d.id: d.district_name for d in districts}
+
+    by_org_unit: dict[str, str] = {}
+    by_district_code: dict[str, str] = {}
+    for d in districts:
+        if d.district_code:
+            by_district_code[str(d.district_code).strip().upper()] = d.district_name
+        ou = getattr(d, "organisationunitid", None)
+        if ou:
+            by_org_unit.setdefault(str(ou).strip(), d.district_name)
+
+    mappings = (await db.execute(select(OrgUnitMapping))).scalars().all()
+    for m in mappings:
+        name = id_to_name.get(m.district_id)
+        if m.org_unit_id and name:
+            by_org_unit[str(m.org_unit_id).strip()] = name
+
+    return {"by_org_unit": by_org_unit, "by_district_code": by_district_code}
 
 
 # Background task for AI prediction processing

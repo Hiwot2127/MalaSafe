@@ -24,6 +24,9 @@ export interface LocalPreviewResult {
   fileErrors: UploadError[];
   distinctMonths: string[]; // ISO YYYY-MM, monthly uploads only
   predictedMode?: "close" | "backfill"; // monthly uploads only
+  // Every parsed data row (header-normalized), valid or not. The EDA panel
+  // computes quality/stats over the full set, not just the valid sample.
+  allRows: Array<Record<string, string>>;
 }
 
 const REQUIRED_BY_KIND: Record<UploadKind, string[]> = {
@@ -168,6 +171,7 @@ export async function parseLocalPreview(
           fileErrors,
           distinctMonths,
           predictedMode,
+          allRows: rows,
         });
       },
       error: (err) => {
@@ -177,6 +181,7 @@ export async function parseLocalPreview(
           invalidRows: [],
           fileErrors: [{ error: `Could not parse CSV: ${err.message}` }],
           distinctMonths: [],
+          allRows: [],
         });
       },
     });
