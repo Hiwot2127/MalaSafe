@@ -1,60 +1,73 @@
 'use client';
 
-import { useState } from 'react';
-import { Activity, Download, Sparkles } from 'lucide-react';
-import { useTrends } from '@/lib/api/queries';
+import { useMemo, useState } from 'react';
+import { Download } from 'lucide-react';
+import { useDashboard, useRiskMap, useTrends } from '@/lib/api/queries';
 import { exportsApi } from '@/lib/api/exports';
 import { useToast } from '@/lib/hooks/use-toast';
 import type { TrendDataPoint } from '@/types/analytics';
 import {
   AlertBanner,
-  EditorialCard,
   EditorialSelect,
   EmptyState,
   LoadingScreen,
-  Metric,
   PageHeader,
   SectionHeader,
-  StatCard,
 } from '@/components/editorial';
+import { CHART, RISK } from '@/components/charts/chart-frame';
+import {
+  buildRegionRiskMatrix,
+  prepareTrendSeries,
+  regionOptions,
+  riskDistribution,
+  scatterPoints,
+  topN,
+} from '@/lib/analytics-derive';
+import { KpiRow } from '@/components/analytics/kpi-row';
+import { CaseTrendChart } from '@/components/analytics/case-trend-chart';
+import { RegionBar } from '@/components/analytics/region-bar';
+import { RegionRiskHeatmap } from '@/components/analytics/region-risk-heatmap';
+import { RiskDistributionDonut } from '@/components/analytics/risk-distribution-donut';
+import { ConfidenceScatter } from '@/components/analytics/confidence-scatter';
+import { TopDistrictsBar } from '@/components/analytics/top-districts-bar';
 
 type TrendType = 'weekly' | 'monthly';
 
 export default function AnalyticsPage() {
   const [trendType, setTrendType] = useState<TrendType>('monthly');
+  const [region, setRegion] = useState<string>('');
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const { toast } = useToast();
-  
-  const { data, isLoading, error } = useTrends({
-    trend_type: trendType,
-    limit: 20,
-  });
 
-  const trends = (data?.data ?? []) as TrendDataPoint[];
+  const regionParam = region || undefined;
 
-  const totals = trends.reduce(
-    (acc: { positive: number }, t: TrendDataPoint) => {
-      acc.positive += t.positive;
-      return acc;
-    },
-    { positive: 0 },
+  // Region-scoped queries drive the trend, KPIs and risk views.
+  const trendsQuery = useTrends({ trend_type: trendType, limit: 24, region: regionParam });
+  const dashboardQuery = useDashboard(undefined, undefined, regionParam);
+  const riskQuery = useRiskMap(undefined, regionParam);
+  // An unfiltered dashboard snapshot powers the region selector and the
+  // by-region charts, which the backend blanks out when a single region is set.
+  const allRegionsQuery = useDashboard();
+
+  const trends = useMemo(
+    () => (trendsQuery.data?.data ?? []) as TrendDataPoint[],
+    [trendsQuery.data],
+  );
+  const trendSeries = useMemo(() => prepareTrendSeries(trends), [trends]);
+  const totalPositive = useMemo(
+    () => trends.reduce((sum, t) => sum + t.positive, 0),
+    [trends],
   );
 
-  const seriesMax = trends.reduce((m: number, t: TrendDataPoint) => Math.max(m, t.positive), 0);
-  const buildPoints = (key: 'positive') =>
-    trends.length
-      ? trends
-        .slice()
-        .reverse()
-        .map((t: TrendDataPoint, i: number) => {
-          const x = (i / Math.max(trends.length - 1, 1)) * 100;
-          const y = seriesMax === 0 ? 50 : 50 - (t[key] / seriesMax) * 45;
-          return `${x.toFixed(2)},${y.toFixed(2)}`;
-        })
-        .join(' ')
-      : '';
-  const casesPoints = buildPoints('positive');
+  const byRegion = allRegionsQuery.data?.by_region ?? [];
+  const regionSelectOptions = useMemo(() => regionOptions(byRegion), [byRegion]);
+
+  const features = useMemo(() => riskQuery.data?.features ?? [], [riskQuery.data]);
+  const riskMatrix = useMemo(() => buildRegionRiskMatrix(features), [features]);
+  const distribution = useMemo(() => riskDistribution(features), [features]);
+  const scatter = useMemo(() => scatterPoints(features), [features]);
+  const topDistricts = useMemo(() => topN(features, 10), [features]);
 
   const handleExport = async () => {
     try {
@@ -70,26 +83,20 @@ export default function AnalyticsPage() {
       const maybe = err as { response?: { data?: { detail?: string } }; message?: string };
       const errorMsg = maybe.response?.data?.detail || maybe.message || 'Failed to export PDF summary';
       setExportError(errorMsg);
-      toast({
-        title: 'Export failed',
-        description: errorMsg,
-        variant: 'destructive',
-      });
+      toast({ title: 'Export failed', description: errorMsg, variant: 'destructive' });
     } finally {
       setExporting(false);
     }
   };
 
+  const isMonthly = trendType === 'monthly';
+
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-14 animate-fade-in">
       <PageHeader
-        eyebrow="MalaSafe · Trends"
+        eyebrow="MalaSafe · Analytics"
         title="Analytics"
-        description={
-          trendType === 'weekly'
-            ? 'Week-over-week case movement. (Weekly view is planned — the current data pipeline is monthly-only.)'
-            : 'Month-over-month case movement. Cases are aggregated from the monthly malaria CSV uploads (columns: positive, tests, travel).'
-        }
+        description="Case trends, regional burden, and model risk — aggregated from the monthly malaria CSV uploads and the latest prediction run."
         actions={
           <button
             type="button"
@@ -108,180 +115,203 @@ export default function AnalyticsPage() {
         <AlertBanner tone="error" title="Couldn't export PDF" description={exportError} />
       ) : null}
 
-      {trendType === 'weekly' ? null : (
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both delay-100">
-          <div className="glass-panel rounded-2xl overflow-hidden p-1">
-            <StatCard
-              eyebrow="Total cases"
-              value={totals.positive.toLocaleString()}
-              caption={`Sum across ${trends.length} month${trends.length === 1 ? '' : 's'} (uploaded CSV data)`}
-              icon={Activity}
-              tone="signal"
-            />
-          </div>
-          <div className="glass-panel rounded-2xl overflow-hidden p-1">
-            <StatCard
-              eyebrow="Periods"
-              value={trends.length.toLocaleString()}
-              caption="Monthly bins"
-              icon={Sparkles}
-            />
-          </div>
-        </section>
-      )}
+      {/* Toolbar: region + trend-type filters */}
+      <div className="flex flex-wrap items-center gap-3">
+        <EditorialSelect
+          value={region}
+          onChange={setRegion}
+          aria-label="Region filter"
+          contentWidth="auto"
+          options={regionSelectOptions}
+        />
+        <EditorialSelect
+          value={trendType}
+          onChange={(next) => setTrendType(next as TrendType)}
+          aria-label="Trend type"
+          options={[
+            { value: 'monthly', label: 'Monthly' },
+            { value: 'weekly', label: 'Weekly' },
+          ]}
+        />
+      </div>
 
-      <section className="flex flex-col gap-5 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-        <SectionHeader
-          index="001"
-          label={trendType === 'weekly' ? 'Weekly series' : 'Monthly series'}
-          tone="signal"
-        >
-          <EditorialSelect
-            value={trendType}
-            onChange={(next) => setTrendType(next as TrendType)}
-            aria-label="Trend type"
-            options={[
-              { value: 'weekly', label: 'Weekly' },
-              { value: 'monthly', label: 'Monthly' },
-            ]}
-          />
+      {/* 001 · KPI row */}
+      <section className="flex flex-col gap-5">
+        <SectionHeader index="001" label="Overview" tone="signal" />
+        {dashboardQuery.isLoading ? (
+          <LoadingScreen caption="Loading summary" />
+        ) : dashboardQuery.error ? (
+          <AlertBanner tone="error" title="Couldn't load summary" description={(dashboardQuery.error as Error).message} />
+        ) : dashboardQuery.data ? (
+          <KpiRow summary={dashboardQuery.data.summary} />
+        ) : null}
+      </section>
+
+      {/* 002 · Case trend */}
+      <section className="flex flex-col gap-5">
+        <SectionHeader index="002" label={isMonthly ? 'Monthly case trend' : 'Weekly case trend'} tone="signal">
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
+            {totalPositive.toLocaleString()} cases · {trends.length} {isMonthly ? 'mo' : 'wk'}
+          </span>
         </SectionHeader>
-
-        {trendType === 'weekly' ? (
+        {!isMonthly ? (
           <AlertBanner
             tone="info"
             title="Weekly view coming soon"
-            description="The malaria reporting pipeline currently ingests monthly aggregates only. Weekly (ISO-week) granularity is planned for a future update — switch to Monthly above for the current view."
+            description="The malaria reporting pipeline currently ingests monthly aggregates only. Weekly (ISO-week) granularity is planned — switch to Monthly above for the current view."
           />
-        ) : isLoading ? (
+        ) : trendsQuery.isLoading ? (
           <LoadingScreen caption="Loading series" />
-        ) : error ? (
-          <AlertBanner tone="error" title="Couldn't load trends" description={(error as Error).message} />
+        ) : trendsQuery.error ? (
+          <AlertBanner tone="error" title="Couldn't load trends" description={(trendsQuery.error as Error).message} />
         ) : trends.length === 0 ? (
+          <EmptyState title="No trend data available" description="Upload a monthly malaria CSV to seed the trend series." />
+        ) : (
+          <div className="glass-panel rounded-2xl p-4 shadow-lg">
+            <CaseTrendChart data={trendSeries} />
+          </div>
+        )}
+      </section>
+
+      {/* 003 · Regional burden */}
+      <section className="flex flex-col gap-5">
+        <SectionHeader index="003" label="Regional burden" tone="signal">
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
+            {byRegion.length} regions
+          </span>
+        </SectionHeader>
+        {allRegionsQuery.isLoading ? (
+          <LoadingScreen caption="Loading regions" />
+        ) : byRegion.length === 0 ? (
           <EmptyState
-            title="No trend data available"
-            description="Upload a monthly malaria CSV to seed the trend series."
+            title="No regional breakdown"
+            description="Upload monthly malaria data to populate per-region statistics."
           />
         ) : (
-          <>
-            <div className="grid grid-cols-1 gap-px bg-border/40 lg:grid-cols-[1.4fr_1fr] rounded-2xl overflow-hidden glass-panel shadow-lg">
-              <div className="flex flex-col gap-4 bg-background/40 backdrop-blur-md p-6 group">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none" />
-                <div className="flex items-center justify-between relative z-10">
-                  <p className="font-mono text-[11px] uppercase tracking-[0.20em] text-muted-foreground">
-                    Cases · oldest → most recent
-                  </p>
-                  <p className="font-mono text-[11px] uppercase tracking-[0.20em] text-primary tabular-nums">
-                    {trends.length} mo
-                  </p>
-                </div>
-                <div className="relative h-32 w-full mt-2 transition-transform duration-500 group-hover:scale-[1.02]">
-                  <svg
-                    viewBox="0 0 100 50"
-                    preserveAspectRatio="none"
-                    className="h-full w-full overflow-visible"
-                    aria-hidden
-                  >
-                    <line
-                      x1="0"
-                      y1="49.5"
-                      x2="100"
-                      y2="49.5"
-                      stroke="hsl(var(--border))"
-                      strokeWidth="0.5"
-                      vectorEffect="non-scaling-stroke"
-                    />
-                    <polyline
-                      fill="none"
-                      stroke="currentColor"
-                      className="text-primary"
-                      strokeWidth="2"
-                      points={casesPoints}
-                      vectorEffect="non-scaling-stroke"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d={`M0,50 L${casesPoints} L100,50 Z`}
-                      fill="url(#trend-gradient)"
-                      opacity="0.1"
-                    />
-                    <defs>
-                      <linearGradient id="trend-gradient" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" stopColor="currentColor" className="text-primary" />
-                        <stop offset="100%" stopColor="transparent" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-                <div className="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.20em] text-muted-foreground relative z-10">
-                  <span className="inline-flex items-center gap-2">
-                    <span aria-hidden className="inline-block size-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.8)]" />
-                    Cases
-                  </span>
-                </div>
-                <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.20em] text-muted-foreground tabular-nums relative z-10">
-                  <span>{trends[trends.length - 1]?.period ?? '-'}</span>
-                  <span>{trends[0]?.period ?? '-'}</span>
-                </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="glass-panel rounded-2xl p-4 shadow-lg">
+              <p className="mb-3 px-1 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                Cases by region
+              </p>
+              <RegionBar data={byRegion} metric="total_positive" color={CHART[0]} />
+            </div>
+            <div className="glass-panel rounded-2xl p-4 shadow-lg">
+              <p className="mb-3 px-1 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                High-risk districts by region
+              </p>
+              <RegionBar data={byRegion} metric="high_risk_count" color={RISK[3]} />
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* 004–006 · Risk model views (share the risk-map query) */}
+      <section className="flex flex-col gap-5">
+        <SectionHeader index="004" label="Risk landscape" tone="signal">
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
+            {features.length} districts
+          </span>
+        </SectionHeader>
+        {riskQuery.isLoading ? (
+          <LoadingScreen caption="Loading risk predictions" />
+        ) : riskQuery.error ? (
+          <AlertBanner tone="error" title="Couldn't load risk data" description={(riskQuery.error as Error).message} />
+        ) : features.length === 0 ? (
+          <EmptyState
+            title="No risk predictions yet"
+            description="Run the prediction pipeline (or close a month) to populate the risk landscape."
+          />
+        ) : (
+          <div className="flex flex-col gap-6">
+            <div className="glass-panel rounded-2xl p-5 shadow-lg">
+              <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                Region × risk level · district counts
+              </p>
+              <RegionRiskHeatmap matrix={riskMatrix} />
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.4fr]">
+              <div className="glass-panel rounded-2xl p-4 shadow-lg">
+                <p className="mb-3 px-1 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Risk distribution
+                </p>
+                {distribution.length === 0 ? (
+                  <EmptyState title="No risk levels" description="Predictions carry no risk classification yet." />
+                ) : (
+                  <RiskDistributionDonut data={distribution} />
+                )}
               </div>
-              <div className="flex items-center justify-center bg-background/40 backdrop-blur-md p-6 border-t lg:border-t-0 lg:border-l border-border/40">
-                <Metric eyebrow="Total cases" value={totals.positive.toLocaleString()} />
+              <div className="glass-panel rounded-2xl p-4 shadow-lg">
+                <p className="mb-3 px-1 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Confidence vs prediction score
+                </p>
+                {scatter.length === 0 ? (
+                  <EmptyState title="No scores" description="Predictions carry no confidence/score values yet." />
+                ) : (
+                  <ConfidenceScatter points={scatter} />
+                )}
               </div>
             </div>
 
-            <SectionHeader index="002" label="Periods" tone="signal">
-              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
-                {trends.length} rows
-              </span>
-            </SectionHeader>
-            <div className="overflow-hidden rounded-2xl glass-panel border border-border/40 mt-2 shadow-lg">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border/40">
-                      <Th>Period</Th>
-                      <Th>Year</Th>
-                      <Th align="right">Cases</Th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {trends.map((trend: TrendDataPoint, index: number) => (
-                      <tr
-                        key={index}
-                        className="group border-b border-border/40 transition-all duration-300 last:border-0 hover:bg-primary/5 hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)] cursor-pointer"
-                      >
-                        <Td>{trend.period}</Td>
-                        <Td>{trend.year}</Td>
-                        <Td align="right" numeric>
-                          <span className="font-medium text-foreground group-hover:text-primary transition-colors">
-                            {trend.positive.toLocaleString()}
-                          </span>
-                        </Td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {topDistricts.length > 0 && (
+              <div className="glass-panel rounded-2xl p-4 shadow-lg">
+                <p className="mb-3 px-1 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Top districts by recent positive cases
+                </p>
+                <TopDistrictsBar data={topDistricts} />
               </div>
-            </div>
-          </>
+            )}
+          </div>
         )}
       </section>
+
+      {/* 007 · Periods table */}
+      {isMonthly && trends.length > 0 && (
+        <section className="flex flex-col gap-5">
+          <SectionHeader index="007" label="Periods" tone="signal">
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
+              {trends.length} rows
+            </span>
+          </SectionHeader>
+          <div className="overflow-hidden rounded-2xl glass-panel border border-border/40 shadow-lg">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border/40">
+                    <Th>Period</Th>
+                    <Th>Year</Th>
+                    <Th align="right">Cases</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {trends.map((trend, index) => (
+                    <tr
+                      key={index}
+                      className="group border-b border-border/40 transition-all duration-300 last:border-0 hover:bg-primary/5 cursor-pointer"
+                    >
+                      <Td>{trend.period}</Td>
+                      <Td>{trend.year}</Td>
+                      <Td align="right" numeric>
+                        <span className="font-medium text-foreground group-hover:text-primary transition-colors">
+                          {trend.positive.toLocaleString()}
+                        </span>
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
 
-function Th({
-  children,
-  align = 'left',
-}: {
-  children: React.ReactNode;
-  align?: 'left' | 'right';
-}) {
+function Th({ children, align = 'left' }: { children: React.ReactNode; align?: 'left' | 'right' }) {
   return (
     <th
-      className={`px-4 py-3 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground ${align === 'right' ? 'text-right' : 'text-left'
-        }`}
+      className={`px-4 py-3 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground ${align === 'right' ? 'text-right' : 'text-left'}`}
     >
       {children}
     </th>
@@ -299,8 +329,7 @@ function Td({
 }) {
   return (
     <td
-      className={`px-4 py-3 font-sans text-sm text-foreground ${align === 'right' ? 'text-right' : 'text-left'
-        } ${numeric ? 'font-mono tabular-nums' : ''}`}
+      className={`px-4 py-3 font-sans text-sm text-foreground ${align === 'right' ? 'text-right' : 'text-left'} ${numeric ? 'font-mono tabular-nums' : ''}`}
     >
       {children}
     </td>

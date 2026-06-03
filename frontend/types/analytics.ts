@@ -47,7 +47,19 @@ export interface TrendsResponse {
   total_periods: number;
 }
 
+/** Per-region rollup returned by `/analytics/dashboard` in `by_region`. The
+ *  backend only populates this when NO `region` filter is set (it returns `[]`
+ *  for a single-region query), so the UI keeps an unfiltered snapshot to drive
+ *  the region selector and the by-region charts. */
+export interface RegionStat {
+  region: string;
+  total_positive: number;
+  districts_count: number;
+  high_risk_count: number;
+}
+
 export interface DashboardResponse {
   summary: DashboardSummary;
+  by_region: RegionStat[];
   recent_trends: TrendDataPoint[];
 }

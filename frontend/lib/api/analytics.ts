@@ -3,9 +3,9 @@ import { DashboardResponse, TrendsResponse } from '@/types/analytics';
 
 export const analyticsApi = {
   getDashboard: async (params?: {
+    year?: number;
+    month?: number;
     region?: string;
-    start_date?: string;
-    end_date?: string;
   }): Promise<DashboardResponse> => {
     const response = await apiClient.get('/analytics/dashboard', { params });
     return response.data;
