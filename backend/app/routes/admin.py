@@ -83,6 +83,25 @@ class UserListResponse(BaseModel):
     
     class Config:
         from_attributes = True
+    
+    @classmethod
+    def from_orm(cls, user: 'User') -> 'UserListResponse':
+        """Custom from_orm to handle status property."""
+        return cls(
+            id=user.id,
+            email=user.email,
+            full_name=user.full_name,
+            role=user.role,
+            district_id=user.district_id,
+            is_active=user.is_active,
+            force_password_change=user.force_password_change,
+            failed_login_attempts=user.failed_login_attempts,
+            account_locked_until=user.account_locked_until,
+            last_login_at=user.last_login_at,
+            last_login_ip=user.last_login_ip,
+            status=user.status,  # Call the property method explicitly
+            created_at=user.created_at,
+        )
 
 
 class CreateUserResponse(UserListResponse):
@@ -158,17 +177,43 @@ async def list_users(
     - role: Filter by user role
     - is_active: Filter by active status
     """
-    query = select(User).order_by(desc(User.created_at))
-    
-    if role:
-        query = query.where(User.role == role)
-    if is_active is not None:
-        query = query.where(User.is_active == is_active)
-    
-    result = await db.execute(query)
-    users = result.scalars().all()
-    
-    return users
+    try:
+        logger.info(f"list_users called with role={role}, is_active={is_active}")
+        
+        query = select(User).order_by(desc(User.created_at))
+        
+        if role:
+            logger.info(f"Applying role filter: {role}")
+            query = query.where(User.role == role)
+        if is_active is not None:
+            logger.info(f"Applying is_active filter: {is_active}")
+            query = query.where(User.is_active == is_active)
+        
+        result = await db.execute(query)
+        users = result.scalars().all()
+        
+        logger.info(f"Found {len(users)} users, converting to response format")
+        
+        # Use custom from_orm to handle @property fields
+        response_users = []
+        for user in users:
+            try:
+                user_response = UserListResponse.from_orm(user)
+                response_users.append(user_response)
+            except Exception as e:
+                logger.error(f"Error converting user {user.id} ({user.email}): {str(e)}")
+                # Continue with other users instead of failing completely
+                continue
+        
+        logger.info(f"Returning {len(response_users)} users")
+        return response_users
+        
+    except Exception as e:
+        logger.error(f"Error in list_users: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list users: {str(e)}"
+        )
 
 
 @router.post(
@@ -456,7 +501,7 @@ async def unlock_user_account(
     await db.commit()
     
     # Audit log
-    await AuditService.log_action(
+    await AuditService.log(
         db=db,
         actor=current_user,
         action="unlock_account",
@@ -470,6 +515,82 @@ async def unlock_user_account(
     logger.info(f"Admin {current_user.email} unlocked account for user {user.email}")
     
     return {"message": "Account unlocked successfully", "status": user.status}
+
+
+@router.delete(
+    "/users/{user_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Delete user",
+    dependencies=[Depends(require_admin)]
+)
+async def delete_user(
+    user_id: UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """
+    Delete a user account.
+    
+    **Authorization:** Admin only
+    
+    **Security:** 
+    - Cannot delete yourself
+    - Cannot delete the last admin
+    
+    **Returns:**
+    - Success message
+    """
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Prevent self-deletion
+    if user.id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete your own account"
+        )
+    
+    # Prevent deleting the last admin
+    if user.role == UserRole.ADMIN:
+        admin_count_result = await db.execute(
+            select(func.count(User.id)).where(User.role == UserRole.ADMIN)
+        )
+        admin_count = admin_count_result.scalar()
+        if admin_count <= 1:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot delete the last admin account"
+            )
+    
+    user_email = user.email
+    user_name = user.full_name
+    
+    # Delete user
+    await db.delete(user)
+    await db.commit()
+    
+    # Audit log
+    await AuditService.log(
+        db=db,
+        actor=current_user,
+        action="user_deleted",
+        resource_type="user",
+        resource_id=str(user_id),
+        description=f"Admin deleted user {user_name} ({user_email})",
+        request=request,
+        status="success"
+    )
+    
+    logger.info(f"Admin {current_user.email} deleted user {user_email}")
+    
+    return {"message": f"User {user_email} deleted successfully"}
 
 
 # ============================================================================

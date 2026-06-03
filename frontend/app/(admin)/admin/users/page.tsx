@@ -7,7 +7,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, Search, MoreVertical, Edit, Trash2, Key, UserCheck, UserX } from 'lucide-react';
+import { Plus, Search, MoreVertical, Edit, Trash2, Key, UserCheck, UserX, Users } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { UserRole } from '@/types/auth';
 import { EditorialCard } from '@/components/editorial';
@@ -30,12 +30,24 @@ interface User {
   created_at: string;
 }
 
+type ConfirmAction = {
+  type: 'delete' | 'reset' | 'toggle';
+  userId: string;
+  userName: string;
+  userEmail: string;
+  currentStatus?: boolean;
+};
+
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -44,11 +56,15 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      setError(null);
       const params = roleFilter !== 'all' ? { role: roleFilter } : {};
+      console.log('Fetching users with filter:', roleFilter, 'params:', params);
       const response = await apiClient.get('/admin/users', { params });
+      console.log('Received users:', response.data.length, 'users');
       setUsers(response.data);
     } catch (error) {
       console.error('Failed to fetch users:', error);
+      setError('Failed to load users');
     } finally {
       setLoading(false);
     }
@@ -76,6 +92,67 @@ export default function UsersPage() {
 
   const formatRole = (role: UserRole) => {
     return role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const handleToggleActive = async (userId: string, userName: string, userEmail: string, currentStatus: boolean) => {
+    setConfirmAction({
+      type: 'toggle',
+      userId,
+      userName,
+      userEmail,
+      currentStatus
+    });
+  };
+
+  const handleResetPassword = async (userId: string, userName: string, userEmail: string) => {
+    setConfirmAction({
+      type: 'reset',
+      userId,
+      userName,
+      userEmail
+    });
+  };
+
+  const handleDeleteUser = async (userId: string, userName: string, userEmail: string) => {
+    setConfirmAction({
+      type: 'delete',
+      userId,
+      userName,
+      userEmail
+    });
+  };
+
+  const executeAction = async () => {
+    if (!confirmAction || actionLoading) return;
+    
+    try {
+      setActionLoading(confirmAction.userId);
+      
+      if (confirmAction.type === 'toggle') {
+        await apiClient.patch(`/admin/users/${confirmAction.userId}`, {
+          is_active: !confirmAction.currentStatus
+        });
+        setSuccessMessage(`${confirmAction.userName} has been ${confirmAction.currentStatus ? 'deactivated' : 'activated'}.`);
+      } else if (confirmAction.type === 'reset') {
+        await apiClient.post(`/admin/users/${confirmAction.userId}/reset-password`, {
+          new_password: Math.random().toString(36).slice(-12) + 'A1!',
+          require_change_on_login: true
+        });
+        setSuccessMessage(`Password reset for ${confirmAction.userName}. They will be required to change it on next login.`);
+      } else if (confirmAction.type === 'delete') {
+        await apiClient.delete(`/admin/users/${confirmAction.userId}`);
+        setSuccessMessage(`${confirmAction.userName} has been deleted.`);
+      }
+      
+      await fetchUsers();
+      setConfirmAction(null);
+    } catch (error) {
+      console.error(`Failed to ${confirmAction.type} user:`, error);
+      setError(`Failed to ${confirmAction.type} user. Please try again.`);
+      setConfirmAction(null);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   return (
@@ -132,6 +209,20 @@ export default function UsersPage() {
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
               <p className="text-sm text-muted-foreground">Loading users...</p>
             </div>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center p-12 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20 mb-4">
+              <Users className="h-8 w-8 text-red-600" strokeWidth={1.5} />
+            </div>
+            <p className="text-lg font-semibold text-red-900 dark:text-red-100">{error}</p>
+            <p className="text-sm text-red-700 dark:text-red-300 mt-1 mb-4">Please try again</p>
+            <button 
+              onClick={fetchUsers}
+              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Retry
+            </button>
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center">
@@ -208,31 +299,41 @@ export default function UsersPage() {
                     <td className="px-6 py-4 text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" aria-label={`Actions for ${user.full_name}`}>
-                            <MoreVertical className="h-4 w-4" strokeWidth={1.5} />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            aria-label={`Actions for ${user.full_name}`}
+                            disabled={actionLoading === user.id}
+                          >
+                            {actionLoading === user.id ? (
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                            ) : (
+                              <MoreVertical className="h-4 w-4" strokeWidth={1.5} />
+                            )}
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                            Edit User
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleResetPassword(user.id, user.full_name, user.email)}>
                             <Key className="mr-2 h-4 w-4" strokeWidth={1.5} />
                             Reset Password
                           </DropdownMenuItem>
-                          {user.is_active ? (
-                            <DropdownMenuItem>
-                              <UserX className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                              Deactivate
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem>
-                              <UserCheck className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                              Activate
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem onClick={() => handleToggleActive(user.id, user.full_name, user.email, user.is_active)}>
+                            {user.is_active ? (
+                              <>
+                                <UserX className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                                Deactivate
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                                Activate
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-red-600"
+                            onClick={() => handleDeleteUser(user.id, user.full_name, user.email)}
+                          >
                             <Trash2 className="mr-2 h-4 w-4" strokeWidth={1.5} />
                             Delete User
                           </DropdownMenuItem>
@@ -279,6 +380,127 @@ export default function UsersPage() {
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={fetchUsers}
       />
+
+      {/* Confirmation Modal */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md mx-4 bg-card border border-border rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6 space-y-4">
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-lg ${
+                  confirmAction.type === 'delete' 
+                    ? 'bg-red-500/10' 
+                    : confirmAction.type === 'reset'
+                    ? 'bg-yellow-500/10'
+                    : 'bg-blue-500/10'
+                }`}>
+                  {confirmAction.type === 'delete' ? (
+                    <Trash2 className="h-5 w-5 text-red-600" strokeWidth={1.5} />
+                  ) : confirmAction.type === 'reset' ? (
+                    <Key className="h-5 w-5 text-yellow-600" strokeWidth={1.5} />
+                  ) : confirmAction.currentStatus ? (
+                    <UserX className="h-5 w-5 text-orange-600" strokeWidth={1.5} />
+                  ) : (
+                    <UserCheck className="h-5 w-5 text-green-600" strokeWidth={1.5} />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-display text-lg font-semibold text-foreground">
+                    {confirmAction.type === 'delete' 
+                      ? 'Delete User' 
+                      : confirmAction.type === 'reset'
+                      ? 'Reset Password'
+                      : confirmAction.currentStatus
+                      ? 'Deactivate User'
+                      : 'Activate User'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {confirmAction.type === 'delete' ? (
+                      <>
+                        Are you sure you want to delete <strong className="text-foreground">{confirmAction.userName}</strong> ({confirmAction.userEmail})?
+                        <span className="block mt-2 text-red-600 dark:text-red-400 font-medium">This action cannot be undone.</span>
+                      </>
+                    ) : confirmAction.type === 'reset' ? (
+                      <>
+                        Reset password for <strong className="text-foreground">{confirmAction.userName}</strong> ({confirmAction.userEmail})?
+                        <span className="block mt-2">A temporary password will be generated and the user will be required to change it on next login.</span>
+                      </>
+                    ) : confirmAction.currentStatus ? (
+                      <>
+                        Deactivate <strong className="text-foreground">{confirmAction.userName}</strong> ({confirmAction.userEmail})?
+                        <span className="block mt-2">This user will no longer be able to log in.</span>
+                      </>
+                    ) : (
+                      <>
+                        Activate <strong className="text-foreground">{confirmAction.userName}</strong> ({confirmAction.userEmail})?
+                        <span className="block mt-2">This user will be able to log in again.</span>
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setConfirmAction(null)}
+                  disabled={!!actionLoading}
+                  className="flex-1 px-4 py-2 bg-muted text-foreground rounded-md hover:bg-muted/80 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={executeAction}
+                  disabled={!!actionLoading}
+                  className={`flex-1 px-4 py-2 rounded-md transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+                    confirmAction.type === 'delete'
+                      ? 'bg-red-600 text-white hover:bg-red-700'
+                      : confirmAction.type === 'reset'
+                      ? 'bg-yellow-600 text-white hover:bg-yellow-700'
+                      : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                  }`}
+                >
+                  {actionLoading ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    confirmAction.type === 'delete' ? 'Delete User' : confirmAction.type === 'reset' ? 'Reset Password' : confirmAction.currentStatus ? 'Deactivate' : 'Activate'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {successMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md mx-4 bg-card border border-border rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6 space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <UserCheck className="h-5 w-5 text-green-600" strokeWidth={1.5} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-display text-lg font-semibold text-foreground">Success</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{successMessage}</p>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => setSuccessMessage(null)}
+                  className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium text-sm"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -283,28 +283,6 @@ export default function SystemHealthPage() {
               </div>
             </EditorialCard>
           </div>
-
-          {/* Performance Metrics */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Performance</h3>
-            <div className="grid gap-4 md:grid-cols-3">
-              <EditorialCard className="p-4">
-                <p className="text-sm text-muted-foreground mb-2">Response Time</p>
-                <p className="text-2xl font-bold">~45ms</p>
-                <p className="text-xs text-green-600 mt-1">Excellent</p>
-              </EditorialCard>
-              <EditorialCard className="p-4">
-                <p className="text-sm text-muted-foreground mb-2">Uptime</p>
-                <p className="text-2xl font-bold">99.9%</p>
-                <p className="text-xs text-green-600 mt-1">Last 30 days</p>
-              </EditorialCard>
-              <EditorialCard className="p-4">
-                <p className="text-sm text-muted-foreground mb-2">Error Rate</p>
-                <p className="text-2xl font-bold">0.1%</p>
-                <p className="text-xs text-green-600 mt-1">Within threshold</p>
-              </EditorialCard>
-            </div>
-          </div>
         </>
       )}
     </div>

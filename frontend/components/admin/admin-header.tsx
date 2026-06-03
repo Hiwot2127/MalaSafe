@@ -42,12 +42,6 @@ export function AdminHeader() {
         {/* Theme Toggle */}
         <ThemeToggle />
 
-        {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" strokeWidth={1.5} />
-          <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
-        </Button>
-
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

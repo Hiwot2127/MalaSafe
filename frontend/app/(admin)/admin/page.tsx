@@ -18,21 +18,25 @@ interface SystemHealth {
 export default function AdminDashboardPage() {
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchHealth = async () => {
-      try {
-        const response = await apiClient.get('/admin/system-health');
-        setHealth(response.data);
-      } catch (error) {
-        console.error('Failed to fetch system health:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchHealth();
   }, []);
+
+  const fetchHealth = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiClient.get('/admin/system-health');
+      setHealth(response.data);
+    } catch (error) {
+      console.error('Failed to fetch system health:', error);
+      setError('Failed to load system health data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -45,7 +49,32 @@ export default function AdminDashboardPage() {
     );
   }
 
-  const isHealthy = health?.database_status === 'ok' || health?.database_status === 'operational';
+  if (error) {
+    return (
+      <div className="flex flex-col gap-10 animate-fade-in mx-auto max-w-6xl w-full">
+        <PageHeader eyebrow="MalaSafe · Admin" title="Admin Dashboard" description="System overview" />
+        <EditorialCard className="p-12 text-center border-red-500/50 bg-red-500/10">
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20">
+              <Activity className="h-8 w-8 text-red-600" strokeWidth={1.5} />
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-red-900 dark:text-red-100">{error}</p>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-1">Please try again</p>
+            </div>
+            <button 
+              onClick={fetchHealth}
+              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </EditorialCard>
+      </div>
+    );
+  }
+
+  const isHealthy = health?.database_status === 'healthy' || health?.database_status === 'ok' || health?.database_status === 'operational';
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-10 animate-fade-in w-full">
@@ -64,9 +93,6 @@ export default function AdminDashboardPage() {
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10 ring-1 ring-blue-500/20 transition-transform duration-300 group-hover:scale-110">
                 <Users className="h-6 w-6 text-blue-600" strokeWidth={1.5} />
               </div>
-              <div className="flex items-center gap-1 text-sm font-medium text-green-600">
-                <TrendingUp className="h-4 w-4" strokeWidth={1.5} />
-              </div>
             </div>
             <p className="text-3xl font-display font-bold tracking-tight">{health?.total_users || 0}</p>
             <p className="text-sm font-medium text-muted-foreground mt-1">Total Users</p>
@@ -81,9 +107,6 @@ export default function AdminDashboardPage() {
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-500/10 ring-1 ring-purple-500/20 transition-transform duration-300 group-hover:scale-110">
                 <FileUp className="h-6 w-6 text-purple-600" strokeWidth={1.5} />
               </div>
-              <div className="flex items-center gap-1 text-sm font-medium text-green-600">
-                <TrendingUp className="h-4 w-4" strokeWidth={1.5} />
-              </div>
             </div>
             <p className="text-3xl font-display font-bold tracking-tight">{health?.total_uploads || 0}</p>
             <p className="text-sm font-medium text-muted-foreground mt-1">Total Uploads</p>
@@ -97,9 +120,6 @@ export default function AdminDashboardPage() {
             <div className="flex items-center gap-3 mb-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-500/10 ring-1 ring-amber-500/20 transition-transform duration-300 group-hover:scale-110">
                 <Shield className="h-6 w-6 text-amber-600" strokeWidth={1.5} />
-              </div>
-              <div className="flex items-center gap-1 text-sm font-medium text-green-600">
-                <TrendingUp className="h-4 w-4 rotate-180" strokeWidth={1.5} />
               </div>
             </div>
             <p className="text-3xl font-display font-bold tracking-tight">{health?.failed_logins_last_24h || 0}</p>

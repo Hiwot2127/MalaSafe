@@ -28,6 +28,7 @@ export default function UploadMonitoringPage() {
   const [uploads, setUploads] = useState<UploadMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUploads();
@@ -36,11 +37,15 @@ export default function UploadMonitoringPage() {
   const fetchUploads = async () => {
     try {
       setLoading(true);
+      setError(null);
       const params = typeFilter !== 'all' ? { upload_type: typeFilter } : {};
+      console.log('Fetching uploads with filter:', typeFilter, 'params:', params);
       const response = await apiClient.get('/admin/uploads', { params });
+      console.log('Received uploads:', response.data.length, 'uploads');
       setUploads(response.data);
     } catch (error) {
       console.error('Failed to fetch uploads:', error);
+      setError('Failed to load uploads');
     } finally {
       setLoading(false);
     }
@@ -121,9 +126,8 @@ export default function UploadMonitoringPage() {
             className="h-10 rounded-lg border border-border bg-background px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">All Upload Types</option>
-            <option value="weekly_malaria">Weekly Malaria</option>
-            <option value="monthly_malaria">Monthly Malaria</option>
-            <option value="climate">Climate Data</option>
+            <option value="malaria_monthly">Monthly Malaria</option>
+            <option value="climate_data">Climate Data</option>
           </select>
           <Button variant="outline" size="sm" onClick={fetchUploads} aria-label="Refresh upload list">
             Refresh
@@ -165,6 +169,20 @@ export default function UploadMonitoringPage() {
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
               <p className="text-sm text-muted-foreground">Loading uploads...</p>
             </div>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center p-12 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20 mb-4">
+              <FileUp className="h-8 w-8 text-red-600" strokeWidth={1.5} />
+            </div>
+            <p className="text-lg font-semibold text-red-900 dark:text-red-100">{error}</p>
+            <p className="text-sm text-red-700 dark:text-red-300 mt-1 mb-4">Please try again</p>
+            <button 
+              onClick={fetchUploads}
+              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Retry
+            </button>
           </div>
         ) : uploads.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center">

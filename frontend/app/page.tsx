@@ -458,7 +458,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 max-w-3xl mx-auto">
               {[
                 {
                   icon: Globe2,
@@ -475,14 +475,6 @@ export default function Home() {
                   description: t.coverage.woredasDesc,
                   color: 'text-green-600 dark:text-green-400',
                   bgColor: 'bg-green-500/10'
-                },
-                {
-                  icon: BarChart3,
-                  value: '3 seasons',
-                  label: t.coverage.seasons,
-                  description: t.coverage.seasonsDesc,
-                  color: 'text-purple-600 dark:text-purple-400',
-                  bgColor: 'bg-purple-500/10'
                 }
               ].map((stat, i) => (
                 <div
@@ -495,106 +487,6 @@ export default function Home() {
                   <div className="mb-2 font-display text-3xl font-bold">{stat.value}</div>
                   <div className="mb-1 text-sm font-semibold">{stat.label}</div>
                   <div className="text-xs text-muted-foreground">{stat.description}</div>
-                </div>
-              ))}
-            </div>
-
-            <p className="mt-8 text-center text-sm text-muted-foreground">
-              {t.coverage.seasonalPatterns} <span className="font-medium text-foreground">{t.coverage.bega}</span> •{' '}
-              <span className="font-medium text-foreground">{t.coverage.belg}</span> •{' '}
-              <span className="font-medium text-foreground">{t.coverage.kiremt}</span>
-            </p>
-          </AnimatedSection>
-        </section>
-
-        {/* Testimonials Section - New */}
-        <section className="py-16 sm:py-20">
-          <AnimatedSection className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto mb-12 max-w-2xl text-center">
-              <h2 className="mb-4 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-                {t.testimonials.title}
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                {t.testimonials.subtitle}
-              </p>
-            </div>
-
-            <div className="grid gap-8 md:grid-cols-3">
-              {[
-                t.testimonials.testimonial1,
-                t.testimonials.testimonial2,
-                t.testimonials.testimonial3,
-              ].map((testimonial, i) => (
-                <div
-                  key={i}
-                  className="glass-panel group relative overflow-hidden rounded-2xl border border-border/50 p-8 transition-all hover:border-primary/30 hover:shadow-[0_8px_32px_rgba(var(--primary-rgb),0.15)] hover:-translate-y-1"
-                >
-                  {/* Quote Icon */}
-                  <div className="mb-6 inline-flex rounded-xl bg-primary/10 p-3">
-                    <Quote className="h-6 w-6 text-primary" strokeWidth={1.5} />
-                  </div>
-
-                  {/* Quote Text */}
-                  <blockquote className="mb-6 text-sm leading-relaxed text-muted-foreground italic">
-                    "{testimonial.quote}"
-                  </blockquote>
-
-                  {/* Author Info */}
-                  <div className="border-t border-border/40 pt-4">
-                    <div className="font-semibold text-foreground">{testimonial.name}</div>
-                    <div className="text-sm text-muted-foreground">{testimonial.role}</div>
-                    <div className="mt-1 text-xs text-muted-foreground/70">{testimonial.location}</div>
-                  </div>
-
-                  {/* Decorative Element */}
-                  <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/5 blur-2xl transition-all group-hover:bg-primary/10" />
-                </div>
-              ))}
-            </div>
-          </AnimatedSection>
-        </section>
-
-        {/* Mobile App Download - Polished */}
-        <section id="mobile-app" className="py-16 sm:py-20">
-          <AnimatedSection className="container mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-purple-500/20 bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-600 dark:text-purple-400">
-              <Smartphone className="h-3.5 w-3.5" />
-              {t.mobileAppSection.badge}
-            </div>
-
-            <h2 className="mb-4 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-              {t.mobileAppSection.title}
-            </h2>
-            <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground">
-              {t.mobileAppSection.description}
-            </p>
-
-            <div className="mb-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a
-                href="#"
-                className="inline-flex items-center gap-2 rounded-lg bg-foreground px-6 py-3 font-medium text-background transition-opacity hover:opacity-90"
-              >
-                <Download className="h-5 w-5" />
-                {t.mobileAppSection.downloadApk}
-              </a>
-              <a
-                href="#"
-                className="inline-flex items-center gap-2 rounded-lg border border-border px-6 py-3 font-medium transition-colors hover:bg-muted"
-              >
-                <Smartphone className="h-5 w-5" />
-                {t.mobileAppSection.openExpo}
-              </a>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              {[
-                { icon: Map, label: t.mobileAppSection.districtMaps },
-                { icon: BellRing, label: t.mobileAppSection.pushAlerts },
-                { icon: Activity, label: t.mobileAppSection.offlineMode }
-              ].map((feature, i) => (
-                <div key={i} className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <feature.icon className="h-4 w-4" strokeWidth={1.5} />
-                  <span>{feature.label}</span>
                 </div>
               ))}
             </div>
@@ -640,7 +532,7 @@ export default function Home() {
                 </p>
                 <div className="space-y-4">
                   <a
-                    href="mailto:support@malasafe.gov.et"
+                    href="mailto:admin_malasafe@gmail.com"
                     className="group flex items-center gap-3 text-sm transition-colors hover:text-primary"
                   >
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 transition-transform group-hover:scale-110">
@@ -648,11 +540,11 @@ export default function Home() {
                     </div>
                     <div>
                       <div className="font-medium">{t.contact.emailSupport}</div>
-                      <div className="text-muted-foreground">support@malasafe.gov.et</div>
+                      <div className="text-muted-foreground">admin_malasafe@gmail.com</div>
                     </div>
                   </a>
                   <a
-                    href="tel:+251-11-xxx-xxxx"
+                    href="tel:+251703245232"
                     className="group flex items-center gap-3 text-sm transition-colors hover:text-primary"
                   >
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 transition-transform group-hover:scale-110">
@@ -660,7 +552,7 @@ export default function Home() {
                     </div>
                     <div>
                       <div className="font-medium">{t.contact.emergencyHotline}</div>
-                      <div className="text-muted-foreground">+251-11-xxx-xxxx</div>
+                      <div className="text-muted-foreground">+251 70 324 5232</div>
                     </div>
                   </a>
                 </div>
