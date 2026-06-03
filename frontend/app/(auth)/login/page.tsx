@@ -462,6 +462,11 @@ function LoginForm() {
             <p className="text-xs text-muted-foreground/70 leading-relaxed">
               {t.securityNotice}
             </p>
+            <p className="text-xs text-muted-foreground/50 mt-2">
+              <a href="/data-use-policy" className="hover:text-primary transition-colors">
+                {language === 'en' ? 'Data Use Policy' : language === 'am' ? 'የመረጃ አጠቃቀም ፖሊሲ' : language === 'om' ? 'Imaammata Itti Fayyadama Deetaa' : 'ፖሊሲ ኣጠቓቕማ ዳታ'}
+              </a>
+            </p>
           </div>
         </div>
 

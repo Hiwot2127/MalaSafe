@@ -26,7 +26,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     role = Column(
-        SQLEnum(UserRole, values_callable=lambda enum_cls: [member.value for member in enum_cls]),
+        SQLEnum(UserRole, values_callable=lambda enum_cls: [member.value for member in enum_cls], native_enum=False),
         nullable=False,
         default=UserRole.PUBLIC_USER,
     )

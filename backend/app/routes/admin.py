@@ -163,7 +163,7 @@ class SystemHealthResponse(BaseModel):
     dependencies=[Depends(require_admin)]
 )
 async def list_users(
-    role: Optional[UserRole] = Query(None, description="Filter by role"),
+    role: Optional[str] = Query(None, description="Filter by role"),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_admin)
@@ -184,7 +184,16 @@ async def list_users(
         
         if role:
             logger.info(f"Applying role filter: {role}")
-            query = query.where(User.role == role)
+            # Validate the role string is a valid UserRole value
+            if role not in [r.value for r in UserRole]:
+                logger.error(f"Invalid role value: {role}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid role: {role}"
+                )
+            # Use cast to text to avoid PostgreSQL enum comparison issues
+            from sqlalchemy import cast, Text
+            query = query.where(cast(User.role, Text) == role)
         if is_active is not None:
             logger.info(f"Applying is_active filter: {is_active}")
             query = query.where(User.is_active == is_active)
@@ -208,6 +217,9 @@ async def list_users(
         logger.info(f"Returning {len(response_users)} users")
         return response_users
         
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 400 Bad Request)
+        raise
     except Exception as e:
         logger.error(f"Error in list_users: {str(e)}", exc_info=True)
         raise HTTPException(
@@ -559,8 +571,9 @@ async def delete_user(
     
     # Prevent deleting the last admin
     if user.role == UserRole.ADMIN:
+        from sqlalchemy import cast, Text
         admin_count_result = await db.execute(
-            select(func.count(User.id)).where(User.role == UserRole.ADMIN)
+            select(func.count(User.id)).where(cast(User.role, Text) == UserRole.ADMIN.value)
         )
         admin_count = admin_count_result.scalar()
         if admin_count <= 1:
