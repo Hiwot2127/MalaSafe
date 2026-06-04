@@ -52,6 +52,10 @@ export function PredictionExplanationCard({
   // the human-readable reason string for legacy rows that predate structured
   // factors (where direction can't be known and is best-effort).
   const factors = resolveFactors(structuredFactors, prediction_reason);
+
+  // One-line plain-language headline tying the risk level to its main drivers,
+  // e.g. "High risk, driven by heavy rain last month and high inbound travel".
+  const summary = buildSummary(risk_level, factors);
   
   // Confidence level interpretation
   const confidenceLevel = getConfidenceLevel(confidence_score);
@@ -78,6 +82,12 @@ export function PredictionExplanationCard({
             </span>
           </div>
         </div>
+
+        {summary ? (
+          <p className="mt-3 text-sm leading-relaxed text-foreground/80">
+            {summary}
+          </p>
+        ) : null}
       </div>
 
       {/* Confidence Score */}
@@ -295,6 +305,45 @@ function resolveFactors(
         lower.includes('increase');
       return { description: part, impact: isIncrease ? 'increase' : 'decrease' };
     });
+}
+
+// Compose a one-line headline like "High risk, driven by heavy rain last month
+// and high inbound travel". Picks the factors pushing in the same direction as
+// the risk level (the drivers that explain *why* it's high — or why it's low),
+// so the sentence reads as a cause rather than a contradiction.
+function buildSummary(
+  riskLevel: string,
+  factors: DisplayFactor[],
+): string | null {
+  const word = riskLabel(riskLevel);
+  if (factors.length === 0) return `${word} risk.`;
+
+  const elevated = riskLevel === 'high' || riskLevel === 'very_high' || riskLevel === 'moderate';
+  const wanted = elevated ? 'increase' : 'decrease';
+  const aligned = factors.filter((f) => f.impact === wanted);
+  const drivers = (aligned.length > 0 ? aligned : factors)
+    .slice(0, 2)
+    .map((f) => f.description);
+
+  const phrase =
+    drivers.length === 2 ? `${drivers[0]} and ${drivers[1]}` : drivers[0];
+  const connector = elevated ? 'driven by' : 'with';
+  return `${word} risk, ${connector} ${phrase}.`;
+}
+
+function riskLabel(riskLevel: string): string {
+  switch (riskLevel) {
+    case 'very_high':
+      return 'Very high';
+    case 'high':
+      return 'High';
+    case 'moderate':
+      return 'Moderate';
+    case 'low':
+      return 'Low';
+    default:
+      return riskLevel.replace('_', ' ');
+  }
 }
 
 function getConfidenceLevel(score: number): {

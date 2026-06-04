@@ -76,7 +76,9 @@ PHRASEBOOK: dict[str, tuple[str, str]] = {
     "g_month_sin":   ("mid-rains seasonal phase",   "off-rains seasonal phase"),
     "g_month_cos":   ("late-rains seasonal phase",  "dry-season phase"),
     "ec_month":      ("late EC month",              "early EC month"),
-    "month_index":   ("recent time period",         "earlier time period"),
+    # `month_index` is a monotonic time/drift index, not an actionable driver —
+    # "recent time period" means nothing to a public-health user, so it is
+    # suppressed (handled in phrase_for) rather than surfaced as a factor.
 
     # --- Baselines (rarely top, but possible) ---
     "baseline_rainfall": ("typically wet location for this month",
@@ -99,6 +101,8 @@ def phrase_for(feature: str, shap_value: float) -> str | None:
         return None  # negative region one-hot isn't informative
     if feature.startswith("csrc_"):
         return None  # climate-source flags aren't user-facing
+    if feature == "month_index":
+        return None  # monotonic time index — not an actionable driver
     pair = PHRASEBOOK.get(feature)
     if pair is None:
         return None
