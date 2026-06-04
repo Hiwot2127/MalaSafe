@@ -2,6 +2,8 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict
 from datetime import date
 
+from app.schemas.predictions import PredictionFactor
+
 
 class RiskThresholds(BaseModel):
     """Global percentile cutoffs on the model's predicted case-count
@@ -207,8 +209,11 @@ class PredictionHistoryItem(BaseModel):
     confidence_score: float
     prediction_score: float
     prediction_reason: Optional[str]
+    q10: Optional[float] = None
+    q90: Optional[float] = None
+    factors: List[PredictionFactor] = []
     created_at: str
-    
+
     class Config:
         json_schema_extra = {
             "example": {

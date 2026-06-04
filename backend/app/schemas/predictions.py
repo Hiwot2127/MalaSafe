@@ -6,6 +6,20 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
+class PredictionFactor(BaseModel):
+    """One signed SHAP driver behind a prediction, as persisted in the
+    `predictions.prediction_factors` JSONB column.
+
+    `direction` is authoritative (taken from the sign of `impact`); clients
+    must use it instead of inferring up/down from the `label` wording.
+    """
+    feature_name: str
+    label: str               # human-readable phrase
+    impact: float            # signed SHAP contribution (log-space)
+    value: Optional[float] = None  # the feature's input value, when known
+    direction: str           # "increase" | "decrease"
+
+
 class FeatureContribution(BaseModel):
     """Individual feature contribution to prediction"""
     feature_name: str
@@ -49,7 +63,10 @@ class PredictionResultResponse(BaseModel):
     prediction_score: float
     confidence_score: float
     prediction_reason: Optional[str]
-    explanation: Optional[PredictionExplanation] = None  # Enhanced explanation
+    q10: Optional[float] = None
+    q90: Optional[float] = None
+    factors: List[PredictionFactor] = Field(default_factory=list)  # signed SHAP drivers
+    explanation: Optional[PredictionExplanation] = None  # Enhanced explanation (legacy)
     is_warm: bool
     created_at: Optional[str] = None
 

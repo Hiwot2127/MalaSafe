@@ -27,6 +27,7 @@ import {
   riskStatus,
 } from '@/components/editorial';
 import RecommendationPanel from '@/components/recommendations/RecommendationPanel';
+import { PredictionExplanationCard } from '@/components/predictions/prediction-explanation-card';
 import { Download } from 'lucide-react';
 import { Pagination } from '@/components/Pagination';
 import {
@@ -253,6 +254,22 @@ export default function PredictionsPage() {
   const latestPredictionId = history[0]?.prediction_id ?? history[0]?.id ?? null;
   const selectedDistrictId = selectedFeature?.properties.district_id ?? null;
 
+  // Most recent prediction for the selected district drives the explanation
+  // card. History is returned newest-first, so [0] is the latest.
+  const latestPrediction = history[0] ?? null;
+  // Oldest→newest series for the card's trend sparkline (needs ≥2 points).
+  const explanationTrend = useMemo(
+    () =>
+      [...history]
+        .filter((h) => h.prediction_score != null)
+        .reverse()
+        .map((h) => ({
+          date: formatDate((h.prediction_date ?? h.date ?? '') as string),
+          value: h.prediction_score as number,
+        })),
+    [history],
+  );
+
   const handleDistrictExport = async () => {
     if (!selectedDistrictId) return;
     try {
@@ -418,7 +435,7 @@ export default function PredictionsPage() {
                         className="border-b border-border/70 last:border-0"
                       >
                         <Td className="font-mono text-xs tabular-nums">
-                          {formatDate(h.date)}
+                          {formatDate((h.prediction_date ?? h.date ?? '') as string)}
                         </Td>
                         <Td align="right" className="tabular-nums">
                           {h.predicted_positive?.toLocaleString() ?? '—'}
@@ -448,6 +465,29 @@ export default function PredictionsPage() {
                 onChange={(next) => setHistoryPage(next)}
               />
             </EditorialCard>
+
+            {latestPrediction ? (
+              <PredictionExplanationCard
+                prediction={{
+                  risk_level:
+                    latestPrediction.risk_level ??
+                    selectedFeature?.properties.risk_level ??
+                    'low',
+                  prediction_score: latestPrediction.prediction_score ?? 0,
+                  confidence_score: latestPrediction.confidence_score ?? 0,
+                  prediction_reason: latestPrediction.prediction_reason ?? null,
+                  factors: latestPrediction.factors ?? null,
+                  q10: latestPrediction.q10 ?? undefined,
+                  q90: latestPrediction.q90 ?? undefined,
+                  prediction_date: (latestPrediction.prediction_date ??
+                    latestPrediction.date ??
+                    '') as string,
+                }}
+                historicalTrend={
+                  explanationTrend.length >= 2 ? explanationTrend : undefined
+                }
+              />
+            ) : null}
 
             {latestPredictionId ? (
               <RecommendationPanel

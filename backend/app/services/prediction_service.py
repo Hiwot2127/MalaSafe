@@ -184,6 +184,9 @@ class PredictionService:
                 existing.prediction_score = result.prediction_score
                 existing.confidence_score = result.confidence_score
                 existing.prediction_reason = result.prediction_reason
+                existing.prediction_factors = result.factors_json()
+                existing.q10 = result.q10
+                existing.q90 = result.q90
                 await self.db.flush()
                 pred = existing
             else:
@@ -195,6 +198,9 @@ class PredictionService:
                 prediction_score=result.prediction_score,
                 confidence_score=result.confidence_score,
                 prediction_reason=result.prediction_reason,
+                prediction_factors=result.factors_json(),
+                q10=result.q10,
+                q90=result.q90,
                 prediction_date=result.target_month,
             )
             self.db.add(pred)

@@ -13,6 +13,7 @@
 
 import { TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import type { PredictionFactor } from '@/types/predictions';
 
 interface PredictionExplanationCardProps {
   prediction: {
@@ -20,12 +21,17 @@ interface PredictionExplanationCardProps {
     prediction_score: number;
     confidence_score: number;
     prediction_reason: string | null;
+    /** Authoritative signed drivers from the model. When present, these drive
+     *  the Key Factors list (and its arrows). */
+    factors?: PredictionFactor[] | null;
     q10?: number;
     q90?: number;
     prediction_date: string;
   };
   historicalTrend?: Array<{ date: string; value: number }>;
 }
+
+type DisplayFactor = { description: string; impact: 'increase' | 'decrease' };
 
 export function PredictionExplanationCard({
   prediction,
@@ -36,13 +42,16 @@ export function PredictionExplanationCard({
     prediction_score,
     confidence_score,
     prediction_reason,
+    factors: structuredFactors,
     q10,
     q90,
     prediction_date,
   } = prediction;
 
-  // Parse prediction reason into factors
-  const factors = parsePredictionReason(prediction_reason);
+  // Prefer the model's authoritative signed factors. Only fall back to parsing
+  // the human-readable reason string for legacy rows that predate structured
+  // factors (where direction can't be known and is best-effort).
+  const factors = resolveFactors(structuredFactors, prediction_reason);
   
   // Confidence level interpretation
   const confidenceLevel = getConfidenceLevel(confidence_score);
@@ -133,46 +142,49 @@ export function PredictionExplanationCard({
             </TooltipProvider>
           </div>
           
-          <div className="relative">
-            {/* Range visualization */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
+          {(() => {
+            // Map the track to the full [low, high] span so the shaded q10–q90
+            // band and the point estimate are positioned proportionally. The
+            // point can legitimately fall outside [q10, q90] (it comes from a
+            // different model than the quantile boosters), so widen the track to
+            // include it and clamp every position into [0, 100].
+            const lo = Math.min(q10, q90, prediction_score);
+            const hi = Math.max(q10, q90, prediction_score);
+            const span = Math.max(hi - lo, 1);
+            const pct = (v: number) =>
+              Math.min(100, Math.max(0, ((v - lo) / span) * 100));
+            const q10Pct = pct(q10);
+            const q90Pct = pct(q90);
+            const pointPct = pct(prediction_score);
+            return (
+              <div className="relative">
                 <div className="relative h-8 bg-muted/30 rounded-lg overflow-hidden">
-                  {/* Lower bound */}
+                  {/* q10–q90 band */}
                   <div
-                    className="absolute inset-y-0 left-0 bg-primary/20"
-                    style={{ width: `${(q10 / prediction_score) * 50}%` }}
+                    className="absolute inset-y-0 bg-primary/20"
+                    style={{ left: `${q10Pct}%`, width: `${Math.max(q90Pct - q10Pct, 1)}%` }}
                   />
                   {/* Prediction point */}
                   <div
-                    className="absolute inset-y-0 bg-primary"
-                    style={{ 
-                      left: '50%', 
-                      width: '2px',
-                      transform: 'translateX(-50%)'
-                    }}
-                  />
-                  {/* Upper bound */}
-                  <div
-                    className="absolute inset-y-0 right-0 bg-primary/20"
-                    style={{ width: `${((q90 - prediction_score) / prediction_score) * 50}%` }}
+                    className="absolute inset-y-0 w-0.5 bg-primary"
+                    style={{ left: `${pointPct}%`, transform: 'translateX(-50%)' }}
                   />
                 </div>
-                
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs text-muted-foreground font-mono">
+
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="font-mono text-xs text-muted-foreground">
                     {Math.round(q10)} cases
                   </span>
-                  <span className="text-xs font-medium font-mono">
-                    {Math.round(prediction_score)} cases
+                  <span className="font-mono text-xs font-medium">
+                    {Math.round(prediction_score)} expected
                   </span>
-                  <span className="text-xs text-muted-foreground font-mono">
+                  <span className="font-mono text-xs text-muted-foreground">
                     {Math.round(q90)} cases
                   </span>
                 </div>
               </div>
-            </div>
-          </div>
+            );
+          })()}
         </div>
       )}
 
@@ -248,25 +260,41 @@ export function PredictionExplanationCard({
 
 // Helper functions
 
-function parsePredictionReason(reason: string | null): Array<{ description: string; impact: 'increase' | 'decrease' }> {
+function resolveFactors(
+  structured: PredictionFactor[] | null | undefined,
+  reason: string | null,
+): DisplayFactor[] {
+  // Authoritative path: the model already told us each factor's direction from
+  // the sign of its SHAP value. No guessing. An empty (but present) array is
+  // authoritative too — e.g. cold-start predictions have no displayable
+  // drivers, so we show none rather than fabricating from the reason string.
+  if (structured) {
+    return structured.slice(0, 3).map((f) => ({
+      description: f.label,
+      impact: f.direction === 'increase' ? 'increase' : 'decrease',
+    }));
+  }
+  // Legacy fallback only for rows that predate structured factors entirely
+  // (field absent). The reason string carries no sign, so direction here is a
+  // best-effort guess from wording — kept only so old predictions render.
   if (!reason) return [];
-  
-  // Parse SHAP-based reasons (e.g., "High rainfall anomaly; elevated case history; seasonal peak")
-  const parts = reason.split(';').map(s => s.trim()).filter(Boolean);
-  
-  return parts.slice(0, 3).map(part => {
-    // Determine impact based on keywords
-    const lowerPart = part.toLowerCase();
-    const isIncrease = lowerPart.includes('high') || 
-                       lowerPart.includes('elevated') || 
-                       lowerPart.includes('peak') ||
-                       lowerPart.includes('increase');
-    
-    return {
-      description: part,
-      impact: isIncrease ? 'increase' : 'decrease',
-    };
-  });
+  return reason
+    .split(';')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 3)
+    .map((part) => {
+      const lower = part.toLowerCase();
+      const isIncrease =
+        lower.includes('high') ||
+        lower.includes('elevated') ||
+        lower.includes('heavy') ||
+        lower.includes('warm') ||
+        lower.includes('peak') ||
+        lower.includes('above') ||
+        lower.includes('increase');
+      return { description: part, impact: isIncrease ? 'increase' : 'decrease' };
+    });
 }
 
 function getConfidenceLevel(score: number): {
