@@ -121,31 +121,38 @@ class PDFExportService:
                 latest = predictions[0]
                 heading = Paragraph("Latest Prediction Details", heading_style)
                 elements.append(heading)
-                
-                explanation = latest.get("prediction_reason", "No explanation available")
-                explanation_para = Paragraph(f"<b>Explanation:</b> {explanation}", styles['Normal'])
+
+                # Plain-language headline tying the risk level to its drivers,
+                # built from the same shared summarizer as the dashboard + alerts.
+                from app.ai.summary import summarize
+                summary_text = summarize(latest.get("risk_level", ""), latest.get("factors"))
+                summary_para = Paragraph(f"<b>Summary:</b> {summary_text}", styles['Normal'])
+                elements.append(summary_para)
+                elements.append(Spacer(1, 0.1*inch))
+
+                explanation = latest.get("prediction_reason") or "No explanation available"
+                explanation_para = Paragraph(f"<b>Drivers:</b> {explanation}", styles['Normal'])
                 elements.append(explanation_para)
                 elements.append(Spacer(1, 0.2*inch))
-                
-                # Top Contributing Factors (if available)
-                if latest.get("explanation") and latest["explanation"].get("top_factors"):
+
+                # Top contributing factors, read from the stored signed factors.
+                factors = latest.get("factors") or []
+                if factors:
                     factors_heading = Paragraph("Top Contributing Factors", heading_style)
                     elements.append(factors_heading)
-                    
-                    factors_data = [["Factor", "Value", "Impact", "Direction"]]
-                    for factor in latest["explanation"]["top_factors"][:5]:
-                        factors_data.append([
-                            factor.get("display_name", "N/A"),
-                            f"{factor.get('value', 0):.1f}",
-                            f"{factor.get('impact_percentage', 0):.1f}%",
-                            factor.get("direction", "N/A").upper()
-                        ])
-                    
-                    factors_table = Table(factors_data, colWidths=[2.5*inch, 1.5*inch, 1.5*inch, 1*inch])
+
+                    factors_data = [["Factor", "Effect on risk"]]
+                    for factor in factors[:5]:
+                        effect = ("Increases risk" if factor.get("direction") == "increase"
+                                  else "Decreases risk")
+                        factors_data.append([factor.get("label", "N/A"), effect])
+
+                    factors_table = Table(factors_data, colWidths=[4.5*inch, 2*inch])
                     factors_table.setStyle(TableStyle([
                         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e40af')),
                         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+                        ('ALIGN', (1, 0), (1, -1), 'CENTER'),
                         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                         ('FONTSIZE', (0, 0), (-1, 0), 11),
                         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),

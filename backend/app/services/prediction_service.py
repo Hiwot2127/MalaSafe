@@ -217,10 +217,9 @@ class PredictionService:
                 alert = AlertModel(
                     district_id=district.id,
                     risk_level=result.risk_level,
-                    message=f"Predicted {result.risk_level} malaria risk for "
-                            f"{result.target_month.isoformat()}: "
-                            f"{result.prediction_score:.0f} cases expected. "
-                            f"{result.prediction_reason or ''}",
+                    message=f"{result.summary()} "
+                            f"~{result.prediction_score:.0f} cases expected for "
+                            f"{result.target_month.isoformat()}.",
                     is_active=True,
                 )
                 self.db.add(alert)

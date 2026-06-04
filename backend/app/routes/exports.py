@@ -68,8 +68,8 @@ async def export_district_report(
             "prediction_score": pred.prediction_score,
             "confidence_score": pred.confidence_score,
             "prediction_reason": pred.prediction_reason,
-            "is_warm": True,  # Simplified for now
-            "explanation": None  # Can be enhanced with SHAP data
+            "factors": pred.prediction_factors or [],
+            "is_warm": not (pred.prediction_reason or "").lower().startswith("cold-start"),
         }
         for pred in predictions
     ]

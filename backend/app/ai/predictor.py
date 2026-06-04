@@ -76,6 +76,11 @@ class PredictionResult:
         """JSON-serialisable factor list for the `prediction_factors` column."""
         return [f.to_dict() for f in self.factors]
 
+    def summary(self) -> str:
+        """Plain-language headline, e.g. 'High risk, driven by heavy rain ...'."""
+        from app.ai.summary import summarize
+        return summarize(self.risk_level, self.factors_json())
+
 
 class MalariaPredictor:
     def __init__(self, model_dir: Path):
