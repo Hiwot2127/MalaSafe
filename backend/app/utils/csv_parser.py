@@ -175,23 +175,26 @@ class CSVParser:
 class MalariaCSVParser(CSVParser):
     """Parser for malaria data CSV files. Monthly-only - weekly was removed."""
 
-    # New schema: facility-grain rows keyed by DHIS2 org unit + EC month label.
-    REQUIRED_COLUMNS_MONTHLY = ['organisationunitid', 'eth_month_year', 'positive', 'tests']
+    # New schema: monthly rows keyed by either DHIS2 org unit OR district code.
+    REQUIRED_COLUMNS_MONTHLY = ['eth_month_year', 'positive', 'tests']
     OPTIONAL_COLUMNS_MONTHLY = ['travel']  # Optional, defaults to 0 when absent/blank.
+    IDENTIFIER_COLUMNS = ['organisationunitid', 'district_code']
 
     @classmethod
     def parse_monthly_data(cls, file_content: bytes) -> Tuple[Optional[pd.DataFrame], List[Dict], List[Dict]]:
         """
         Parse monthly malaria data CSV (new schema).
 
-        Required columns: `organisationunitid`, `Eth_Month_Year`, `Positive`, `Tests`.
+        Required columns: `Eth_Month_Year`, `Positive`, `Tests`, plus at least one
+        identifier column: `organisationunitid` or `district_code`.
         Optional column: `Travel` (defaults to 0). All other columns are ignored.
 
         Returns:
             Tuple of (DataFrame, file_errors, row_errors).
 
-            On success the DataFrame has columns: `organisationunitid`, `month`,
-            `year`, `positive`, `tests`, `travel`. The original facility-row
+            On success the DataFrame has columns: `organisationunitid`,
+            `district_code`, `month`, `year`, `positive`, `tests`, `travel`.
+            The original facility-row
             grain is preserved — aggregation to woreda-month happens later in
             `upload_service`.
 
@@ -217,7 +220,18 @@ class MalariaCSVParser(CSVParser):
         if missing_columns:
             return None, [{"error": f"Missing required columns: {', '.join(missing_columns)}"}], []
 
-        row_errors.extend(cls.validate_required_values(df, cls.REQUIRED_COLUMNS_MONTHLY))
+        if not any(col in df.columns for col in cls.IDENTIFIER_COLUMNS):
+            return None, [{
+                "error": "Missing required identifier column: include organisationunitid or district_code"
+            }], []
+
+        required_value_cols = list(cls.REQUIRED_COLUMNS_MONTHLY)
+        if 'organisationunitid' in df.columns:
+            required_value_cols.append('organisationunitid')
+        elif 'district_code' in df.columns:
+            required_value_cols.append('district_code')
+
+        row_errors.extend(cls.validate_required_values(df, required_value_cols))
         row_errors.extend(cls.validate_numeric_column(df, 'positive', min_value=0))
         row_errors.extend(cls.validate_numeric_column(df, 'tests', min_value=0))
 
@@ -245,6 +259,7 @@ class MalariaCSVParser(CSVParser):
                 # behave; upload_service skips these via the bad_rows set.
                 parsed_rows.append({
                     "organisationunitid": str(row.get('organisationunitid', '')).strip(),
+                    "district_code": str(row.get('district_code', '')).strip().upper(),
                     "month": None, "year": None,
                     "positive": None, "tests": None, "travel": None,
                 })
@@ -262,6 +277,7 @@ class MalariaCSVParser(CSVParser):
                 })
                 parsed_rows.append({
                     "organisationunitid": str(row.get('organisationunitid', '')).strip(),
+                    "district_code": str(row.get('district_code', '')).strip().upper(),
                     "month": None, "year": None,
                     "positive": None, "tests": None, "travel": None,
                 })
@@ -269,7 +285,8 @@ class MalariaCSVParser(CSVParser):
 
             travel_raw = row.get('travel') if has_travel else 0
             parsed_rows.append({
-                "organisationunitid": str(row['organisationunitid']).strip(),
+                "organisationunitid": str(row.get('organisationunitid', '')).strip(),
+                "district_code": str(row.get('district_code', '')).strip().upper(),
                 "month": g_month,
                 "year": g_year,
                 "positive": row['positive'],

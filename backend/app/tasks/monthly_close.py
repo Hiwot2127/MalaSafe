@@ -105,9 +105,8 @@ async def _orchestrate(close_id: UUID) -> dict:
             # Fetch real climate for the just-uploaded month so the next
             # prediction reads observed CHIRPS rainfall + ERA5 temperature
             # instead of falling back to climatological normals.
-            from app.services.climate.climate_fetch_service import ClimateFetchService
-
             try:
+                from app.services.climate.climate_fetch_service import ClimateFetchService
                 fetch_report = await ClimateFetchService(db).fetch_month(anchor)
                 climate_note = fetch_report.as_dict()
             except Exception as exc:

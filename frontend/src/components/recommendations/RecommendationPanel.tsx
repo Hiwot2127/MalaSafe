@@ -13,6 +13,7 @@ import {
   RecommendationCategory,
 } from '../../types/recommendation';
 import axios from 'axios';
+import { useToast } from '@/lib/hooks/use-toast';
 
 interface RecommendationPanelProps {
   predictionId: string;
@@ -27,6 +28,7 @@ const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<RecommendationListResponse | null>(null);
   const [generating, setGenerating] = useState(false);
+  const { toast } = useToast();
 
   // Fetch recommendations
   const fetchRecommendations = async () => {
@@ -63,11 +65,25 @@ const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
       // Refresh recommendations
       await fetchRecommendations();
       
+      toast({
+        title: 'Recommendations generated',
+        description: force 
+          ? 'Response plan has been regenerated with latest data.'
+          : 'Response plan created successfully.',
+        variant: 'success',
+      });
+      
       if (onGenerate) {
         onGenerate();
       }
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to generate recommendations');
+      const errorMsg = err.response?.data?.detail || 'Failed to generate recommendations';
+      setError(errorMsg);
+      toast({
+        title: 'Generation failed',
+        description: errorMsg,
+        variant: 'destructive',
+      });
     } finally {
       setGenerating(false);
     }

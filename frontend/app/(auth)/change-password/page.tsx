@@ -331,8 +331,13 @@ export default function ChangePasswordPage() {
 
         {/* Security Notice */}
         <div className="mt-6 text-center">
-          <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
+          <p className="text-xs text-muted-foreground/70 leading-relaxed">
             Your password must be unique and not used for other accounts. Never share your password with anyone.
+          </p>
+          <p className="text-xs text-muted-foreground/50 mt-2">
+            <a href="/data-use-policy" className="hover:text-primary transition-colors">
+              Data Use Policy
+            </a>
           </p>
         </div>
       </div>

@@ -26,7 +26,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     role = Column(
-        SQLEnum(UserRole, values_callable=lambda enum_cls: [member.value for member in enum_cls]),
+        SQLEnum(UserRole, values_callable=lambda enum_cls: [member.value for member in enum_cls], native_enum=False),
         nullable=False,
         default=UserRole.PUBLIC_USER,
     )
@@ -68,7 +68,18 @@ class User(Base):
         """Check if account is currently locked."""
         if self.account_locked_until is None:
             return False
-        return datetime.utcnow() < self.account_locked_until
+        # Handle both aware and naive datetimes
+        now = datetime.utcnow()
+        if self.account_locked_until.tzinfo is not None and now.tzinfo is None:
+            # account_locked_until is aware, now is naive - make now aware
+            from datetime import timezone
+            now = now.replace(tzinfo=timezone.utc)
+        elif self.account_locked_until.tzinfo is None and now.tzinfo is not None:
+            # account_locked_until is naive, now is aware - make account_locked_until aware
+            from datetime import timezone
+            account_locked_until = self.account_locked_until.replace(tzinfo=timezone.utc)
+            return now < account_locked_until
+        return now < self.account_locked_until
     
     def lock_account(self, minutes: int = 15):
         """Lock account for specified minutes."""

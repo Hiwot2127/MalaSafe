@@ -32,16 +32,35 @@ export interface DistrictRiskCollection {
   metadata?: Record<string, unknown>;
 }
 
+// One signed SHAP driver behind a prediction, as returned by the backend in
+// `prediction_factors`. `direction` is authoritative (derived from the sign of
+// the SHAP `impact`) — render the up/down arrow from it, never from `label`.
+export interface PredictionFactor {
+  feature_name: string;
+  label: string;
+  impact: number;
+  value?: number | null;
+  direction: 'increase' | 'decrease';
+}
+
 // Backend response from /api/v1/predictions/history/{district_id}.
-// Shape kept loose since the backend schema isn't fully specified yet.
 export interface PredictionHistoryItem {
+  id?: string;
   prediction_id?: string;
   district_id?: string;
-  date: string; // ISO 8601
+  /** ISO date the prediction is for. Backend sends `prediction_date`; `date`
+   *  is kept for older callers. */
+  prediction_date?: string;
+  date?: string;
   predicted_positive?: number;
   risk_level?: string;
   confidence_score?: number | null;
   prediction_score?: number;
+  prediction_reason?: string | null;
+  q10?: number | null;
+  q90?: number | null;
+  factors?: PredictionFactor[];
+  created_at?: string;
 }
 
 export interface PredictionHistoryResponse {

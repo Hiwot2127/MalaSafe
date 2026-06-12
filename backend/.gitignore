@@ -67,3 +67,10 @@ Thumbs.db
 
 # Alembic
 alembic/versions/*.pyc
+
+# Celery runtime scheduler state (regenerated on start)
+celerybeat-schedule
+celerybeat-schedule.*
+
+# Ad-hoc upload inputs / runtime upload storage
+temp/upload-data/

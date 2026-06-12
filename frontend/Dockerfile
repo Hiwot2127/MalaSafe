@@ -34,8 +34,12 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install all dependencies (including dev)
-RUN npm install
+# Install all dependencies (including dev).
+# Drop the committed lockfile first: it may pin platform-specific optional
+# binaries (e.g. @tailwindcss/oxide-linux-x64-musl) that break `npm install`
+# on a different host arch (arm64/Apple Silicon). Letting npm re-resolve
+# picks the correct per-platform binary.
+RUN rm -f package-lock.json && npm install
 
 # Copy application code
 COPY . .

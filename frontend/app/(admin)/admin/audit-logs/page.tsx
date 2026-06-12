@@ -7,10 +7,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Shield, Search, Filter, Download, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { Shield, Search, Filter, Download, AlertTriangle, CheckCircle, Info, Eye } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { EditorialCard } from '@/components/editorial';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/lib/hooks/use-toast';
 
 interface AuditLog {
   id: string;
@@ -31,6 +32,8 @@ export default function AuditLogsPage() {
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [resourceFilter, setResourceFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchLogs();
@@ -123,8 +126,19 @@ export default function AuditLogsPage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.csv`;
+    const date = new Date().toISOString().split('T')[0];
+    const actionPart = actionFilter !== 'all' ? `-action-${actionFilter}` : '';
+    const resourcePart = resourceFilter !== 'all' ? `-resource-${resourceFilter}` : '';
+    const filename = `MalaSafe_Audit_Logs_${date}${actionPart}${resourcePart}.csv`;
+    a.download = filename;
     a.click();
+    window.URL.revokeObjectURL(url);
+    
+    toast({
+      title: 'Logs exported',
+      description: `${filename} has been saved to your downloads folder (${filteredLogs.length} entries).`,
+      variant: 'success',
+    });
   };
 
   return (
@@ -137,7 +151,7 @@ export default function AuditLogsPage() {
             Security and system activity logs
           </p>
         </div>
-        <Button onClick={exportLogs} className="gap-2">
+        <Button onClick={exportLogs} className="gap-2" aria-label="Export audit logs to CSV">
           <Download className="h-4 w-4" strokeWidth={1.5} />
           Export CSV
         </Button>
@@ -263,7 +277,13 @@ export default function AuditLogsPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filteredLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-muted/50 transition-colors">
+                  <tr 
+                    key={log.id} 
+                    className="hover:bg-muted/50 transition-colors focus-within:bg-muted/50"
+                    tabIndex={0}
+                    role="row"
+                    aria-label={`Audit log: ${log.action} by ${log.actor_email || 'System'} at ${new Date(log.timestamp).toLocaleString()}`}
+                  >
                     <td className="px-6 py-4 text-sm text-muted-foreground whitespace-nowrap">
                       {new Date(log.timestamp).toLocaleString()}
                     </td>
@@ -285,11 +305,20 @@ export default function AuditLogsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm max-w-md">
-                      <p className="truncate">{log.description}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="truncate flex-1">{log.description}</p>
+                        <button
+                          onClick={() => setSelectedLog(log)}
+                          className="flex-shrink-0 text-primary hover:text-primary/80 transition-colors"
+                          aria-label="View full description"
+                        >
+                          <Eye className="h-4 w-4" strokeWidth={1.5} />
+                        </button>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className={`flex items-center gap-2 text-sm font-medium ${getStatusColor(log.status)}`}>
-                        {getStatusIcon(log.status)}
+                        <span aria-hidden="true">{getStatusIcon(log.status)}</span>
                         <span className="capitalize">{log.status}</span>
                       </div>
                     </td>
@@ -303,6 +332,90 @@ export default function AuditLogsPage() {
           </div>
         )}
       </EditorialCard>
+
+      {/* Details Modal */}
+      {selectedLog && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setSelectedLog(null)}
+        >
+          <EditorialCard
+            className="max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 space-y-4">
+              <div className="flex items-start justify-between">
+                <h3 className="text-xl font-semibold">Audit Log Details</h3>
+                <button
+                  onClick={() => setSelectedLog(null)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Close details modal"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-3 text-sm">
+                <div>
+                  <p className="text-muted-foreground font-medium">Timestamp</p>
+                  <p className="font-mono">{new Date(selectedLog.timestamp).toLocaleString()}</p>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground font-medium">Actor</p>
+                  <p>{selectedLog.actor_email || 'System'}</p>
+                  {selectedLog.actor_role && (
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {selectedLog.actor_role.replace('_', ' ')}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground font-medium">Action</p>
+                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${getActionBadgeColor(selectedLog.action)}`}>
+                    {formatAction(selectedLog.action)}
+                  </span>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground font-medium">Resource</p>
+                  <p className="capitalize">{selectedLog.resource_type}</p>
+                  {selectedLog.resource_id && (
+                    <p className="text-xs text-muted-foreground font-mono">ID: {selectedLog.resource_id}</p>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground font-medium">Status</p>
+                  <div className={`flex items-center gap-2 font-medium ${getStatusColor(selectedLog.status)}`}>
+                    {getStatusIcon(selectedLog.status)}
+                    <span className="capitalize">{selectedLog.status}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground font-medium">IP Address</p>
+                  <p className="font-mono">{selectedLog.ip_address || 'N/A'}</p>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground font-medium">Full Description</p>
+                  <p className="whitespace-pre-wrap bg-muted/50 p-3 rounded-lg border border-border">
+                    {selectedLog.description}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border">
+                <Button onClick={() => setSelectedLog(null)} variant="outline" className="w-full">
+                  Close
+                </Button>
+              </div>
+            </div>
+          </EditorialCard>
+        </div>
+      )}
     </div>
   );
 }

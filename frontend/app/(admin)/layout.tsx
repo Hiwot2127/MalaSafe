@@ -14,6 +14,8 @@ import { UserRole } from '@/types/auth';
 import { canAccessAdminPanel } from '@/lib/rbac';
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
 import { AdminHeader } from '@/components/admin/admin-header';
+import { ToastProvider } from '@/lib/hooks/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 
 export default function AdminLayout({
   children,
@@ -53,20 +55,23 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar */}
-      <AdminSidebar />
+    <ToastProvider>
+      <div className="flex h-screen overflow-hidden bg-background">
+        {/* Sidebar */}
+        <AdminSidebar />
 
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header */}
-        <AdminHeader />
+        {/* Main Content */}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Header */}
+          <AdminHeader />
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
+          {/* Page Content */}
+          <main className="flex-1 overflow-y-auto p-6">
+            {children}
+          </main>
+        </div>
+        <Toaster />
       </div>
-    </div>
+    </ToastProvider>
   );
 }

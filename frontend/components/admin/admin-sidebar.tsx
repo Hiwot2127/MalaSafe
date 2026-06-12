@@ -42,7 +42,10 @@ export function AdminSidebar() {
               </h3>
               <div className="space-y-1">
                 {section.items.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                  // Fix: Exact match for /admin to prevent matching /admin/* routes
+                  const isActive = item.href === '/admin' 
+                    ? pathname === '/admin'
+                    : pathname === item.href || pathname.startsWith(item.href + '/');
                   const Icon = item.icon;
 
                   return (

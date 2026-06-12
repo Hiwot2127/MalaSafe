@@ -133,6 +133,9 @@ async def get_prediction_history(
             "confidence_score": float(pred.confidence_score),
             "prediction_score": float(pred.prediction_score),
             "prediction_reason": pred.prediction_reason,
+            "q10": float(pred.q10) if pred.q10 is not None else None,
+            "q90": float(pred.q90) if pred.q90 is not None else None,
+            "factors": pred.prediction_factors or [],
             "created_at": pred.created_at.isoformat() + "Z" if pred.created_at else None
         })
     
@@ -244,6 +247,9 @@ async def generate_prediction(
         prediction_score=float(pred.prediction_score),
         confidence_score=float(pred.confidence_score),
         prediction_reason=pred.prediction_reason,
+        q10=float(pred.q10) if pred.q10 is not None else None,
+        q90=float(pred.q90) if pred.q90 is not None else None,
+        factors=pred.prediction_factors or [],
         is_warm=(pred.prediction_reason or "").lower().startswith("cold-start") is False,
         created_at=pred.created_at.isoformat() + "Z" if pred.created_at else None,
     )

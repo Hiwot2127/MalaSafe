@@ -37,7 +37,7 @@ function LoginForm() {
   const [mounted, setMounted] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
-  const [capsLockOn, setCapsLockOn] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Load saved language preference
@@ -60,48 +60,11 @@ function LoginForm() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Detect Caps Lock
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.getModifierState && e.getModifierState('CapsLock')) {
-      setCapsLockOn(true);
-    } else {
-      setCapsLockOn(false);
-    }
-  };
-
   // Save language preference
   const handleLanguageChange = (lang: 'en' | 'am' | 'om' | 'ti') => {
     setLanguage(lang);
     localStorage.setItem('malasafe-language', lang);
     setIsLangDropdownOpen(false);
-  };
-
-  // Calculate password strength
-  const getPasswordStrength = (password: string) => {
-    let strength = 0;
-    if (password.length >= 8) strength++;
-    if (password.length >= 12) strength++;
-    if (/[a-z]/.test(password)) strength++;
-    if (/[A-Z]/.test(password)) strength++;
-    if (/[0-9]/.test(password)) strength++;
-    if (/[^a-zA-Z0-9]/.test(password)) strength++;
-    return Math.min(strength, 5);
-  };
-
-  const passwordStrength = getPasswordStrength(password);
-  const passwordStrengthPercentage = (passwordStrength / 5) * 100;
-  
-  const getPasswordStrengthColor = () => {
-    if (passwordStrength <= 2) return 'bg-red-500';
-    if (passwordStrength <= 3) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
-
-  const getPasswordStrengthLabel = () => {
-    if (passwordStrength === 0) return '';
-    if (passwordStrength <= 2) return language === 'en' ? 'Weak' : language === 'am' ? 'ደካማ' : language === 'om' ? 'Dadhabaa' : 'ድኹም';
-    if (passwordStrength <= 3) return language === 'en' ? 'Medium' : language === 'am' ? 'መካከለኛ' : language === 'om' ? 'Giddu galeessa' : 'ማእከላይ';
-    return language === 'en' ? 'Strong' : language === 'am' ? 'ጠንካራ' : language === 'om' ? 'Cimaa' : 'ድልዱል';
   };
 
   const languageOptions = [
@@ -137,6 +100,7 @@ function LoginForm() {
     en: {
       signIn: 'Sign in',
       emailLabel: 'Email address',
+      emailHelp: 'Use your institutional email',
       passwordLabel: 'Password',
       signInButton: 'Sign in',
       signingIn: 'Signing in…',
@@ -144,18 +108,19 @@ function LoginForm() {
       description: 'Access the MalaSafe surveillance dashboard. Authorised personnel only.',
       passwordHelp: 'Contact IT support for password assistance',
       securityNotice: 'This system is for authorized use only. All activity is monitored and logged.',
-      systemStatus: 'All systems operational',
       emailInvalid: 'Please enter a valid email address',
       showPassword: 'Show password',
       hidePassword: 'Hide password',
       backToHome: 'Back to home',
       forgotPassword: 'Forgot password?',
-      capsLockWarning: 'Caps Lock is on',
-      passwordStrength: 'Password strength',
+      forgotPasswordTitle: 'Reset Password',
+      forgotPasswordMessage: 'Please email admin_malasafe@gmail.com to reset your password.',
+      close: 'Close',
     },
     am: {
       signIn: 'ግባ',
       emailLabel: 'ኢሜይል አድራሻ',
+      emailHelp: 'የተቋምዎን ኢሜይል ይጠቀሙ',
       passwordLabel: 'የይለፍ ቃል',
       signInButton: 'ግባ',
       signingIn: 'በመግባት ላይ…',
@@ -163,18 +128,19 @@ function LoginForm() {
       description: 'የማላሴፍ ክትትል ዳሽቦርድ ይድረሱ። ለተፈቀደላቸው ሰራተኞች ብቻ።',
       passwordHelp: 'ለይለፍ ቃል እገዛ የአይቲ ድጋፍን ያነጋግሩ',
       securityNotice: 'ይህ ስርዓት ለተፈቀደ አጠቃቀም ብቻ ነው። ሁሉም እንቅስቃሴዎች ይከታተላሉ።',
-      systemStatus: 'ሁሉም ስርዓቶች እየሰሩ ነው',
       emailInvalid: 'እባክዎ ትክክለኛ ኢሜይል አድራሻ ያስገቡ',
       showPassword: 'የይለፍ ቃል አሳይ',
       hidePassword: 'የይለፍ ቃል ደብቅ',
       backToHome: 'ወደ መነሻ ተመለስ',
       forgotPassword: 'የይለፍ ቃል ረሱ?',
-      capsLockWarning: 'Caps Lock ክፍት ነው',
-      passwordStrength: 'የይለፍ ቃል ጥንካሬ',
+      forgotPasswordTitle: 'የይለፍ ቃል ዳግም ማስጀመር',
+      forgotPasswordMessage: 'የይለፍ ቃልዎን ዳግም ለማስጀመር እባክዎ admin_malasafe@gmail.com ኢሜይል ያድርጉ።',
+      close: 'ዝጋ',
     },
     om: {
       signIn: 'Seeni',
       emailLabel: 'Teessoo email',
+      emailHelp: 'Email dhaabbata keessanii fayyadamaa',
       passwordLabel: 'Jecha darbii',
       signInButton: 'Seeni',
       signingIn: 'Seenaa jira…',
@@ -182,18 +148,19 @@ function LoginForm() {
       description: 'Dashboard hordoffii MalaSafe seeni. Hojjettootaaf hayyamamaniif qofa.',
       passwordHelp: 'Gargaarsa jecha darbiitiif deeggarsa IT quunnamaa',
       securityNotice: 'Sirni kun itti fayyadama hayyamamaaf qofa. Sochiiwwan hundi ni hordofamu.',
-      systemStatus: 'Sirnoonni hundi hojii irra jiru',
       emailInvalid: 'Maaloo teessoo email sirrii galchaa',
       showPassword: 'Jecha darbii agarsiisi',
       hidePassword: 'Jecha darbii dhoksi',
       backToHome: 'Gara manaatti deebi\'i',
       forgotPassword: 'Jecha darbii irraanfatte?',
-      capsLockWarning: 'Caps Lock banaa jira',
-      passwordStrength: 'Humna jecha darbii',
+      forgotPasswordTitle: 'Jecha Darbii Haaromsi',
+      forgotPasswordMessage: 'Jecha darbii keessan haaromsuuf maaloo admin_malasafe@gmail.com emailii ergaa.',
+      close: 'Cufi',
     },
     ti: {
       signIn: 'ኣትው',
       emailLabel: 'ኢመይል ኣድራሻ',
+      emailHelp: 'ናይ ትካልካ ኢመይል ተጠቐም',
       passwordLabel: 'ምስጢር ቃል',
       signInButton: 'ኣትው',
       signingIn: 'ይኣትው ኣሎ…',
@@ -201,14 +168,14 @@ function LoginForm() {
       description: 'ናይ ማላሴፍ ክትትል ዳሽቦርድ ኣትው። ንዝተፈቐደሎም ሰራሕተኛታት ጥራይ።',
       passwordHelp: 'ንምስጢር ቃል ሓገዝ ናይ አይቲ ደገፍ ተራኸቡ',
       securityNotice: 'እዚ ስርዓት ንዝተፈቐደ ኣጠቓቕማ ጥራይ እዩ። ኩሉ ንጥፈታት ይክታተል።',
-      systemStatus: 'ኩሎም ስርዓታት ይሰርሑ ኣለዉ',
       emailInvalid: 'በጃኹም ቅኑዕ ኢመይል ኣድራሻ ኣእትዉ',
       showPassword: 'ምስጢር ቃል ኣርኢ',
       hidePassword: 'ምስጢር ቃል ሕብእ',
       backToHome: 'ናብ መበገሲ ተመለስ',
       forgotPassword: 'ምስጢር ቃል ረሲዕካዮ?',
-      capsLockWarning: 'Caps Lock ክፉት እዩ',
-      passwordStrength: 'ሓይሊ ምስጢር ቃል',
+      forgotPasswordTitle: 'ምስጢር ቃል ዳግማይ ምትካል',
+      forgotPasswordMessage: 'ምስጢር ቃልካ ዳግማይ ንምትካል በጃኻ admin_malasafe@gmail.com ኢመይል ስደድ።',
+      close: 'ዕጸው',
     },
   };
 
@@ -306,7 +273,7 @@ function LoginForm() {
           <div className="flex items-center justify-between gap-2">
             <Link 
               href="/"
-              className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors group"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
             >
               <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-1" strokeWidth={1.5} />
               <span className="font-mono uppercase tracking-wider">{t.backToHome}</span>
@@ -376,7 +343,9 @@ function LoginForm() {
                 {t.emailLabel}
               </label>
               <div className="group relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary pointer-events-none" strokeWidth={1.5} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                  <Mail className="h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" strokeWidth={1.5} aria-hidden="true" />
+                </div>
                 <input
                   id="email"
                   name="email"
@@ -390,6 +359,9 @@ function LoginForm() {
                   className={`flex h-10 w-full rounded-md border border-border/40 bg-background/40 backdrop-blur-md px-3 py-2 text-sm text-foreground transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 disabled:cursor-not-allowed disabled:opacity-50 pl-10 ${emailError ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50' : ''}`}
                 />
               </div>
+              <p className="text-xs text-muted-foreground/70">
+                {t.emailHelp}
+              </p>
               {emailError && (
                 <p className="text-xs text-red-500 animate-in fade-in slide-in-from-top-1 duration-200">
                   {emailError}
@@ -405,15 +377,18 @@ function LoginForm() {
                 >
                   {t.passwordLabel}
                 </label>
-                <a
-                  href="mailto:support@malasafe.gov.et?subject=Password Reset Request"
-                  className="text-[10px] text-primary hover:text-primary/80 transition-colors font-medium"
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPasswordModal(true)}
+                  className="text-xs text-primary hover:text-primary/80 transition-colors font-medium"
                 >
                   {t.forgotPassword}
-                </a>
+                </button>
               </div>
               <div className="group relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary pointer-events-none" strokeWidth={1.5} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                  <Lock className="h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" strokeWidth={1.5} aria-hidden="true" />
+                </div>
                 <input
                   id="password"
                   name="password"
@@ -421,8 +396,6 @@ function LoginForm() {
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onKeyUp={handleKeyDown}
                   disabled={loading || loginSuccess}
                   required
                   className="flex h-10 w-full rounded-md border border-border/40 bg-background/40 backdrop-blur-md px-3 py-2 text-sm text-foreground transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 disabled:cursor-not-allowed disabled:opacity-50 pl-10 pr-10"
@@ -430,7 +403,7 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:text-primary"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:text-primary z-10"
                   aria-label={showPassword ? t.hidePassword : t.showPassword}
                   disabled={loading || loginSuccess}
                 >
@@ -441,29 +414,6 @@ function LoginForm() {
                   )}
                 </button>
               </div>
-              
-              {/* Caps Lock Warning */}
-              {capsLockOn && password && (
-                <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-500 animate-in fade-in slide-in-from-top-1 duration-200">
-                  <AlertTriangle className="h-3 w-3" strokeWidth={2} />
-                  <span>{t.capsLockWarning}</span>
-                </div>
-              )}
-
-              {/* Password Strength Indicator */}
-              {password && passwordStrength > 0 && (
-                <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
-                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full transition-all duration-300 ${getPasswordStrengthColor()}`}
-                      style={{ width: `${passwordStrengthPercentage}%` }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    {t.passwordStrength}: <span className="font-medium">{getPasswordStrengthLabel()}</span>
-                  </p>
-                </div>
-              )}
             </div>
 
             {error ? (
@@ -507,19 +457,70 @@ function LoginForm() {
             </div>
           </form>
 
-          {/* System Status */}
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-            <span>{t.systemStatus}</span>
-          </div>
-
           {/* Security Notice */}
           <div className="text-center">
-            <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
+            <p className="text-xs text-muted-foreground/70 leading-relaxed">
               {t.securityNotice}
+            </p>
+            <p className="text-xs text-muted-foreground/50 mt-2">
+              <a href="/data-use-policy" className="hover:text-primary transition-colors">
+                {language === 'en' ? 'Data Use Policy' : language === 'am' ? 'የመረጃ አጠቃቀም ፖሊሲ' : language === 'om' ? 'Imaammata Itti Fayyadama Deetaa' : 'ፖሊሲ ኣጠቓቕማ ዳታ'}
+              </a>
             </p>
           </div>
         </div>
+
+        {/* Forgot Password Modal */}
+        {showForgotPasswordModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="relative w-full max-w-md mx-4 bg-card border border-border rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200">
+              <div className="p-6 space-y-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Mail className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                    </div>
+                    <h3 className="font-display text-lg font-semibold text-foreground">
+                      {t.forgotPasswordTitle}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setShowForgotPasswordModal(false)}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
+                
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {t.forgotPasswordMessage}
+                </p>
+                
+                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                  <Mail className="h-4 w-4 text-primary shrink-0" strokeWidth={1.5} />
+                  <a 
+                    href="mailto:admin_malasafe@gmail.com"
+                    className="text-sm font-mono text-primary hover:underline"
+                  >
+                    admin_malasafe@gmail.com
+                  </a>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    onClick={() => setShowForgotPasswordModal(false)}
+                    className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium text-sm"
+                  >
+                    {t.close}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );

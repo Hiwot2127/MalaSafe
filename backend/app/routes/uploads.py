@@ -6,8 +6,9 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status,
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
-from app.models import User
+from app.models import User, District, OrgUnitMapping
 from app.utils.dependencies import get_current_user, require_official
+from sqlalchemy import select
 from app.schemas.upload import UploadResponse, UploadError, StageResult, UploadPreviewResponse
 from app.services.upload_service import UploadService
 from app.middleware.rate_limit import limiter
@@ -17,6 +18,46 @@ import csv
 from loguru import logger
 
 router = APIRouter(prefix="/uploads", tags=["Uploads"])
+
+
+@router.get(
+    "/geo-names",
+    summary="Lookup woreda (district) names for upload identifiers",
+)
+async def get_geo_names(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Identifier -> woreda name maps for the upload preview EDA.
+
+    The CSV only carries opaque identifiers (DHIS2 `organisationunitid` or a
+    woreda `district_code`); the human-readable woreda name lives in the DB.
+    This returns both lookups so the client-side EDA can label charts by name.
+
+    - `by_org_unit`: DHIS2 organisationunitid -> district_name
+      (org_unit_mappings is the authoritative many-to-one source; the single
+      `districts.organisationunitid` is merged in as a fallback)
+    - `by_district_code`: woreda code (uppercased) -> district_name
+    """
+    districts = (await db.execute(select(District))).scalars().all()
+    id_to_name = {d.id: d.district_name for d in districts}
+
+    by_org_unit: dict[str, str] = {}
+    by_district_code: dict[str, str] = {}
+    for d in districts:
+        if d.district_code:
+            by_district_code[str(d.district_code).strip().upper()] = d.district_name
+        ou = getattr(d, "organisationunitid", None)
+        if ou:
+            by_org_unit.setdefault(str(ou).strip(), d.district_name)
+
+    mappings = (await db.execute(select(OrgUnitMapping))).scalars().all()
+    for m in mappings:
+        name = id_to_name.get(m.district_id)
+        if m.org_unit_id and name:
+            by_org_unit[str(m.org_unit_id).strip()] = name
+
+    return {"by_org_unit": by_org_unit, "by_district_code": by_district_code}
 
 
 # Background task for AI prediction processing
@@ -49,12 +90,13 @@ async def upload_monthly_malaria_data(
     current_user: User = Depends(require_official)
 ):
     """
-    Upload monthly malaria data CSV file (DHIS2 facility-grain).
+    Upload monthly malaria data CSV file (DHIS2 org-unit or district-code keyed).
 
     **Authorization:** Officials only (not public users)
 
     **CSV Format:**
-    - organisationunitid: DHIS2 organisation unit ID (e.g., `JgBKioqJo5h`)
+    - organisationunitid: DHIS2 organisation unit ID (e.g., `JgBKioqJo5h`) OR
+    - district_code: Ethiopian woreda code (e.g., `ET120101`)
     - Eth_Month_Year: Ethiopian month + year label (e.g., `Ginbot 2016`)
     - Positive: Number of positive cases (>=0)
     - Tests: Number of tests performed (>=0)
@@ -66,13 +108,20 @@ async def upload_monthly_malaria_data(
     JgBKioqJo5h,Ginbot 2016,17,89,823
     JgBKioqJo5h,Sene 2016,5,42,510
     ```
+    or
+    ```csv
+    district_code,Eth_Month_Year,Travel,Positive,Tests
+    ET120101,Tahsas 2018,11,64,598
+    ET120102,Tahsas 2018,9,57,552
+    ```
 
     **Validation:**
-    - Required columns: organisationunitid, Eth_Month_Year, Positive, Tests
+    - Required columns: Eth_Month_Year, Positive, Tests, plus one identifier
+      column (`organisationunitid` or `district_code`)
     - Numeric values must be valid (Positive/Tests/Travel >= 0)
     - Eth_Month_Year must be a valid Ethiopian month + EC year
-    - organisationunitid must exist in the districts catalog
-    - Duplicate detection (same DHIS2 org unit, month, year — facility rows
+    - identifier must exist in the districts catalog
+    - Duplicate detection (same identifier, month, year — facility rows
       are aggregated to the woreda level before duplicate check)
 
     **Returns:**

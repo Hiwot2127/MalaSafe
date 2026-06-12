@@ -34,6 +34,10 @@ import type {
   UploadKind,
 } from "@/types/upload";
 import type { LocalPreviewResult } from "@/lib/csv-preview";
+import { useQuery } from "@tanstack/react-query";
+import { computeMonthlyEda, type MonthlyEda } from "@/lib/csv-eda";
+import { uploadsApi } from "@/lib/api/uploads";
+import { UploadEdaPanel } from "./upload-eda-panel";
 
 interface UploadPreviewDialogProps {
   open: boolean;
@@ -91,6 +95,27 @@ export function UploadPreviewDialog({
     };
   }, [serverPreview, localPreview]);
 
+  // Client-side EDA over the full parsed file. Monthly only; computed from the
+  // local parse so the Overview tab can render before the server dry-run lands.
+  const eda = useMemo<MonthlyEda | null>(
+    () =>
+      kind === "monthly" && localPreview && localPreview.allRows.length > 0
+        ? computeMonthlyEda(localPreview.allRows)
+        : null,
+    [kind, localPreview],
+  );
+  const showOverview = kind === "monthly";
+
+  // Woreda name lookups (id -> name). Fetched once and cached; the EDA falls
+  // back to raw identifiers until this resolves.
+  const { data: geoNames } = useQuery({
+    queryKey: ["upload", "geo-names"],
+    queryFn: uploadsApi.getGeoNames,
+    enabled: open && showOverview,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+
   const validRows = serverPreview
     ? serverPreview.valid_sample.map((r) => ({ rowNumber: r.row_number, data: r.data }))
     : localPreview?.validRows ?? [];
@@ -111,7 +136,7 @@ export function UploadPreviewDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-3xl gap-0 border-border bg-popover p-0 sm:rounded-sm"
+        className={`gap-0 border-border bg-popover p-0 sm:rounded-sm ${showOverview ? "max-w-4xl" : "max-w-3xl"}`}
       >
         {/* Top eyebrow + title */}
         <DialogHeader className="space-y-3 border-b border-border px-6 pb-5 pt-6">
@@ -180,14 +205,34 @@ export function UploadPreviewDialog({
           </div>
         )}
 
-        {/* Tabs: Valid / Invalid / Duplicates */}
+        {/* Tabs: Overview (monthly) / Valid / Invalid / Duplicates */}
         {!confirming && !hasFileBlocker && (
-          <Tabs defaultValue="valid" className="px-6 pt-4">
+          <Tabs
+            key={fileName}
+            defaultValue={showOverview ? "overview" : "valid"}
+            className="px-6 pt-4"
+          >
             <TabsList className="h-auto gap-1 border-b border-border bg-transparent p-0">
+              {showOverview && <TabBadge value="overview" label="Overview" tone="valid" />}
               <TabBadge value="valid" label="Valid" count={summary.valid} tone="valid" />
               <TabBadge value="invalid" label="Invalid" count={summary.skipped} tone="warn" />
               <TabBadge value="duplicates" label="Duplicates" count={summary.duplicates} tone="error" />
             </TabsList>
+
+            {showOverview && (
+              <TabsContent value="overview" className="mt-0">
+                <ScrollArea className="h-[440px] -mx-6 px-6">
+                  {eda ? (
+                    <UploadEdaPanel eda={eda} nameMap={geoNames} />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+                      <Loader2 aria-hidden className="size-6 animate-spin text-muted-foreground" strokeWidth={1.5} />
+                      <p className="font-sans text-sm text-muted-foreground">Analyzing the file…</p>
+                    </div>
+                  )}
+                </ScrollArea>
+              </TabsContent>
+            )}
 
             <TabsContent value="valid" className="mt-0">
               {validSampleRows.length > 0 ? (
@@ -320,7 +365,7 @@ function SummaryCell({ label, value, tone }: SummaryCellProps) {
 interface TabBadgeProps {
   value: string;
   label: string;
-  count: number;
+  count?: number;
   tone: "valid" | "warn" | "error";
 }
 function TabBadge({ value, label, count, tone }: TabBadgeProps) {
@@ -331,12 +376,14 @@ function TabBadge({ value, label, count, tone }: TabBadgeProps) {
       className="group rounded-none border-0 border-b-2 border-transparent bg-transparent px-3 pb-2.5 pt-1 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
     >
       <span>{label}</span>
-      <Badge
-        variant="outline"
-        className={`ml-2 rounded-none border-border bg-transparent px-1.5 font-mono text-[10px] tabular-nums ${toneClass}`}
-      >
-        {count}
-      </Badge>
+      {count !== undefined && (
+        <Badge
+          variant="outline"
+          className={`ml-2 rounded-none border-border bg-transparent px-1.5 font-mono text-[10px] tabular-nums ${toneClass}`}
+        >
+          {count}
+        </Badge>
+      )}
     </TabsTrigger>
   );
 }

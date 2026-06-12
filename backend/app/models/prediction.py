@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Float, Text, Date, DateTime, ForeignKey, CheckConstraint, Index
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 import uuid
@@ -27,7 +27,11 @@ class Prediction(Base):
     prediction_score = Column(Float, nullable=False)  # Model's raw prediction score
     q10 = Column(Float, nullable=True)  # 10th percentile bound from quantile booster (lower CI)
     q90 = Column(Float, nullable=True)  # 90th percentile bound from quantile booster (upper CI)
-    prediction_reason = Column(Text, nullable=True)  # Explanation of prediction
+    prediction_reason = Column(Text, nullable=True)  # Human-readable explanation (joined factor labels)
+    # Signed top SHAP drivers behind this prediction. Each entry:
+    #   {feature_name, label, impact (signed), value, direction: "increase"|"decrease"}
+    # Nullable so pre-migration rows and cold-start predictions ([]) are valid.
+    prediction_factors = Column(JSONB, nullable=True)
     prediction_date = Column(Date, nullable=False, index=True)  # Date for which prediction is made
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
     
@@ -58,6 +62,7 @@ class Prediction(Base):
             "q10": self.q10,
             "q90": self.q90,
             "prediction_reason": self.prediction_reason,
+            "prediction_factors": self.prediction_factors,
             "prediction_date": self.prediction_date.isoformat() if self.prediction_date else None,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }

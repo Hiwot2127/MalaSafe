@@ -23,6 +23,40 @@ from app.ai.features import FeatureContext, build_features, to_dataframe
 from app.ai.phrasebook import phrase_for
 
 
+def _as_float(v) -> float | None:
+    """Coerce a feature value to a JSON-safe float, or None if not numeric."""
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    return f if np.isfinite(f) else None
+
+
+@dataclass
+class Factor:
+    """One signed driver of a prediction, derived from a SHAP contribution.
+
+    `direction` is the authoritative up/down signal taken straight from the
+    sign of `impact` — the UI must use it rather than re-guessing direction
+    from the wording of `label` (e.g. "unusually dry month" can be a *positive*
+    contribution in some regions, which keyword-matching gets wrong).
+    """
+    feature_name: str
+    label: str               # human-readable phrase from the phrasebook
+    impact: float            # signed SHAP contribution (log-space)
+    value: float | None      # the feature's input value, when known
+    direction: str           # "increase" | "decrease"
+
+    def to_dict(self) -> dict:
+        return {
+            "feature_name": self.feature_name,
+            "label": self.label,
+            "impact": round(self.impact, 6),
+            "value": self.value,
+            "direction": self.direction,
+        }
+
+
 @dataclass
 class PredictionResult:
     risk_level: str          # 'low' | 'moderate' | 'high' | 'very_high'
@@ -31,7 +65,21 @@ class PredictionResult:
     prediction_reason: str    # human-readable, up to 200 chars
     is_warm: bool             # whether main model (vs cold-start) was used
     target_month: date
+    factors: list[Factor]     # signed top drivers (empty for cold-start)
+    total_positive_impact: float = 0.0   # sum of +ve SHAP across all features
+    total_negative_impact: float = 0.0   # sum of -ve SHAP across all features
+    q10: float | None = None  # lower interval bound, case-count axis (warm only)
+    q90: float | None = None  # upper interval bound, case-count axis (warm only)
     debug: dict | None = None
+
+    def factors_json(self) -> list[dict]:
+        """JSON-serialisable factor list for the `prediction_factors` column."""
+        return [f.to_dict() for f in self.factors]
+
+    def summary(self) -> str:
+        """Plain-language headline, e.g. 'High risk, driven by heavy rain ...'."""
+        from app.ai.summary import summarize
+        return summarize(self.risk_level, self.factors_json())
 
 
 class MalariaPredictor:
@@ -140,6 +188,8 @@ class MalariaPredictor:
             pred = float(raw) * float(max(tests_hint, 1.0))
 
         # 3. Confidence - quantile interval (warm only; cold gets a flat prior)
+        q10_out: float | None = None
+        q90_out: float | None = None
         if is_warm:
             df_full = to_dataframe(f, self.feats)
             q10_log = float(self.q10.predict(df_full, num_iteration=self.q10.best_iteration)[0])
@@ -148,6 +198,12 @@ class MalariaPredictor:
             q90_c = float(np.expm1(q90_log))
             spread = max(q90_c - q10_c, 0.0)
             confidence = float(np.clip(1.0 - spread / (pred + 1.0), 0.0, 1.0))
+            # The q10/q90 boosters are trained on log1p(Positive) directly with
+            # no exposure offset (unlike the Poisson main model), so expm1 of
+            # their output is already an absolute case count on the same axis as
+            # the point estimate. Store as-is — do NOT apply the exposure factor.
+            q10_out = round(max(q10_c, 0.0), 2)
+            q90_out = round(max(q90_c, 0.0), 2)
         else:
             confidence = 0.3
 
@@ -156,7 +212,8 @@ class MalariaPredictor:
                                     district.region)
 
         # 5. Reason via SHAP top-3 + phrasebook
-        reason = self._explain(df if is_warm else None, f, is_warm)
+        factors, pos_total, neg_total = self._factors(df if is_warm else None, f, is_warm)
+        reason = self._reason_from_factors(factors, is_warm)
 
         return PredictionResult(
             risk_level=risk,
@@ -165,6 +222,11 @@ class MalariaPredictor:
             prediction_reason=reason,
             is_warm=is_warm,
             target_month=target_month,
+            factors=factors,
+            total_positive_impact=round(pos_total, 4),
+            total_negative_impact=round(neg_total, 4),
+            q10=q10_out,
+            q90=q90_out,
         )
 
     # ----- helpers ----------------------------------------------------------
@@ -180,22 +242,71 @@ class MalariaPredictor:
             return "high"
         return "very_high"
 
-    def _explain(self, df: pd.DataFrame | None, feat_dict: dict, is_warm: bool) -> str:
+    # Number of candidate features to scan when filling the top-3 mapped
+    # factors. The phrasebook returns None for some features (negative region
+    # one-hots, climate-source flags), so scanning only the top 3 by magnitude
+    # could yield fewer than 3 phrases. Scanning a wider pool lets genuine
+    # drivers surface even when an unmapped feature outranks them.
+    _FACTOR_CANDIDATES = 10
+    _MAX_FACTORS = 3
+
+    def _factors(
+        self, df: pd.DataFrame | None, feat_dict: dict, is_warm: bool
+    ) -> tuple[list[Factor], float, float]:
+        """Compute signed top drivers + total +/- impact for a warm prediction.
+
+        Returns `([], 0.0, 0.0)` for cold-start (no SHAP is computed). The
+        per-feature SHAP sign is preserved on each Factor so downstream
+        consumers never have to infer direction from the phrase wording.
+        """
+        if not is_warm or df is None:
+            return [], 0.0, 0.0
+
+        # SHAP via the booster's pred_contrib (no extra dep needed at inference).
+        contrib = self.main.predict(
+            df, num_iteration=self.main.best_iteration, pred_contrib=True
+        )[0]
+        sv = contrib[:-1]  # last column is the bias term; drop it.
+        names = self.feats
+
+        pos_total = float(sv[sv > 0].sum())
+        neg_total = float(sv[sv < 0].sum())
+
+        factors: list[Factor] = []
+        unmapped_top: list[str] = []
+        for i in np.argsort(-np.abs(sv))[: self._FACTOR_CANDIDATES]:
+            val = float(sv[i])
+            label = phrase_for(names[i], val)
+            if not label:
+                if len(factors) < self._MAX_FACTORS:
+                    unmapped_top.append(names[i])
+                continue
+            factors.append(Factor(
+                feature_name=names[i],
+                label=label,
+                impact=val,
+                value=_as_float(feat_dict.get(names[i])),
+                direction="increase" if val > 0 else "decrease",
+            ))
+            if len(factors) >= self._MAX_FACTORS:
+                break
+
+        # Surface coverage gaps: a high-ranking feature with no phrasebook entry
+        # is silently dropped from the explanation. Logging it tells us what to
+        # add rather than letting the reason quietly fall back to generic text.
+        if unmapped_top and len(factors) < self._MAX_FACTORS:
+            import logging
+            logging.getLogger("predictor").info(
+                "unmapped top SHAP features (no phrasebook entry): %s",
+                ", ".join(unmapped_top),
+            )
+
+        return factors, pos_total, neg_total
+
+    @staticmethod
+    def _reason_from_factors(factors: list[Factor], is_warm: bool) -> str:
         if not is_warm:
             return "Cold-start prediction - limited case history; uses climate + geography only."
-        # Compute SHAP via the booster's pred_contrib (no extra dep needed)
-        contrib = self.main.predict(df, num_iteration=self.main.best_iteration,
-                                     pred_contrib=True)[0]
-        # Last column is the bias; drop it.
-        sv = contrib[:-1]
-        names = self.feats
-        # Top 3 by |contribution|
-        idx = np.argsort(-np.abs(sv))[:3]
-        phrases: list[str] = []
-        for i in idx:
-            p = phrase_for(names[i], float(sv[i]))
-            if p:
-                phrases.append(p)
-        if not phrases:
+        if not factors:
             return "Driven by case-history and seasonal context."
-        return "; ".join(phrases[:3])[:200]
+        return "; ".join(f.label for f in factors)[:200]

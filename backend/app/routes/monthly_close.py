@@ -26,6 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models import (
     BacktestResult,
+    District,
     DriftFinding,
     MonthlyClose,
     User,
@@ -140,19 +141,28 @@ async def get_backtest(
 
     rows = (
         await db.execute(
-            select(BacktestResult)
+            select(BacktestResult, District.district_name)
+            .join(District, BacktestResult.district_id == District.id)
             .where(BacktestResult.monthly_close_id == close_id)
             .order_by(desc(BacktestResult.abs_error))
             .offset(skip)
             .limit(limit)
         )
-    ).scalars().all()
+    ).all()
+    
+    # Build items with district names included
+    items = []
+    for result, district_name in rows:
+        item = result.to_dict()
+        item['district_name'] = district_name
+        items.append(item)
+    
     return {
         "monthly_close_id": str(close_id),
         "count": int(total),
         "skip": skip,
         "limit": limit,
-        "items": [r.to_dict() for r in rows],
+        "items": items,
     }
 
 

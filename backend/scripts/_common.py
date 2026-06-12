@@ -18,8 +18,7 @@ if str(BACKEND_ROOT) not in sys.path:
 
 # Path to the pre-computed climate CSV in the climate-pipeline workspace.
 # Override via SEED_DATA_DIR env var if you've copied it locally.
-DEFAULT_SECOND_BRAIN = Path("/Users/danielbogale/Documents/second-brain")
-SEED_DATA_DIR = Path(os.environ.get("SEED_DATA_DIR", DEFAULT_SECOND_BRAIN / "temp"))
+SEED_DATA_DIR = Path(os.environ.get("SEED_DATA_DIR", BACKEND_ROOT / "temp"))
 
 
 def cli_argparser(name: str) -> argparse.ArgumentParser:
