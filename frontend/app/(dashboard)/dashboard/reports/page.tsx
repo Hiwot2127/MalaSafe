@@ -54,27 +54,6 @@ export default function ReportsPage() {
     return () => controller.abort();
   }, [year]);
 
-  return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-12">
-      <div className="flex flex-col gap-3">
-        <Link
-          href="/dashboard"
-          className="inline-flex w-fit items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
-          aria-label="Back to dashboard"
-        >
-          <ArrowLeft aria-hidden className="size-3.5" strokeWidth={1.5} />
-          Back to dashboard
-        </Link>
-        <PageHeader
-          eyebrow="MalaSafe · Reports"
-          title="Annual surveillance report"
-          description="Caseload and alerting posture by year and region."
-        />
-      </div>
-      <LoadingScreen caption="Compiling report" />
-    </div>
-  );
-
   if (loading) {
     return (
       <div className="mx-auto flex max-w-6xl flex-col gap-12">

@@ -8,7 +8,7 @@ import { uploadsApi } from "@/lib/api/uploads";
 import { parseLocalPreview, type LocalPreviewResult } from "@/lib/csv-preview";
 import type {
   UploadResponse,
-  UploadPreviewResponse,
+  UploadEDAResponse,
   UploadKind,
   StageResult,
 } from "@/types/upload";
@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 
 type PageState =
   | { kind: "idle" }
-  | { kind: "previewing"; file: File; local: LocalPreviewResult | null; server: UploadPreviewResponse | null; loadingServer: boolean }
+  | { kind: "previewing"; file: File; local: LocalPreviewResult | null; server: UploadEDAResponse | null; loadingServer: boolean }
   | { kind: "uploading"; file: File }
   | { kind: "done"; result: UploadResponse; file: File };
 
@@ -50,7 +50,7 @@ export default function UploadPage() {
   const handleFile = useCallback(
     async (file: File) => {
       // Open the modal immediately with a placeholder so the UI never blocks.
-      setState({ kind: "previewing", file, local: null, server: null, loadingServer: backendKind === "monthly" });
+      setState({ kind: "previewing", file, local: null, server: null, loadingServer: backendKind === "monthly" || backendKind === "climate" });
 
       // Client-side parse - should be sub-second even on large files.
       const local = await parseLocalPreview(file, backendKind);
@@ -60,9 +60,8 @@ export default function UploadPage() {
           : prev,
       );
 
-      // Server dry-run is only meaningful for monthly today (only endpoint
-      // shipped in Phase 3 backend); skip for climate until that exists.
-      if (backendKind !== "monthly") {
+      // Server dry-run now available for both monthly and climate uploads
+      if (backendKind !== "monthly" && backendKind !== "climate") {
         setState((prev) =>
           prev.kind === "previewing" && prev.file === file
             ? { ...prev, loadingServer: false }
@@ -72,7 +71,9 @@ export default function UploadPage() {
       }
 
       try {
-        const server = await uploadsApi.previewMonthlyMalariaUpload(file);
+        const server = backendKind === "monthly"
+          ? await uploadsApi.previewMonthlyMalariaUploadWithEDA(file)
+          : await uploadsApi.previewClimateUpload(file);
         setState((prev) =>
           prev.kind === "previewing" && prev.file === file
             ? { ...prev, server, loadingServer: false }

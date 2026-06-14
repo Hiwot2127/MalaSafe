@@ -27,11 +27,12 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertTriangle, CheckCircle2, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
 import type {
   UploadPreviewResponse,
   UploadError,
   UploadKind,
+  UploadEDAResponse,
 } from "@/types/upload";
 import type { LocalPreviewResult } from "@/lib/csv-preview";
 
@@ -45,7 +46,7 @@ interface UploadPreviewDialogProps {
   localPreview: LocalPreviewResult | null;
 
   /** Server dry-run result, loaded asynchronously after the modal opens. */
-  serverPreview: UploadPreviewResponse | null;
+  serverPreview: UploadEDAResponse | null;
   loadingServer: boolean;
 
   onConfirm: () => void;
@@ -180,11 +181,12 @@ export function UploadPreviewDialog({
           </div>
         )}
 
-        {/* Tabs: Valid / Invalid / Duplicates */}
+        {/* Tabs: Valid / Analysis / Invalid / Duplicates */}
         {!confirming && !hasFileBlocker && (
           <Tabs defaultValue="valid" className="px-6 pt-4">
             <TabsList className="h-auto gap-1 border-b border-border bg-transparent p-0">
               <TabBadge value="valid" label="Valid" count={summary.valid} tone="valid" />
+              <TabSimple value="eda" label="Analysis" icon={BarChart3} />
               <TabBadge value="invalid" label="Invalid" count={summary.skipped} tone="warn" />
               <TabBadge value="duplicates" label="Duplicates" count={summary.duplicates} tone="error" />
             </TabsList>
@@ -244,6 +246,24 @@ export function UploadPreviewDialog({
               )}
             </TabsContent>
 
+            {/* NEW: EDA Tab */}
+            <TabsContent value="eda" className="mt-0">
+              {loadingServer ? (
+                <div className="flex flex-col items-center justify-center gap-3 py-16">
+                  <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">Analyzing data quality...</p>
+                </div>
+              ) : serverPreview?.stats ? (
+                <ScrollArea className="h-[400px] -mx-6 px-6">
+                  <EDAContent edaData={serverPreview} />
+                </ScrollArea>
+              ) : (
+                <div className="px-1 py-12 text-center font-sans text-sm text-muted-foreground">
+                  Analysis unavailable
+                </div>
+              )}
+            </TabsContent>
+
             <TabsContent value="invalid" className="mt-0">
               <ErrorList rows={invalidRows} emptyLabel="No invalid rows - this file will import cleanly." />
             </TabsContent>
@@ -297,6 +317,224 @@ export function UploadPreviewDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ─── EDA Components ─────────────────────────────────────────────────────────
+
+function EDAContent({ edaData }: { edaData: UploadEDAResponse }) {
+  const { stats, distributions, outliers, completeness, historical_comparison } = edaData;
+
+  if (!stats) {
+    return <div className="py-8 text-center text-sm text-muted-foreground">No analysis data available</div>;
+  }
+
+  return (
+    <div className="space-y-6 py-4">
+      {/* Statistics Summary */}
+      <div>
+        <h4 className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+          Summary Statistics
+        </h4>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard label="Total Cases" value={stats.total_positive.toLocaleString()} />
+          <StatCard label="Avg/Row" value={stats.avg_positive.toFixed(1)} />
+          <StatCard label="Test Positivity" value={`${stats.test_positivity_rate.toFixed(1)}%`} />
+          <StatCard label="Districts" value={stats.unique_districts.toString()} />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <StatCard label="Median Cases" value={stats.median_positive.toFixed(0)} />
+          <StatCard label="Peak" value={stats.max_positive.toString()} />
+          <StatCard label="Std Dev" value={stats.std_positive.toFixed(1)} />
+        </div>
+      </div>
+
+      {/* Distribution Charts */}
+      {distributions && distributions.length > 0 && (
+        <div>
+          <h4 className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            Distribution
+          </h4>
+          <div className="space-y-4">
+            {distributions.map((dist) => (
+              <div key={dist.column_name} className="rounded-lg border border-border bg-card/50 p-4">
+                <p className="mb-3 font-semibold text-sm capitalize">{dist.column_name}</p>
+                <div className="flex items-end gap-1 h-24">
+                  {dist.buckets.map((bucket, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 bg-primary/80 rounded-t transition-all hover:bg-primary"
+                      style={{ height: `${bucket.percentage}%` }}
+                      title={`${bucket.min_value.toFixed(0)}-${bucket.max_value.toFixed(0)}: ${bucket.count} rows (${bucket.percentage.toFixed(1)}%)`}
+                    />
+                  ))}
+                </div>
+                <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+                  <span>{dist.buckets[0]?.min_value.toFixed(0) || 0}</span>
+                  <span>{dist.buckets[dist.buckets.length - 1]?.max_value.toFixed(0) || 0}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Outliers */}
+      {outliers && outliers.length > 0 && (
+        <div>
+          <h4 className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            Potential Outliers
+          </h4>
+          <div className="rounded-lg border border-status-warn/40 bg-status-warn/5 p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <AlertTriangle className="size-4 text-status-warn" />
+              <p className="font-semibold text-sm">Data Quality Alerts</p>
+            </div>
+            <ul className="space-y-2">
+              {outliers.slice(0, 5).map((outlier, i) => (
+                <li key={i} className="text-sm">
+                  <span className="font-mono text-xs text-muted-foreground">Row {outlier.row_number}</span>
+                  <span className="mx-2">·</span>
+                  <span>{outlier.reason}</span>
+                  {outlier.context && outlier.context.district_code && (
+                    <span className="ml-2 text-muted-foreground">
+                      ({outlier.context.district_code})
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {outliers.length > 5 && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                + {outliers.length - 5} more outliers detected
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Completeness */}
+      {completeness && completeness.length > 0 && (
+        <div>
+          <h4 className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            Data Completeness
+          </h4>
+          <div className="space-y-3 rounded-lg border border-border bg-card/50 p-4">
+            {completeness.map((item) => (
+              <div key={item.column}>
+                <div className="mb-1 flex items-center justify-between text-sm">
+                  <span className="font-medium capitalize">{item.column}</span>
+                  <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                    {item.completeness_pct.toFixed(0)}%
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                  <div
+                    className={`h-full ${
+                      item.completeness_pct === 100 ? 'bg-status-valid' : 'bg-primary'
+                    }`}
+                    style={{ width: `${item.completeness_pct}%` }}
+                  />
+                </div>
+                {item.missing_will_default && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Missing values will default to {item.default_value ?? 0}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Historical Comparison */}
+      {historical_comparison && historical_comparison.status !== 'error' && (
+        <div>
+          <h4 className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            Historical Comparison
+          </h4>
+          <div
+            className={`rounded-lg border p-4 ${
+              historical_comparison.status === 'within_range'
+                ? 'border-status-valid/40 bg-status-valid/5'
+                : historical_comparison.status === 'above_average'
+                ? 'border-status-warn/40 bg-status-warn/5'
+                : 'border-border bg-card/50'
+            }`}
+          >
+            <p className="mb-2 font-semibold text-sm">{historical_comparison.message}</p>
+            {historical_comparison.change_percent !== undefined && (
+              <div className="flex items-center gap-2">
+                {historical_comparison.change_percent > 0 ? (
+                  <TrendingUp className="size-4 text-status-error" />
+                ) : (
+                  <TrendingDown className="size-4 text-status-valid" />
+                )}
+                <span className="font-mono tabular-nums">
+                  {historical_comparison.change_percent > 0 ? '+' : ''}
+                  {historical_comparison.change_percent.toFixed(1)}%
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  ({historical_comparison.change_absolute > 0 ? '+' : ''}
+                  {historical_comparison.change_absolute?.toLocaleString()} cases)
+                </span>
+              </div>
+            )}
+            {historical_comparison.comparison_period && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Compared to: {historical_comparison.comparison_period}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* District Coverage */}
+      {stats.missing_districts && stats.missing_districts.length > 0 && (
+        <div>
+          <h4 className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            District Coverage
+          </h4>
+          <div className="rounded-lg border border-border bg-card/50 p-4">
+            <p className="mb-2 text-sm">
+              <span className="font-semibold">{stats.unique_districts} districts</span> included in upload
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {stats.missing_districts.length} districts not in this file
+              {stats.missing_districts.length <= 5 ? ': ' : ' (showing first 5):'}
+              <span className="font-mono text-xs ml-1">
+                {stats.missing_districts.slice(0, 5).join(', ')}
+              </span>
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-card/50 p-3">
+      <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </p>
+      <p className="font-display text-2xl font-semibold tabular-nums text-foreground">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function TabSimple({ value, label, icon: Icon }: { value: string; label: string; icon: typeof BarChart3 }) {
+  return (
+    <TabsTrigger
+      value={value}
+      className="group inline-flex items-center gap-1.5 rounded-none border-0 border-b-2 border-transparent bg-transparent px-3 pb-2.5 pt-1 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+    >
+      <Icon className="size-3.5" strokeWidth={1.75} />
+      <span>{label}</span>
+    </TabsTrigger>
   );
 }
 

@@ -250,7 +250,7 @@ export default function PredictionsPage() {
     [features, selected],
   );
 
-  const latestPredictionId = history[0]?.prediction_id ?? history[0]?.id ?? null;
+  const latestPredictionId = history[0]?.prediction_id ?? null;
   const selectedDistrictId = selectedFeature?.properties.district_id ?? null;
 
   const handleDistrictExport = async () => {
@@ -414,7 +414,7 @@ export default function PredictionsPage() {
                   <tbody>
                     {history.map((h, i) => (
                       <tr
-                        key={(h.prediction_id ?? h.id ?? `${h.date}-${i}`) as string}
+                        key={h.prediction_id ?? `${h.date}-${i}`}
                         className="border-b border-border/70 last:border-0"
                       >
                         <Td className="font-mono text-xs tabular-nums">

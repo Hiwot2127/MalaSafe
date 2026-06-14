@@ -97,46 +97,21 @@ export default function AnalyticsPage() {
     ...(selectedRegion ? { region: selectedRegion } : {}),
   });
 
-  // Multi-region queries - Fixed: cannot use hooks in loops
-  const region1Query = useTrends({
-    trend_type: trendType,
-    limit: dataLimit,
-    region: compareRegions[0],
-    ...(selectedYear ? { year: selectedYear } : {}),
-  });
-  
-  const region2Query = useTrends({
-    trend_type: trendType,
-    limit: dataLimit,
-    region: compareRegions[1] || '',
-    ...(selectedYear ? { year: selectedYear } : {}),
-  });
-  
-  const region3Query = useTrends({
-    trend_type: trendType,
-    limit: dataLimit,
-    region: compareRegions[2] || '',
-    ...(selectedYear ? { year: selectedYear } : {}),
-  });
-  
-  const region4Query = useTrends({
-    trend_type: trendType,
-    limit: dataLimit,
-    region: compareRegions[3] || '',
-    ...(selectedYear ? { year: selectedYear } : {}),
-  });
+  // Multi-region queries
+  const regionQueries = compareRegions.map(region => 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useTrends({
+      trend_type: trendType,
+      limit: dataLimit,
+      region,
+      ...(selectedYear ? { year: selectedYear } : {}),
+    })
+  );
 
   const trends = (data?.data ?? []) as TrendDataPoint[];
   const yoyTrends1 = (yoyData1?.data ?? []) as TrendDataPoint[];
   const yoyTrends2 = (yoyData2?.data ?? []) as TrendDataPoint[];
-  
-  // Combine region queries into array
-  const multiRegionTrends = [
-    (region1Query.data?.data ?? []) as TrendDataPoint[],
-    compareRegions[1] ? ((region2Query.data?.data ?? []) as TrendDataPoint[]) : [],
-    compareRegions[2] ? ((region3Query.data?.data ?? []) as TrendDataPoint[]) : [],
-    compareRegions[3] ? ((region4Query.data?.data ?? []) as TrendDataPoint[]) : [],
-  ].slice(0, compareRegions.length);
+  const multiRegionTrends = regionQueries.map(q => (q.data?.data ?? []) as TrendDataPoint[]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -574,7 +549,7 @@ export default function AnalyticsPage() {
       <section className="flex flex-col gap-5 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         <SectionHeader
           index="001"
-          label={viewMode === 'yoy' ? 'Year-over-Year Comparison' : viewMode === 'multi-region' ? 'Region Comparison' : trendType === 'weekly' ? 'Weekly series' : 'Monthly series'}
+          label={trendType === 'weekly' ? 'Weekly series' : 'Monthly series'}
           tone="signal"
         >
           <EditorialSelect
@@ -598,264 +573,14 @@ export default function AnalyticsPage() {
           <LoadingScreen caption="Loading series" />
         ) : error ? (
           <AlertBanner tone="error" title="Couldn't load trends" description={(error as Error).message} />
-        ) : viewMode === 'single' && trends.length === 0 ? (
+        ) : trends.length === 0 ? (
           <EmptyState
             title="No trend data available"
             description="Upload a monthly malaria CSV to seed the trend series."
           />
-        ) : viewMode === 'yoy' ? (
-          <>
-            {/* Year-over-Year Comparison Chart */}
-            <div className="glass-panel rounded-2xl overflow-hidden border border-border/40 shadow-lg">
-              <div className="flex flex-col gap-4 bg-background/40 backdrop-blur-md p-6">
-                <div className="flex items-center justify-between">
-                  <p className="font-mono text-[11px] uppercase tracking-[0.20em] text-muted-foreground">
-                    {yoyYear1} vs {yoyYear2} · Month-by-month comparison
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <span className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                      <span className="inline-block size-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.8)]" />
-                      {yoyYear1}
-                    </span>
-                    <span className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                      <span className="inline-block size-2.5 rounded-full bg-status-warn shadow-[0_0_8px_rgba(255,180,0,0.8)]" />
-                      {yoyYear2}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="relative h-64 w-full mt-2">
-                  <svg viewBox="0 0 100 50" preserveAspectRatio="none" className="h-full w-full overflow-visible">
-                    <line x1="0" y1="12.5" x2="100" y2="12.5" stroke="hsl(var(--border))" strokeWidth="0.3" opacity="0.3" />
-                    <line x1="0" y1="25" x2="100" y2="25" stroke="hsl(var(--border))" strokeWidth="0.3" opacity="0.3" />
-                    <line x1="0" y1="37.5" x2="100" y2="37.5" stroke="hsl(var(--border))" strokeWidth="0.3" opacity="0.3" />
-                    <line x1="0" y1="49.5" x2="100" y2="49.5" stroke="hsl(var(--border))" strokeWidth="0.5" />
-                    
-                    {/* Year 1 line (primary color, solid) */}
-                    {yoyTrends1.length > 0 && (
-                      <>
-                        <path
-                          d={`M0,50 L${buildPoints(yoyTrends1, 'positive')} L100,50 Z`}
-                          fill="url(#yoy-gradient-1)"
-                          opacity="0.1"
-                        />
-                        <polyline
-                          fill="none"
-                          stroke="hsl(var(--primary))"
-                          strokeWidth="2.5"
-                          points={buildPoints(yoyTrends1, 'positive')}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </>
-                    )}
-                    
-                    {/* Year 2 line (warning color, dashed) */}
-                    {yoyTrends2.length > 0 && (
-                      <polyline
-                        fill="none"
-                        stroke="hsl(38 56% 50%)"
-                        strokeWidth="2.5"
-                        strokeDasharray="6 3"
-                        points={buildPoints(yoyTrends2, 'positive')}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    )}
-                    
-                    <defs>
-                      <linearGradient id="yoy-gradient-1" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" />
-                        <stop offset="100%" stopColor="transparent" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-                
-                <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.20em] text-muted-foreground tabular-nums">
-                  <span>Jan</span>
-                  <span>Dec</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Year-over-Year Table Comparison */}
-            <SectionHeader index="002" label="Month-by-Month Breakdown" tone="signal" />
-            <div className="overflow-hidden rounded-2xl glass-panel border border-border/40 shadow-lg">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border/40">
-                      <Th>Month</Th>
-                      <Th align="right">{yoyYear1}</Th>
-                      <Th align="right">{yoyYear2}</Th>
-                      <Th align="right">Difference</Th>
-                      <Th align="right">% Change</Th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {yoyTrends1.map((trend1, index) => {
-                      const trend2 = yoyTrends2.find(t => t.period.split('-')[1] === trend1.period.split('-')[1]);
-                      const diff = trend2 ? trend1.positive - trend2.positive : null;
-                      const pctChange = trend2 && trend2.positive > 0 ? ((trend1.positive - trend2.positive) / trend2.positive) * 100 : null;
-                      const isIncrease = diff !== null && diff > 0;
-                      const isDecrease = diff !== null && diff < 0;
-                      
-                      return (
-                        <tr key={index} className="group border-b border-border/40 transition-all duration-300 last:border-0 hover:bg-primary/5">
-                          <Td>{trend1.period.split('-')[1] || trend1.period}</Td>
-                          <Td align="right" numeric>
-                            <span className="font-medium text-foreground">{trend1.positive.toLocaleString()}</span>
-                          </Td>
-                          <Td align="right" numeric>
-                            <span className="text-muted-foreground">{trend2?.positive.toLocaleString() ?? '—'}</span>
-                          </Td>
-                          <Td align="right" numeric>
-                            {diff !== null ? (
-                              <span className={isIncrease ? 'text-status-error' : isDecrease ? 'text-status-valid' : 'text-muted-foreground'}>
-                                {diff > 0 ? '+' : ''}{diff.toLocaleString()}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </Td>
-                          <Td align="right" numeric>
-                            {pctChange !== null ? (
-                              <div className="inline-flex items-center gap-1.5">
-                                {isIncrease && <TrendingUp className="size-3 text-status-error" strokeWidth={2} />}
-                                {isDecrease && <TrendingDown className="size-3 text-status-valid" strokeWidth={2} />}
-                                <span className={isIncrease ? 'text-status-error' : isDecrease ? 'text-status-valid' : 'text-muted-foreground'}>
-                                  {pctChange > 0 ? '+' : ''}{pctChange.toFixed(1)}%
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </Td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </>
-        ) : viewMode === 'multi-region' ? (
-          <>
-            {/* Multi-Region Comparison Chart */}
-            <div className="glass-panel rounded-2xl overflow-hidden border border-border/40 shadow-lg">
-              <div className="flex flex-col gap-4 bg-background/40 backdrop-blur-md p-6">
-                <div className="flex items-center justify-between flex-wrap gap-3">
-                  <p className="font-mono text-[11px] uppercase tracking-[0.20em] text-muted-foreground">
-                    Multi-region comparison · {dataLimit} months
-                  </p>
-                  <div className="flex items-center gap-4 flex-wrap">
-                    {compareRegions.map((region, i) => (
-                      <span key={i} className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                        <span className="inline-block size-2.5 rounded-full" style={{ backgroundColor: REGION_COLORS[i], boxShadow: `0 0 8px ${REGION_COLORS[i]}` }} />
-                        {region}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="relative h-64 w-full mt-2">
-                  <svg viewBox="0 0 100 50" preserveAspectRatio="none" className="h-full w-full overflow-visible">
-                    <line x1="0" y1="12.5" x2="100" y2="12.5" stroke="hsl(var(--border))" strokeWidth="0.3" opacity="0.3" />
-                    <line x1="0" y1="25" x2="100" y2="25" stroke="hsl(var(--border))" strokeWidth="0.3" opacity="0.3" />
-                    <line x1="0" y1="37.5" x2="100" y2="37.5" stroke="hsl(var(--border))" strokeWidth="0.3" opacity="0.3" />
-                    <line x1="0" y1="49.5" x2="100" y2="49.5" stroke="hsl(var(--border))" strokeWidth="0.5" />
-                    
-                    {multiRegionTrends.map((regionData, regionIndex) => {
-                      if (regionData.length === 0) return null;
-                      
-                      // Calculate max across all regions for consistent scaling
-                      const allValues = multiRegionTrends.flat().map(t => t.positive);
-                      const max = Math.max(...allValues, 1);
-                      
-                      const points = regionData.slice().reverse().map((t, i) => {
-                        const x = (i / Math.max(regionData.length - 1, 1)) * 100;
-                        const y = 50 - (t.positive / max) * 45;
-                        return `${x.toFixed(2)},${y.toFixed(2)}`;
-                      }).join(' ');
-                      
-                      return (
-                        <polyline
-                          key={regionIndex}
-                          fill="none"
-                          stroke={REGION_COLORS[regionIndex]}
-                          strokeWidth="2.5"
-                          points={points}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      );
-                    })}
-                  </svg>
-                </div>
-                
-                <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.20em] text-muted-foreground tabular-nums">
-                  <span>Oldest</span>
-                  <span>Most recent</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Multi-Region Summary Table */}
-            <SectionHeader index="002" label="Regional Summary" tone="signal" />
-            <div className="overflow-hidden rounded-2xl glass-panel border border-border/40 shadow-lg">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border/40">
-                      <Th>Region</Th>
-                      <Th align="right">Total Cases</Th>
-                      <Th align="right">Average/Month</Th>
-                      <Th align="right">Peak</Th>
-                      <Th align="right">Recent</Th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {compareRegions.map((region, index) => {
-                      const regionData = multiRegionTrends[index] || [];
-                      if (regionData.length === 0) return null;
-                      
-                      const total = regionData.reduce((sum, t) => sum + t.positive, 0);
-                      const avg = Math.round(total / regionData.length);
-                      const peak = Math.max(...regionData.map(t => t.positive));
-                      const recent = regionData[0]?.positive || 0;
-                      
-                      return (
-                        <tr key={index} className="group border-b border-border/40 transition-all duration-300 last:border-0 hover:bg-primary/5">
-                          <Td>
-                            <div className="inline-flex items-center gap-2">
-                              <span className="inline-block size-2.5 rounded-full" style={{ backgroundColor: REGION_COLORS[index] }} />
-                              <span className="font-medium">{region}</span>
-                            </div>
-                          </Td>
-                          <Td align="right" numeric>
-                            <span className="font-medium text-foreground">{total.toLocaleString()}</span>
-                          </Td>
-                          <Td align="right" numeric>
-                            <span className="text-muted-foreground">{avg.toLocaleString()}</span>
-                          </Td>
-                          <Td align="right" numeric>
-                            <span className="text-status-error">{peak.toLocaleString()}</span>
-                          </Td>
-                          <Td align="right" numeric>
-                            <span className="text-foreground">{recent.toLocaleString()}</span>
-                          </Td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </>
         ) : (
           <>
-            {/* Single View Enhanced Chart */}
+            {/* Enhanced Chart */}
             <div className="glass-panel rounded-2xl overflow-hidden border border-border/40 shadow-lg">
               <div className="flex flex-col gap-4 bg-background/40 backdrop-blur-md p-6 group">
                 <div className="flex items-center justify-between">

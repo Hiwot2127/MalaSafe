@@ -66,3 +66,84 @@ export interface UploadedFile {
 }
 
 export type UploadKind = "monthly" | "climate";
+
+// EDA (Exploratory Data Analysis) Types
+export interface DistributionBucket {
+  min_value: number;
+  max_value: number;
+  count: number;
+  percentage: number;
+}
+
+export interface DistributionData {
+  column_name: string;
+  buckets: DistributionBucket[];
+  total_values: number;
+}
+
+export interface OutlierInfo {
+  row_number: number;
+  column: string;
+  value: number;
+  mean: number;
+  std_dev: number;
+  z_score: number;
+  reason: string;
+  context?: Record<string, any>;
+}
+
+export interface StatsSummary {
+  total_rows: number;
+  valid_rows: number;
+  invalid_rows: number;
+  date_range_start?: string;
+  date_range_end?: string;
+  unique_periods: number;
+  unique_districts: number;
+  districts_list: string[];
+  missing_districts: string[];
+  total_positive: number;
+  avg_positive: number;
+  median_positive: number;
+  min_positive: number;
+  max_positive: number;
+  std_positive: number;
+  total_tests: number;
+  avg_tests: number;
+  median_tests: number;
+  test_positivity_rate: number;
+  total_travel?: number;
+  avg_travel?: number;
+  travel_completeness?: number;
+}
+
+export interface CompletenessInfo {
+  column: string;
+  total_rows: number;
+  non_empty_rows: number;
+  completeness_pct: number;
+  missing_will_default: boolean;
+  default_value?: any;
+}
+
+export interface HistoricalComparison {
+  current_total_cases: number;
+  previous_total_cases?: number;
+  change_absolute?: number;
+  change_percent?: number;
+  comparison_period?: string;
+  status: string;
+  message: string;
+}
+
+export interface UploadEDAResponse {
+  summary: UploadPreviewSummary;
+  sample_valid: UploadPreviewRow[];
+  invalid: UploadError[];
+  duplicates: UploadError[];
+  stats: StatsSummary | null;
+  distributions: DistributionData[];
+  outliers: OutlierInfo[];
+  completeness: CompletenessInfo[];
+  historical_comparison: HistoricalComparison;
+}

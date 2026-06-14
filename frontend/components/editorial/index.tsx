@@ -17,7 +17,7 @@ export const SHELL_BAR_HEIGHT = "h-[4.5rem]";
 interface PageHeaderProps {
   eyebrow: string;
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
 }
@@ -38,9 +38,9 @@ export function PageHeader({ eyebrow, title, description, actions, className }: 
           {title}
         </h1>
         {description ? (
-          <p className="max-w-prose font-sans text-base leading-relaxed text-muted-foreground">
+          <div className="max-w-prose font-sans text-base leading-relaxed text-muted-foreground">
             {description}
-          </p>
+          </div>
         ) : null}
       </div>
       {actions ? <div className="flex shrink-0 items-center gap-3">{actions}</div> : null}

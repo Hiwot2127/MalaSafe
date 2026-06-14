@@ -205,23 +205,50 @@ class PredictionService:
                 await self.db.rollback()
                 return await self._existing_prediction(district.id, result.target_month)
 
-        # Best-effort alert raise
-        if result.risk_level in ("high", "very_high"):
-            try:
-                alert = AlertModel(
-                    district_id=district.id,
-                    risk_level=result.risk_level,
-                    message=f"Predicted {result.risk_level} malaria risk for "
-                            f"{result.target_month.isoformat()}: "
-                            f"{result.prediction_score:.0f} cases expected. "
-                            f"{result.prediction_reason or ''}",
-                    is_active=True,
+        # Best-effort alert management: create/update for high risk, close for low risk
+        try:
+            # Check for existing active alert for this district
+            existing_alert_q = select(AlertModel).where(
+                and_(
+                    AlertModel.district_id == district.id,
+                    AlertModel.is_active == True
                 )
-                self.db.add(alert)
-                await self.db.flush()
-            except Exception:
-                import logging
-                logging.getLogger("prediction_service").warning(
-                    f"alert creation failed for district {district.id}; continuing")
+            ).order_by(AlertModel.created_at.desc())
+            existing_alert = (await self.db.execute(existing_alert_q)).scalar_one_or_none()
+            
+            if result.risk_level in ("high", "very_high"):
+                # High risk: create or update alert
+                message = (f"Predicted {result.risk_level} malaria risk for "
+                          f"{result.target_month.isoformat()}: "
+                          f"{result.prediction_score:.0f} cases expected. "
+                          f"{result.prediction_reason or ''}")
+                
+                if existing_alert:
+                    # Update existing alert if risk level changed or message is significantly different
+                    if existing_alert.risk_level != result.risk_level:
+                        existing_alert.risk_level = result.risk_level
+                        existing_alert.message = message
+                        await self.db.flush()
+                else:
+                    # Create new alert
+                    alert = AlertModel(
+                        district_id=district.id,
+                        risk_level=result.risk_level,
+                        message=message,
+                        is_active=True,
+                    )
+                    self.db.add(alert)
+                    await self.db.flush()
+            else:
+                # Low/moderate risk: close any existing active alerts
+                if existing_alert:
+                    existing_alert.is_active = False
+                    existing_alert.resolved_at = date.today()
+                    await self.db.flush()
+                    
+        except Exception:
+            import logging
+            logging.getLogger("prediction_service").warning(
+                f"alert management failed for district {district.id}; continuing")
 
         return pred

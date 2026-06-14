@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowUpRight } from 'lucide-react';
-import { useDashboard } from '@/lib/api/queries';
+import { ArrowUpRight, MapPin, TrendingUp, Clock, AlertTriangle } from 'lucide-react';
+import { useDashboard, useAlerts } from '@/lib/api/queries';
+import { predictionsApi } from '@/lib/api/predictions';
+import { useQuery } from '@tanstack/react-query';
 import {
   Accordion,
   AccordionContent,
@@ -14,9 +16,16 @@ import {
   PageHeader,
   SectionHeader,
   StatusPill,
+  riskLabel,
+  riskStatus,
 } from '@/components/editorial';
 import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton';
 import { DashboardError } from '@/components/dashboard/dashboard-error';
+import { formatDateTime } from '@/lib/utils';
+import { useCounterAnimation } from '@/lib/hooks/use-counter-animation';
+import { useMemo } from 'react';
+
+// Dashboard page - Main surveillance overview
 
 const QUICK_LINKS = [
   {
@@ -44,15 +53,73 @@ const QUICK_LINKS = [
 
 export default function DashboardPage() {
   const { data, isLoading, error, refetch } = useDashboard();
+  
+  // Fetch top 5 high-risk districts
+  const { data: topDistricts } = useQuery({
+    queryKey: ['top-risk-districts'],
+    queryFn: async () => {
+      const response = await predictionsApi.getLatest({ 
+        risk_level: 'very_high',
+        limit: 5 
+      });
+      return response.items || [];
+    },
+    staleTime: 60 * 1000, // 1 minute
+  });
+  
+  // Fetch recent alerts for activity timeline
+  const { data: recentAlerts } = useAlerts({
+    limit: 5,
+  });
 
+  // Extract data (with fallbacks for early returns)
+  const stats = data?.summary;
+  const byRegion = data?.by_region || [];
+  const recentTrends = data?.recent_trends || [];
+  const cases = stats?.total_positive ?? 0;
+  const activeAlerts = stats?.active_alerts ?? 0;
+  const highRisk = stats?.high_risk_districts ?? 0;
+
+  // Animated counters - MUST be called before any conditional returns
+  const animatedCases = useCounterAnimation(cases, 1500);
+  const animatedAlerts = useCounterAnimation(activeAlerts, 1200);
+  const animatedHighRisk = useCounterAnimation(highRisk, 1200);
+
+  // Calculate trends (comparing last 2 periods if available)
+  const trendData = useMemo(() => {
+    if (recentTrends.length < 2) return { casesTrend: null, alertsTrend: null };
+    
+    const latest = recentTrends[0];
+    const previous = recentTrends[1];
+    
+    const casesChange = latest.positive - previous.positive;
+    const casesPct = previous.positive === 0 ? 0 : (casesChange / previous.positive) * 100;
+    
+    return {
+      casesTrend: { change: casesChange, percent: casesPct },
+      currentPeriod: latest.period,
+      previousPeriod: previous.period,
+    };
+  }, [recentTrends]);
+
+  // Regional breakdown for chart
+  const regionChartData = useMemo(() => {
+    if (byRegion.length === 0) return [];
+    const sorted = [...byRegion].sort((a, b) => b.total_positive - a.total_positive);
+    const max = sorted[0]?.total_positive || 1;
+    return sorted.slice(0, 8).map(r => ({
+      region: r.region,
+      cases: r.total_positive,
+      percentage: (r.total_positive / max) * 100,
+      highRisk: r.high_risk_count,
+    }));
+  }, [byRegion]);
+
+  // Conditional returns AFTER all hooks
   if (isLoading) return <DashboardSkeleton />;
   if (error) return <DashboardError error={error as Error} onRetry={refetch} />;
   if (!data) return null;
 
-  const stats = data.summary;
-  const cases = stats?.total_positive ?? 0;
-  const activeAlerts = stats?.active_alerts ?? 0;
-  const highRisk = stats?.high_risk_districts ?? 0;
   const period = stats?.period || 'Current period';
   const periodLabel = stats?.period_label || period;
   const predWindow = stats?.prediction_window_days ?? 30;
@@ -60,6 +127,9 @@ export default function DashboardPage() {
   const riskThresholds = stats?.risk_thresholds ?? null;
   const modelVersion = stats?.model_version ?? null;
   const thresholdsVersion = stats?.thresholds_version ?? null;
+
+  // Last updated timestamp
+  const lastUpdated = new Date();
 
   const alertsPerDistrict = highRisk > 0 ? activeAlerts / highRisk : 0;
   const postureStatus: 'valid' | 'warn' | 'error' =
@@ -98,7 +168,15 @@ export default function DashboardPage() {
       <PageHeader
         eyebrow={`MalaSafe · ${period}`}
         title="Surveillance dashboard"
-        description="A standing read on caseload, alerting posture, and risk concentration. Numbers update with each monthly close."
+        description={
+          <>
+            <p>A standing read on caseload, alerting posture, and risk concentration. Numbers update with each monthly close.</p>
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
+              <Clock className="size-3" strokeWidth={2} />
+              Last updated: {formatDateTime(lastUpdated)}
+            </p>
+          </>
+        }
       />
 
       <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }} data-testid="posture-alert">
@@ -135,20 +213,31 @@ export default function DashboardPage() {
                 <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Total cases</p>
                 <StatusPill kind="neutral">Reported</StatusPill>
               </div>
-              <p className="mt-4 font-display text-4xl font-bold tracking-tight text-gradient" data-testid="total-cases-value">{cases.toLocaleString()}</p>
-              <div className="mt-4 h-12 w-full opacity-60 transition-opacity group-hover:opacity-100">
-                <svg viewBox="0 0 100 30" className="h-full w-full overflow-visible" preserveAspectRatio="none">
-                  <path d="M0,25 Q10,20 20,25 T40,15 T60,20 T80,5 T100,10" fill="none" stroke="currentColor" className="text-primary" strokeWidth="2" strokeLinecap="round" />
-                  <path d="M0,25 Q10,20 20,25 T40,15 T60,20 T80,5 T100,10 L100,30 L0,30 Z" fill="url(#sparkline-gradient-1)" opacity="0.2" />
-                  <defs>
-                    <linearGradient id="sparkline-gradient-1" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor="currentColor" className="text-primary" />
-                      <stop offset="100%" stopColor="transparent" />
-                    </linearGradient>
-                  </defs>
-                </svg>
+              <div className="flex items-baseline gap-3">
+                <p className="mt-4 font-display text-4xl font-bold tracking-tight text-gradient" data-testid="total-cases-value">
+                  {animatedCases.toLocaleString()}
+                </p>
+                {trendData.casesTrend && (
+                  <div className={`flex items-center gap-1 font-mono text-sm ${
+                    trendData.casesTrend.change > 0 ? 'text-status-error' : trendData.casesTrend.change < 0 ? 'text-status-valid' : 'text-muted-foreground'
+                  }`}>
+                    {trendData.casesTrend.change > 0 ? (
+                      <TrendingUp className="size-4" strokeWidth={2} />
+                    ) : trendData.casesTrend.change < 0 ? (
+                      <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6L9 12.75l4.286-4.286a11.948 11.948 0 014.306 6.43l.776 2.898m0 0l3.182-5.511m-3.182 5.511l-5.511-3.181" />
+                      </svg>
+                    ) : null}
+                    <span className="tabular-nums">{trendData.casesTrend.percent > 0 ? '+' : ''}{trendData.casesTrend.percent.toFixed(1)}%</span>
+                  </div>
+                )}
               </div>
-              <p className="mt-4 font-sans text-xs text-muted-foreground">{periodLabel}</p>
+              <p className="mt-2 font-sans text-xs text-muted-foreground">{periodLabel}</p>
+              {recentTrends.length > 0 && (
+                <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+                  {recentTrends.length} months tracked
+                </p>
+              )}
             </div>
 
             <div className="relative p-6 overflow-hidden group" data-testid="kpi-card">
@@ -159,20 +248,17 @@ export default function DashboardPage() {
                   {activeAlerts === 0 ? 'Clear' : 'Open'}
                 </StatusPill>
               </div>
-              <p className="mt-4 font-display text-4xl font-bold tracking-tight">{activeAlerts.toLocaleString()}</p>
-              <div className="mt-4 h-12 w-full opacity-60 transition-opacity group-hover:opacity-100">
-                <svg viewBox="0 0 100 30" className="h-full w-full overflow-visible" preserveAspectRatio="none">
-                  <path d="M0,10 Q10,15 20,10 T40,20 T60,15 T80,25 T100,5" fill="none" stroke="currentColor" className={activeAlerts > 0 ? "text-status-error" : "text-status-valid"} strokeWidth="2" strokeLinecap="round" />
-                  <path d="M0,10 Q10,15 20,10 T40,20 T60,15 T80,25 T100,5 L100,30 L0,30 Z" fill="url(#sparkline-gradient-2)" opacity="0.2" />
-                  <defs>
-                    <linearGradient id="sparkline-gradient-2" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor="currentColor" className={activeAlerts > 0 ? "text-status-error" : "text-status-valid"} />
-                      <stop offset="100%" stopColor="transparent" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </div>
-              <p className="mt-4 font-sans text-xs text-muted-foreground">Across dataset</p>
+              <p className="mt-4 font-display text-4xl font-bold tracking-tight">{animatedAlerts.toLocaleString()}</p>
+              <p className="mt-2 font-sans text-xs text-muted-foreground">Across dataset</p>
+              {activeAlerts > 0 && (
+                <Link 
+                  href="/dashboard/alerts" 
+                  className="mt-2 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.18em] text-primary hover:underline"
+                >
+                  Review now
+                  <ArrowUpRight className="size-3" strokeWidth={2} />
+                </Link>
+              )}
             </div>
 
             <div className="relative p-6 overflow-hidden group" data-testid="kpi-card">
@@ -183,20 +269,17 @@ export default function DashboardPage() {
                   {highRisk === 0 ? 'Stable' : 'Watch'}
                 </StatusPill>
               </div>
-              <p className="mt-4 font-display text-4xl font-bold tracking-tight">{highRisk.toLocaleString()}</p>
-              <div className="mt-4 h-12 w-full opacity-60 transition-opacity group-hover:opacity-100">
-                <svg viewBox="0 0 100 30" className="h-full w-full overflow-visible" preserveAspectRatio="none">
-                  <path d="M0,25 L20,25 L40,15 L60,15 L80,5 L100,10" fill="none" stroke="currentColor" className="text-status-warn" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M0,25 L20,25 L40,15 L60,15 L80,5 L100,10 L100,30 L0,30 Z" fill="url(#sparkline-gradient-3)" opacity="0.2" />
-                  <defs>
-                    <linearGradient id="sparkline-gradient-3" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor="currentColor" className="text-status-warn" />
-                      <stop offset="100%" stopColor="transparent" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </div>
-              <p className="mt-4 font-sans text-xs text-muted-foreground">Forecast last {predWindow}d</p>
+              <p className="mt-4 font-display text-4xl font-bold tracking-tight">{animatedHighRisk.toLocaleString()}</p>
+              <p className="mt-2 font-sans text-xs text-muted-foreground">Forecast last {predWindow}d</p>
+              {highRisk > 0 && (
+                <Link 
+                  href="/dashboard/predictions" 
+                  className="mt-2 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.18em] text-primary hover:underline"
+                >
+                  View details
+                  <ArrowUpRight className="size-3" strokeWidth={2} />
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -254,6 +337,182 @@ export default function DashboardPage() {
           </p>
         )}
       </section>
+
+      {/* Regional Breakdown Chart */}
+      {regionChartData.length > 0 && (
+        <section className="flex flex-col gap-5 animate-fade-in-up" style={{ animationDelay: '225ms' }}>
+          <SectionHeader index="001A" label="Cases by Region" tone="signal">
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              Top {regionChartData.length} regions
+            </span>
+          </SectionHeader>
+          <div className="glass-panel rounded-2xl border border-border/40 bg-background/40 p-6">
+            <div className="flex flex-col gap-3">
+              {regionChartData.map((item, index) => (
+                <div key={item.region} className="group">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className="font-mono text-[10px] text-muted-foreground tabular-nums w-4">
+                        {index + 1}
+                      </span>
+                      <span className="font-semibold text-sm truncate">{item.region}</span>
+                      {item.highRisk > 0 && (
+                        <span className="flex items-center gap-1 font-mono text-[10px] text-status-error">
+                          <AlertTriangle className="size-3" strokeWidth={2} />
+                          {item.highRisk}
+                        </span>
+                      )}
+                    </div>
+                    <span className="font-mono text-sm tabular-nums text-foreground ml-3">
+                      {item.cases.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="relative h-2 bg-secondary/40 rounded-full overflow-hidden">
+                    <div
+                      className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-1000 ease-out"
+                      style={{ 
+                        width: `${item.percentage}%`,
+                        animationDelay: `${index * 50}ms`
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Top High-Risk Districts */}
+      {topDistricts && topDistricts.length > 0 && (
+        <section className="flex flex-col gap-5 animate-fade-in-up" style={{ animationDelay: '250ms' }}>
+          <SectionHeader index="001A" label="Top High-Risk Districts" tone="error">
+            <Link
+              href="/dashboard/predictions"
+              className="font-mono text-[11px] uppercase tracking-[0.18em] text-primary hover:underline"
+            >
+              View all
+            </Link>
+          </SectionHeader>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {topDistricts.slice(0, 6).map((district: any, index: number) => (
+              <Link
+                key={district.district_code}
+                href={`/dashboard/predictions?district=${district.district_code}`}
+                className="glass-panel rounded-xl border border-border/40 bg-background/40 p-4 transition-all hover:border-primary/30 hover:bg-background/60 hover:shadow-lg"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="size-4 text-muted-foreground" strokeWidth={1.5} />
+                      <h3 className="font-semibold text-sm leading-tight">{district.district_name}</h3>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">{district.region}</p>
+                  </div>
+                  <StatusPill kind={riskStatus(district.risk_level)}>
+                    {riskLabel(district.risk_level)}
+                  </StatusPill>
+                </div>
+                <div className="mt-3 flex items-baseline gap-4">
+                  <div>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Score</p>
+                    <p className="font-display text-2xl font-bold tabular-nums text-primary">
+                      {district.prediction_score.toFixed(1)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Recent</p>
+                    <p className="font-mono text-sm tabular-nums text-foreground">
+                      {district.recent_positive.toLocaleString()}
+                    </p>
+                  </div>
+                  {typeof district.confidence_score === 'number' && (
+                    <div>
+                      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Confidence</p>
+                      <p className="font-mono text-sm tabular-nums text-muted-foreground">
+                        {(district.confidence_score * 100).toFixed(0)}%
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Recent Activity Timeline */}
+      {recentAlerts && recentAlerts.alerts && recentAlerts.alerts.length > 0 && (
+        <section className="flex flex-col gap-5 animate-fade-in-up" style={{ animationDelay: '275ms' }}>
+          <SectionHeader index="001B" label="Recent Activity" tone="signal">
+            <Link
+              href="/dashboard/alerts"
+              className="font-mono text-[11px] uppercase tracking-[0.18em] text-primary hover:underline"
+            >
+              View all
+            </Link>
+          </SectionHeader>
+          <div className="glass-panel rounded-2xl border border-border/40 bg-background/40 p-6">
+            <div className="flex flex-col gap-4">
+              {recentAlerts.alerts.slice(0, 5).map((alert: any, index: number) => (
+                <div key={alert.id} className="flex items-start gap-4 pb-4 last:pb-0 border-b last:border-0 border-border/40">
+                  <div className="flex-shrink-0 mt-1">
+                    <div className={`rounded-full p-2 ${
+                      riskStatus(alert.risk_level) === 'error' 
+                        ? 'bg-status-error/10 text-status-error' 
+                        : riskStatus(alert.risk_level) === 'warn'
+                        ? 'bg-status-warn/10 text-status-warn'
+                        : 'bg-primary/10 text-primary'
+                    }`}>
+                      {alert.is_active ? (
+                        <AlertTriangle className="size-4" strokeWidth={2} />
+                      ) : (
+                        <Clock className="size-4" strokeWidth={2} />
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <Link
+                          href={`/dashboard/predictions?district=${alert.district_id}`}
+                          className="font-semibold text-sm hover:text-primary transition-colors"
+                        >
+                          {alert.district_name || 'Unknown District'}
+                        </Link>
+                        <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
+                          {alert.message}
+                        </p>
+                      </div>
+                      <StatusPill kind={riskStatus(alert.risk_level)}>
+                        {riskLabel(alert.risk_level)}
+                      </StatusPill>
+                    </div>
+                    <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                      {alert.region && (
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="size-3" strokeWidth={2} />
+                          {alert.region}
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="size-3" strokeWidth={2} />
+                        {formatDateTime(alert.created_at)}
+                      </span>
+                      {alert.is_active && (
+                        <span className="inline-flex items-center gap-1 text-status-error">
+                          <span className="inline-block size-1.5 rounded-full bg-status-error animate-pulse" />
+                          Active
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="flex flex-col gap-5 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
         <SectionHeader index="002" label="How this works" tone="signal" />

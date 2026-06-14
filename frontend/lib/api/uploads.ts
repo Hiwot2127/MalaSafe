@@ -3,6 +3,7 @@ import type {
   UploadResponse,
   UploadPreviewResponse,
   UploadedFile,
+  UploadEDAResponse,
 } from "@/types/upload";
 
 const FORM_HEADERS = { "Content-Type": "multipart/form-data" } as const;
@@ -14,6 +15,24 @@ export const uploadsApi = {
     formData.append("file", file);
     const response = await apiClient.post(
       "/uploads/malaria/monthly",
+      formData,
+      { headers: FORM_HEADERS },
+    );
+    return response.data;
+  },
+
+  /**
+   * Dry-run the monthly upload with EDA insights - same parsing +  
+   * per-row validation as the real endpoint, PLUS comprehensive statistics,
+   * outlier detection, and historical comparison. No rows are written.
+   * 
+   * Powers the enhanced pre-upload modal with data quality analysis.
+   */
+  previewMonthlyMalariaUploadWithEDA: async (file: File): Promise<UploadEDAResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await apiClient.post(
+      "/uploads/malaria/monthly/preview-eda",
       formData,
       { headers: FORM_HEADERS },
     );
@@ -39,6 +58,20 @@ export const uploadsApi = {
     const formData = new FormData();
     formData.append("file", file);
     const response = await apiClient.post("/uploads/climate", formData, {
+      headers: FORM_HEADERS,
+    });
+    return response.data;
+  },
+
+  /**
+   * Dry-run climate upload with EDA insights - same validation as real endpoint
+   * PLUS comprehensive statistics, outlier detection, and historical comparison.
+   * No rows are written.
+   */
+  previewClimateUpload: async (file: File): Promise<UploadEDAResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await apiClient.post("/uploads/climate/preview", formData, {
       headers: FORM_HEADERS,
     });
     return response.data;
