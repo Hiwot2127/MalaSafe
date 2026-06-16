@@ -33,22 +33,30 @@ import { TopDistrictsBar } from '@/components/analytics/top-districts-bar';
 
 type TrendType = 'weekly' | 'monthly';
 
+const CURRENT_YEAR = new Date().getFullYear();
+const YEARS = Array.from({ length: 6 }, (_, i) => {
+  const y = CURRENT_YEAR - i;
+  return { value: String(y), label: String(y) };
+});
+
 export default function AnalyticsPage() {
   const [trendType, setTrendType] = useState<TrendType>('monthly');
   const [region, setRegion] = useState<string>('');
+  const [year, setYear] = useState<string>(String(CURRENT_YEAR - 1)); // Default to last year with data
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const regionParam = region || undefined;
+  const yearParam = year ? Number(year) : undefined;
 
   // Region-scoped queries drive the trend, KPIs and risk views.
-  const trendsQuery = useTrends({ trend_type: trendType, limit: 24, region: regionParam });
-  const dashboardQuery = useDashboard(undefined, undefined, regionParam);
+  const trendsQuery = useTrends({ trend_type: trendType, limit: 24, region: regionParam, year: yearParam });
+  const dashboardQuery = useDashboard(yearParam, undefined, regionParam);
   const riskQuery = useRiskMap(undefined, regionParam);
   // An unfiltered dashboard snapshot powers the region selector and the
   // by-region charts, which the backend blanks out when a single region is set.
-  const allRegionsQuery = useDashboard();
+  const allRegionsQuery = useDashboard(yearParam);
 
   const trends = useMemo(
     () => (trendsQuery.data?.data ?? []) as TrendDataPoint[],
@@ -115,8 +123,14 @@ export default function AnalyticsPage() {
         <AlertBanner tone="error" title="Couldn't export PDF" description={exportError} />
       ) : null}
 
-      {/* Toolbar: region + trend-type filters */}
+      {/* Toolbar: year + region + trend-type filters */}
       <div className="flex flex-wrap items-center gap-3">
+        <EditorialSelect
+          value={year}
+          onChange={setYear}
+          aria-label="Year filter"
+          options={YEARS}
+        />
         <EditorialSelect
           value={region}
           onChange={setRegion}

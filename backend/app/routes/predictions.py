@@ -8,7 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, HTTPExcept
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, desc, func
 from app.database import get_db
-from app.models import User, Prediction, District
+from app.models import User, Prediction, District, MalariaData
 from app.models.user import UserRole
 from app.utils.dependencies import get_current_user, require_roles
 from app.schemas.analytics import PredictionHistoryResponse, PredictionHistoryItem
@@ -92,9 +92,24 @@ async def get_prediction_history(
     # caller passed.
     district_id = str(district.id)
 
-    # Build query
-    query = select(Prediction).where(
-        Prediction.district_id == district_id
+    # Build query selecting both Prediction and the sum of actual cases (positive) from MalariaData.
+    # Join on district_id, year, month, and week is None (indicating monthly consolidated data).
+    query = (
+        select(
+            Prediction,
+            select(func.sum(MalariaData.positive))
+            .where(
+                and_(
+                    MalariaData.district_id == Prediction.district_id,
+                    MalariaData.year == func.extract('year', Prediction.prediction_date),
+                    MalariaData.month == func.extract('month', Prediction.prediction_date),
+                    MalariaData.week.is_(None)
+                )
+            )
+            .scalar_subquery()
+            .label('actual_positive')
+        )
+        .where(Prediction.district_id == district_id)
     )
     
     if start_date:
@@ -121,11 +136,11 @@ async def get_prediction_history(
     )
 
     result = await db.execute(query)
-    predictions = result.scalars().all()
+    rows = result.all()
     
     # Format response
     prediction_items = []
-    for pred in predictions:
+    for pred, actual_positive in rows:
         prediction_items.append({
             "id": str(pred.id),
             "prediction_date": pred.prediction_date,
@@ -136,6 +151,7 @@ async def get_prediction_history(
             "q10": float(pred.q10) if pred.q10 is not None else None,
             "q90": float(pred.q90) if pred.q90 is not None else None,
             "factors": pred.prediction_factors or [],
+            "predicted_positive": actual_positive,
             "created_at": pred.created_at.isoformat() + "Z" if pred.created_at else None
         })
     

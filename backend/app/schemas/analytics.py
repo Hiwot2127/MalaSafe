@@ -212,7 +212,9 @@ class PredictionHistoryItem(BaseModel):
     q10: Optional[float] = None
     q90: Optional[float] = None
     factors: List[PredictionFactor] = []
+    predicted_positive: Optional[int] = None
     created_at: str
+
 
     class Config:
         json_schema_extra = {

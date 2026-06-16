@@ -28,7 +28,9 @@ export const reportsApi = {
   async getOverview(year?: number): Promise<ReportsOverview> {
     const y = year ?? new Date().getFullYear();
     const [dashboardRes, trendRes] = await Promise.all([
-      apiClient.get<RawDashboard>('/analytics/dashboard'),
+      apiClient.get<RawDashboard>('/analytics/dashboard', {
+        params: { year: y },
+      }),
       apiClient.get<RawTrend>('/analytics/trends', {
         params: { trend_type: 'monthly', year: y },
       }),

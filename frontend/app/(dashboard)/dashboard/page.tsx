@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { useDashboard } from '@/lib/api/queries';
 import {
@@ -10,6 +11,7 @@ import {
   AccordionTrigger,
   AlertCard,
   EditorialCard,
+  EditorialSelect,
   Metric,
   PageHeader,
   SectionHeader,
@@ -17,6 +19,12 @@ import {
 } from '@/components/editorial';
 import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton';
 import { DashboardError } from '@/components/dashboard/dashboard-error';
+
+const CURRENT_YEAR = new Date().getFullYear();
+const YEARS = Array.from({ length: 6 }, (_, i) => {
+  const y = CURRENT_YEAR - i;
+  return { value: String(y), label: String(y) };
+});
 
 const QUICK_LINKS = [
   {
@@ -43,7 +51,12 @@ const QUICK_LINKS = [
 ];
 
 export default function DashboardPage() {
-  const { data, isLoading, error, refetch } = useDashboard();
+  // Default to 2025 (last year with data) for demo purposes
+  // In production with current data, this would default to CURRENT_YEAR
+  const [year, setYear] = useState<string>(String(CURRENT_YEAR - 1));
+  const yearParam = year ? Number(year) : undefined;
+  
+  const { data, isLoading, error, refetch } = useDashboard(yearParam);
 
   if (isLoading) return <DashboardSkeleton />;
   if (error) return <DashboardError error={error as Error} onRetry={refetch} />;
@@ -99,6 +112,14 @@ export default function DashboardPage() {
         eyebrow={`MalaSafe · ${period}`}
         title="Surveillance dashboard"
         description="A standing read on caseload, alerting posture, and risk concentration. Numbers update with each monthly close."
+        actions={
+          <EditorialSelect
+            value={year}
+            onChange={setYear}
+            aria-label="Year filter"
+            options={YEARS}
+          />
+        }
       />
 
       <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }} data-testid="posture-alert">
@@ -116,7 +137,7 @@ export default function DashboardPage() {
         <SectionHeader index="001" label="Indicators" tone={postureStatus}>
           <div className="flex items-center gap-3">
             <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              {period}
+              {period} {Number(year) < CURRENT_YEAR ? '· Historical' : ''}
             </span>
             <StatusPill kind={postureStatus}>
               {postureStatus === 'valid'
