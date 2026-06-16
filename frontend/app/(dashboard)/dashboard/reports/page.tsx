@@ -18,7 +18,7 @@ import {
 } from '@/components/editorial';
 
 const CURRENT_YEAR = new Date().getFullYear();
-const YEARS: { value: string; label: string }[] = Array.from({ length: 4 }, (_, i) => {
+const YEARS: { value: string; label: string }[] = Array.from({ length: 6 }, (_, i) => {
   const y = String(CURRENT_YEAR - i);
   return { value: y, label: y };
 });
@@ -26,7 +26,7 @@ const YEARS: { value: string; label: string }[] = Array.from({ length: 4 }, (_, 
 export default function ReportsPage() {
   const [year, setYear] = useQueryState(
     'year',
-    parseAsString.withDefault(String(CURRENT_YEAR)),
+    parseAsString.withDefault(String(CURRENT_YEAR - 1)), // Default to last year with data
   );
   const [data, setData] = useState<ReportsOverview | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,11 +67,11 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-12">
+    <div className="mx-auto flex max-w-6xl flex-col gap-14 animate-fade-in">
       <PageHeader
         eyebrow="MalaSafe · Reports"
-        title="Annual surveillance report"
-        description="Caseload and alerting posture for the selected reporting year."
+        title="Annual Surveillance Report"
+        description={`Comprehensive malaria surveillance overview for ${year}. Includes caseload trends, regional breakdowns, and risk assessment summary.`}
         actions={
           <EditorialSelect
             value={year}
@@ -89,13 +89,20 @@ export default function ReportsPage() {
       {data ? (
         <>
           {/* Overview */}
-          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <section className="flex flex-col gap-5 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+            <SectionHeader index="001" label="Overview" tone="signal">
+              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                Year {data.year} {Number(data.year) < CURRENT_YEAR ? '· Historical' : ''}
+              </span>
+            </SectionHeader>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <StatCard
               eyebrow="Total cases"
               value={data.total_positive.toLocaleString()}
               caption={`Reporting year ${data.year}`}
               icon={FileText}
               tone="signal"
+              help="Total confirmed malaria cases reported across all districts during this year"
             />
             <StatCard
               eyebrow="Active alerts"
@@ -103,6 +110,7 @@ export default function ReportsPage() {
               caption={data.active_alerts === 0 ? 'All clear' : 'Open right now'}
               icon={Activity}
               tone={data.active_alerts === 0 ? 'valid' : 'warn'}
+              help="Current number of outbreak alerts requiring attention"
             />
             <StatCard
               eyebrow="High-risk districts"
@@ -110,14 +118,16 @@ export default function ReportsPage() {
               caption="Elevated level"
               icon={ShieldAlert}
               tone={data.high_risk_districts === 0 ? 'valid' : 'error'}
+              help="Districts classified as high or very high risk based on recent predictions"
             />
+            </div>
           </section>
 
           {/* Monthly trend */}
-          <section className="flex flex-col gap-5">
-            <SectionHeader index="001" label="Monthly trend" tone="signal">
+          <section className="flex flex-col gap-5 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+            <SectionHeader index="002" label="Monthly trend" tone="signal">
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                {data.year} · monthly
+                {data.year} · {data.monthly_trend.length} months
               </span>
             </SectionHeader>
             {data.monthly_trend.length === 0 ? (
@@ -133,21 +143,43 @@ export default function ReportsPage() {
                       <tr>
                         <Th>Period</Th>
                         <Th align="right">Cases</Th>
+                        <Th align="right">% of Year</Th>
                       </tr>
                     </thead>
                     <tbody>
-                      {data.monthly_trend.map((row) => (
-                        <tr
-                          key={row.period}
-                          className="border-b border-border/70 last:border-0"
-                        >
-                          <Td className="font-mono text-xs tabular-nums">{row.period}</Td>
-                          <Td align="right" className="tabular-nums">
-                            {row.positive.toLocaleString()}
-                          </Td>
-                        </tr>
-                      ))}
+                      {data.monthly_trend.map((row) => {
+                        const pct = data.total_positive > 0 
+                          ? ((row.positive / data.total_positive) * 100).toFixed(1)
+                          : '0.0';
+                        return (
+                          <tr
+                            key={row.period}
+                            className="border-b border-border/70 last:border-0 hover:bg-muted/30 transition-colors"
+                          >
+                            <Td className="font-mono text-xs tabular-nums">{row.period}</Td>
+                            <Td align="right" className="tabular-nums font-medium">
+                              {row.positive.toLocaleString()}
+                            </Td>
+                            <Td align="right" className="tabular-nums text-muted-foreground">
+                              {pct}%
+                            </Td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
+                    <tfoot className="border-t-2 border-border bg-secondary/20">
+                      <tr>
+                        <Td className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                          Total
+                        </Td>
+                        <Td align="right" className="tabular-nums font-bold">
+                          {data.total_positive.toLocaleString()}
+                        </Td>
+                        <Td align="right" className="tabular-nums font-bold">
+                          100%
+                        </Td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
               </EditorialCard>
@@ -155,8 +187,8 @@ export default function ReportsPage() {
           </section>
 
           {/* By region */}
-          <section className="flex flex-col gap-5">
-            <SectionHeader index="002" label="By region">
+          <section className="flex flex-col gap-5 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+            <SectionHeader index="003" label="Regional breakdown" tone="signal">
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                 {data.by_region.length.toLocaleString()} regions
               </span>
@@ -170,27 +202,60 @@ export default function ReportsPage() {
                       <Th align="right">Districts</Th>
                       <Th align="right">High-risk</Th>
                       <Th align="right">Cases</Th>
+                      <Th align="right">% of Total</Th>
                     </tr>
                   </thead>
                   <tbody>
-                    {data.by_region.map((row) => (
-                      <tr
-                        key={row.region}
-                        className="border-b border-border/70 last:border-0"
-                      >
-                        <Td className="font-sans text-foreground">{row.region}</Td>
-                        <Td align="right" className="tabular-nums">
-                          {row.districts_count.toLocaleString()}
-                        </Td>
-                        <Td align="right" className="tabular-nums">
-                          {row.high_risk_count.toLocaleString()}
-                        </Td>
-                        <Td align="right" className="tabular-nums">
-                          {row.total_positive.toLocaleString()}
-                        </Td>
-                      </tr>
-                    ))}
+                    {data.by_region
+                      .sort((a, b) => b.total_positive - a.total_positive)
+                      .map((row) => {
+                        const pct = data.total_positive > 0
+                          ? ((row.total_positive / data.total_positive) * 100).toFixed(1)
+                          : '0.0';
+                        const hasHighRisk = row.high_risk_count > 0;
+                        return (
+                          <tr
+                            key={row.region}
+                            className="border-b border-border/70 last:border-0 hover:bg-muted/30 transition-colors"
+                          >
+                            <Td className="font-sans text-foreground font-medium">{row.region}</Td>
+                            <Td align="right" className="tabular-nums">
+                              {row.districts_count.toLocaleString()}
+                            </Td>
+                            <Td align="right" className="tabular-nums">
+                              <span className={hasHighRisk ? 'text-status-error font-medium' : 'text-muted-foreground'}>
+                                {row.high_risk_count.toLocaleString()}
+                              </span>
+                            </Td>
+                            <Td align="right" className="tabular-nums font-medium">
+                              {row.total_positive.toLocaleString()}
+                            </Td>
+                            <Td align="right" className="tabular-nums text-muted-foreground">
+                              {pct}%
+                            </Td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
+                  <tfoot className="border-t-2 border-border bg-secondary/20">
+                    <tr>
+                      <Td className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                        Total
+                      </Td>
+                      <Td align="right" className="tabular-nums font-bold">
+                        {data.by_region.reduce((sum, r) => sum + r.districts_count, 0).toLocaleString()}
+                      </Td>
+                      <Td align="right" className="tabular-nums font-bold">
+                        {data.by_region.reduce((sum, r) => sum + r.high_risk_count, 0).toLocaleString()}
+                      </Td>
+                      <Td align="right" className="tabular-nums font-bold">
+                        {data.total_positive.toLocaleString()}
+                      </Td>
+                      <Td align="right" className="tabular-nums font-bold">
+                        100%
+                      </Td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </EditorialCard>

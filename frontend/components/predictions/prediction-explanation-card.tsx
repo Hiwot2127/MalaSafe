@@ -201,49 +201,74 @@ export function PredictionExplanationCard({
       {/* Contributing Factors */}
       {factors.length > 0 && (
         <div className="px-6 py-5 border-b border-border/40">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              Key Factors
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                Key Factors
+              </span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="size-3.5 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p className="text-xs">
+                      Top factors influencing this prediction, derived from SHAP (SHapley Additive exPlanations) 
+                      analysis of historical patterns, climate data, and case trends. Arrows show whether each 
+                      factor increases (↑) or decreases (↓) predicted risk.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              {factors.length} of {factors.length} shown
             </span>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="size-3.5 text-muted-foreground" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p className="text-xs">
-                    Top factors influencing this prediction, derived from the model's 
-                    analysis of historical patterns, climate, and case trends.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
           </div>
           
           <div className="space-y-3">
             {factors.map((factor, index) => (
-              <div key={index} className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-0.5">
+              <div key={index} className="group flex items-start gap-3 rounded-lg border border-transparent p-2 -m-2 transition-colors hover:border-border/40 hover:bg-muted/20">
+                <div className="flex-shrink-0 flex flex-col items-center gap-1 mt-0.5">
                   {factor.impact === 'increase' ? (
-                    <TrendingUp className="size-4 text-status-error" strokeWidth={2} />
+                    <>
+                      <TrendingUp className="size-4 text-status-error" strokeWidth={2} />
+                      <span className="font-mono text-[9px] uppercase tracking-wider text-status-error">Up</span>
+                    </>
                   ) : (
-                    <TrendingDown className="size-4 text-status-valid" strokeWidth={2} />
+                    <>
+                      <TrendingDown className="size-4 text-status-valid" strokeWidth={2} />
+                      <span className="font-mono text-[9px] uppercase tracking-wider text-status-valid">Down</span>
+                    </>
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-foreground leading-relaxed">
-                    {factor.description}
-                  </p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm text-foreground leading-relaxed font-medium">
+                      {factor.description}
+                    </p>
+                    <span className="flex-shrink-0 font-mono text-[10px] text-muted-foreground">
+                      #{index + 1}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
+          </div>
+          
+          <div className="mt-4 pt-4 border-t border-border/40">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              <strong className="text-foreground">How to interpret:</strong> These factors are ranked by their 
+              contribution to the prediction. Factors with ↑ arrows push risk higher, while ↓ arrows push it lower. 
+              The model considers dozens of variables; these are the most influential.
+            </p>
           </div>
         </div>
       )}
 
       {/* Historical Trend Sparkline */}
       {historicalTrend && historicalTrend.length > 0 && (
-        <div className="px-6 py-5">
+        <div className="px-6 py-5 border-b border-border/40">
           <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-3 block">
             Recent Trend
           </span>
@@ -264,6 +289,25 @@ export function PredictionExplanationCard({
           </div>
         </div>
       )}
+
+      {/* Model Transparency Footer */}
+      <div className="px-6 py-4 bg-muted/10">
+        <div className="flex items-start gap-3">
+          <Info className="size-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+              About This Prediction
+            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Generated using a LightGBM gradient boosting model trained on historical malaria cases, 
+              climate patterns (rainfall, temperature, humidity), and geographic factors. 
+              Factor contributions are calculated using SHAP (SHapley Additive exPlanations), 
+              an industry-standard explainability method. Confidence reflects historical prediction accuracy 
+              and data completeness for this district.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

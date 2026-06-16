@@ -19,15 +19,17 @@ export function NotificationBell({
   className,
   ariaLabel,
 }: NotificationBellProps) {
+  const isLoading = count === null;
   const hasUnread = typeof count === "number" && count > 0;
   const display = !hasUnread ? null : count > 99 ? "99+" : String(count);
 
   return (
     <Link
       href={href}
-      aria-label={ariaLabel ?? (hasUnread ? `${count} active alerts` : "Alerts")}
+      aria-label={ariaLabel ?? (hasUnread ? `${count} active alerts` : isLoading ? "Loading alerts..." : "No active alerts")}
       className={cn(
-        "relative inline-flex size-9 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:bg-secondary",
+        "relative inline-flex size-9 items-center justify-center rounded-md border border-border bg-card text-foreground transition-all hover:bg-secondary",
+        isLoading && "animate-pulse",
         className,
       )}
     >
@@ -42,6 +44,11 @@ export function NotificationBell({
             {display}
           </span>
         </>
+      ) : isLoading ? (
+        <span
+          aria-hidden
+          className="absolute -right-1 -top-1 inline-flex h-3 w-3 rounded-full bg-muted-foreground/30 ring-1 ring-background"
+        />
       ) : null}
     </Link>
   );

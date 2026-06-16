@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { useNotificationCount } from '@/lib/hooks/use-notification-count';
 import { Avatar, NotificationBell, StatusPill } from '@/components/editorial';
 import { usePathname } from 'next/navigation';
+import { UserRole } from '@/types/auth';
 
 import { cn } from '@/lib/utils';
 
@@ -25,9 +26,17 @@ export default function Header() {
 
   useEffect(() => setMounted(true), []);
 
-  const role = user?.role === 'admin' 
-    ? 'MOH Data Officer' 
-    : user?.role?.replace(/_/g, ' ').toUpperCase() ?? 'USER';
+  const role = user?.role === UserRole.ADMIN 
+    ? 'Administrator' 
+    : user?.role === UserRole.MOH_OFFICER
+    ? 'MOH Officer'
+    : user?.role === UserRole.EPHI_OFFICER
+    ? 'EPHI Officer'
+    : user?.role === UserRole.REGIONAL_OFFICER
+    ? 'Regional Officer'
+    : user?.role === UserRole.PUBLIC_USER
+    ? 'Public User'
+    : 'User';
   const isDark = mounted && resolvedTheme === 'dark';
   const pageSegment = pathname?.startsWith('/dashboard')
     ? pathname.split('/')[2]
@@ -51,15 +60,7 @@ export default function Header() {
         </div>
       </div>
 
-      <div className="hidden flex-1 items-center justify-center md:flex animate-in fade-in slide-in-from-top-2 duration-500">
-        <button className="group flex h-9 w-64 items-center gap-2 rounded-md border border-border/40 bg-background/50 px-3 text-muted-foreground shadow-sm backdrop-blur-md transition-all hover:border-primary/50 hover:bg-background/80 hover:text-foreground">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <span className="font-sans text-sm">Search anywhere...</span>
-          <kbd className="ml-auto inline-flex h-5 items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 transition-opacity group-hover:border-primary/30 group-hover:text-primary">
-            <span className="text-xs">⌘</span>K
-          </kbd>
-        </button>
-      </div>
+      <div className="flex-1" />
 
       <div className="flex items-center gap-3">
         <NotificationBell count={count} />
@@ -68,7 +69,8 @@ export default function Header() {
           type="button"
           onClick={() => setTheme(isDark ? 'light' : 'dark')}
           aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
-          className="inline-flex size-9 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:bg-secondary"
+          title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+          className="inline-flex size-9 items-center justify-center rounded-md border border-border bg-card text-foreground transition-all hover:bg-secondary hover:scale-105"
         >
           {mounted ? (
             isDark ? (
@@ -84,7 +86,8 @@ export default function Header() {
         <Link
           href="/dashboard/settings"
           aria-label="Open settings"
-          className="rounded-full transition-opacity hover:opacity-80"
+          title="Profile & Settings"
+          className="group rounded-full transition-all hover:opacity-80 hover:ring-2 hover:ring-primary/30 hover:ring-offset-2 hover:ring-offset-background"
         >
           <Avatar name={user?.full_name} size="md" />
         </Link>
@@ -93,8 +96,8 @@ export default function Header() {
           type="button"
           onClick={logout}
           aria-label="Log out"
-          title="Log out"
-          className="inline-flex size-9 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:bg-secondary"
+          title="Sign out of MalaSafe"
+          className="inline-flex size-9 items-center justify-center rounded-md border border-border bg-card text-foreground transition-all hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
         >
           <LogOut className="size-4" strokeWidth={1.5} aria-hidden />
         </button>
