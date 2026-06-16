@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar, TrendingUp, AlertTriangle, CheckCircle, Clock, FileText } from "lucide-react";
-import { monthlyCloseApi } from "@/lib/api/monthly-close";
-import type { MonthlyClose, BacktestResult, DriftFinding } from "@/types/monthly-close";
+import { monthlyCloseApi, type MonthlyCloseDetail, type BacktestRow, type DriftRow } from "@/lib/api/monthly-close";
 import { format } from "date-fns";
 
 export default function MonthlyClosePage() {
