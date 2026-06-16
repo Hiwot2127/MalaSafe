@@ -30,6 +30,8 @@ export interface BacktestResult {
 }
 
 export interface BacktestRow {
+  id: string;
+  district_id: string;
   district_code: string;
   district_name: string;
   region: string;
@@ -37,7 +39,9 @@ export interface BacktestRow {
   actual: number;
   error: number;
   absolute_error: number;
+  abs_error: number;
   percentage_error?: number;
+  within_q10_q90?: boolean | null;
 }
 
 export interface DriftFinding {
