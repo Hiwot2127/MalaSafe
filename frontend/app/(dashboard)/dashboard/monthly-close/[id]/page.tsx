@@ -415,8 +415,8 @@ function BacktestRowsTable({ rows }: { rows: BacktestRow[] }) {
         {rows.map((r) => (
           <tr key={r.id} className="border-b border-border/60 last:border-0">
             <td className="px-4 py-2 font-mono text-xs text-muted-foreground tabular-nums">{r.district_id.slice(0, 8)}</td>
-            <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.actual_cases}</td>
-            <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.predicted_cases ?? "-"}</td>
+            <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.actual}</td>
+            <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.predicted ?? "-"}</td>
             <td className="px-4 py-2 text-right font-mono text-sm tabular-nums">{r.abs_error ?? "-"}</td>
             <td className="px-4 py-2 text-right font-mono text-xs uppercase tracking-[0.18em]">{r.within_q10_q90 === null ? "-" : r.within_q10_q90 ? "yes" : "no"}</td>
           </tr>

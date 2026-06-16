@@ -12,7 +12,7 @@ export interface DashboardSummary {
   failed_login_attempts: number;
 }
 
-export interface AdminUser extends User {
+export interface AdminUser extends Omit<User, 'last_login_at' | 'last_login_ip'> {
   failed_login_attempts: number;
   account_locked_until: string | null;
   last_login_at: string | null;

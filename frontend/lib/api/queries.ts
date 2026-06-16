@@ -124,19 +124,3 @@ export function useUploadClimate() {
     },
   });
 }
-
-// Generate Prediction Mutation
-export function useGeneratePrediction() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (params: { district_id: string; target_month: string }) =>
-      predictionsApi.generate(params),
-    onSuccess: (_, variables) => {
-      // Invalidate predictions for this district
-      queryClient.invalidateQueries({ 
-        queryKey: ['predictions', variables.district_id] 
-      });
-    },
-  });
-}

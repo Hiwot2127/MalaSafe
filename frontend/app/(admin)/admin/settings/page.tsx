@@ -62,7 +62,7 @@ export default function SystemInformationPage() {
 
         {/* System Configuration */}
         <section className="flex flex-col gap-4 mt-4">
-          <SectionHeader index="02" label="System Configuration" tone="neutral" />
+          <SectionHeader index="02" label="System Configuration" tone="signal" />
           <EditorialCard className="p-0 border-border/40 overflow-hidden bg-background/60 backdrop-blur-md">
             <div className="p-6 sm:p-8 space-y-6">
               <div className="flex gap-4 items-start">
@@ -148,7 +148,7 @@ export default function SystemInformationPage() {
 
         {/* Deployment Information */}
         <section className="flex flex-col gap-4 mt-4">
-          <SectionHeader index="03" label="Deployment" tone="neutral" />
+          <SectionHeader index="03" label="Deployment" tone="signal" />
           <EditorialCard className="p-0 border-border/40 overflow-hidden bg-background/60 backdrop-blur-md">
             <div className="p-6 sm:p-8 space-y-6">
               <div className="flex gap-4 items-start">
