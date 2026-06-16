@@ -30,16 +30,20 @@ jobs:
       - name: Run TypeScript check
         working-directory: frontend
         run: npx tsc --noEmit
+        continue-on-error: false
 
       - name: Run ESLint
         working-directory: frontend
-        run: npm run lint || true
+        run: npm run lint --  --max-warnings=50
+        continue-on-error: true
 
       - name: Build application
         working-directory: frontend
+        timeout-minutes: 10
         run: npm run build
         env:
           NEXT_PUBLIC_API_URL: /api/v1
+          NODE_ENV: production
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { useDashboard } from '@/lib/api/queries';
 import {
@@ -12,7 +12,6 @@ import {
   AlertCard,
   EditorialCard,
   EditorialSelect,
-  Metric,
   PageHeader,
   SectionHeader,
   StatusPill,
